@@ -37,5 +37,39 @@ This project is developed by a team of five:
 
 ---
 
+## Initial Setup
+
+1. Clone the repository:
+   ```
+   git clone <repo-url>
+   cd sLEAPy-sprint1-project
+   ```
+2. Make sure you have installed:
+   - Java 21
+   - Maven
+   - Docker
+
+---
+
+## Running the Program
+
+1. Build the jar:
+   ```
+   cd starter
+   mvn clean package
+   ```
+2. Build the Docker image:
+   ```
+   docker build -t myapp .
+   ```
+3. Run a container instance from the image:
+   ```
+   docker run --name myapp sLEAPy
+   ```
+
+That's it — the app runs inside the `myapp` container. Use `docker logs myapp` to view output, and `docker rm -f myapp` to remove it when done.
+
+---
+
 ## Notes
 This README will evolve throughout the sprint as more details are finalized.
