@@ -1,4 +1,4 @@
-# sLEAPy–sprint1-project
+# sLEAPy-project
 
 ## Overview
 This repository establishes the core workflow, collaboration structure, and early project scaffolding that the team will build upon in future sprints.
