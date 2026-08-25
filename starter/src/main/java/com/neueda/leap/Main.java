@@ -1,8 +1,15 @@
 package com.neueda.leap;
 
 public class Main {
+
+    public static void calcBumbleBee(int c1, int c2) {
+        System.out.printf("%d + %d = %d bumblebees", c1, c2, c1 + c2); 
+    }
+
+    
     public static void main(String[] args) {
         // TODO: replace <team-name> with your team's actual name
         System.out.println("Hello world from the sLEAPy");
+        calcBumbleBee(5, 8);
     }
 }
