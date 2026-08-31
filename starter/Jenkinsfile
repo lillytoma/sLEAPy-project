@@ -11,26 +11,26 @@ pipeline {
         }
         stage('Build') {
             steps {
-                dir('starter') {
+                dir('starter/backend') {
                     sh 'mvn -B clean package'
                 }
             }
         }
         stage('Test') {
             steps {
-                dir('starter') {
+                dir('starter/backend') {
                     sh 'mvn -B test'
                 }
             }
             post {
                 always {
-                    junit testResults: 'starter/target/surefire-reports/*.xml', allowEmptyResults: true
+                    junit testResults: 'starter/backend/target/surefire-reports/*.xml', allowEmptyResults: true
                 }
             }
         }
         stage('Archive') {
             steps {
-                archiveArtifacts artifacts: 'starter/target/*.jar', fingerprint: true
+                archiveArtifacts artifacts: 'starter/backend/target/*.jar', fingerprint: true
             }
         }
     }

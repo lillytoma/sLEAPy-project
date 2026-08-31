@@ -3,6 +3,11 @@ target/
 *.jar
 *.log
 
+# frontend
+node_modules/
+dist/
+.angular/
+
 # IDE
 .idea/
 *.iml
