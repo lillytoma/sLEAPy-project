@@ -8,7 +8,8 @@ public class Main {
     }
 
     public static void calcBumbleBee(int c1, int c2) {
-        System.out.printf("%d + %d = %d bumblebees", c1, c2, c1 + c2); 
+        System.out.printf("%d + %d = %d bumblebees", c1, c2, c1 + c2);
+        //setting up branch 
     }
 
     

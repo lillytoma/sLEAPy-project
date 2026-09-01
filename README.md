@@ -51,25 +51,113 @@ This project is developed by a team of five:
 
 ---
 
-## Running the Program
+## PostgreSQL Database Setup
 
-1. Build the jar:
-   ```
+### Environment (.env)
+Create the .env in the starter folder and
+create a username, password, and database name 
+of your choosing. For example:
+
+POSTGRES_USER=[username]
+POSTGRES_PASSWORD=[password]
+POSTGRES_DB=[db_name]
+
+### Starting the Database
+
+1. Navigate to the `starter` directory:
+   ```bash
    cd starter
-   mvn clean package
-   ```
-2. Build the Docker image:
-   ```
-   docker build -t myapp .
-   ```
-3. Run a container instance from the image:
-   ```
-   docker run --name myapp sLEAPy
    ```
 
-That's it — the app runs inside the `myapp` container. Use `docker logs myapp` to view output, and `docker rm -f myapp` to remove it when done.
+2. Start PostgreSQL in Docker:
+   ```bash
+   docker-compose up -d
+   ```
+   This starts the `sleapy-postgres` container with the `sleapy_db` database.
+
+3. Verify the container is running:
+   ```bash
+   docker-compose ps
+   ```
+   You should see `sleapy-postgres` with status `Up`.
+
+### Testing the Connection Locally
+
+From the EC2 instance, test the connection:
+```bash
+psql -h localhost -U postgres -d sleapy_db -p 8101 -W
+```
+
+If you see the `psql` prompt (`sleapy_db=>`), the database is working.
+
+### Connecting from Windows via SSH Tunnel
+
+To access PostgreSQL from your Windows machine securely:
+
+1. **Open an SSH tunnel** (keep this terminal open while using the database):
+   ```powershell
+   ssh -L 8101:localhost:8101 ec2-user@YOUR_EC2_IP
+   ```
+   Replace `YOUR_EC2_IP` with your EC2 instance IP.
+
+2. **Connect via pgAdmin** (or any PostgreSQL client):
+   - **Host:** `localhost`
+   - **Port:** `8101`
+   - **Database:**
+   - **Username:**
+   - **Password:**
+
+   The SSH tunnel transparently routes your connection through the encrypted SSH channel.
 
 ---
+
+## Running the Program
+
+### Backend (Java)
+
+1. Navigate to the backend directory:
+   ```bash
+   cd starter/backend
+   ```
+
+2. Build the jar:
+   ```bash
+   mvn clean package
+   ```
+
+3. Build the Docker image:
+   ```bash
+   docker build -t sleapy-backend .
+   ```
+
+4. Run a container:
+   ```bash
+   docker run --name sleapy-backend sleapy-backend
+   ```
+
+View logs with `docker logs sleapy-backend` and stop with `docker rm -f sleapy-backend`.
+
+### Frontend (Angular)
+
+1. Navigate to the frontend directory:
+   ```bash
+   cd starter/frontend
+   ```
+
+2. Install dependencies (if not already installed):
+   ```bash
+   npm install
+   ```
+
+3. Start the development server:
+   ```bash
+   npm start
+   ```
+
+4. Open your browser to `http://localhost:4200`
+
+---
+
 
 ## Notes
 This README will evolve throughout the sprint as more details are finalized.
