@@ -53,6 +53,15 @@ This project is developed by a team of five:
 
 ## PostgreSQL Database Setup
 
+### Environment (.env)
+Create the .env in the starter folder and
+create a username, password, and database name 
+of your choosing. For example:
+
+POSTGRES_USER=[username]
+POSTGRES_PASSWORD=[password]
+POSTGRES_DB=[db_name]
+
 ### Starting the Database
 
 1. Navigate to the `starter` directory:
@@ -148,6 +157,7 @@ View logs with `docker logs sleapy-backend` and stop with `docker rm -f sleapy-b
 4. Open your browser to `http://localhost:4200`
 
 ---
+
 
 ## Notes
 This README will evolve throughout the sprint as more details are finalized.
