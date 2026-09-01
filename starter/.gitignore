@@ -3,6 +3,9 @@ target/
 *.jar
 *.log
 
+# environment
+.env
+
 # frontend
 node_modules/
 dist/
