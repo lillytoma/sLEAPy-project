@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../services/auth.service';
 import { ThemeService } from '../services/theme.service';
-
+// Component for handling user login, including email and password input and dark mode toggle.
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -31,7 +31,7 @@ import { ThemeService } from '../services/theme.service';
 
       <div class="w-full max-w-md">
         <!-- Logo -->
-        <div class="text-center mb-10">
+        <div class="text-center mb-9">
           <a routerLink="/" class="font-serif text-3xl font-bold" style="color:var(--primary)">sLEAPy Stocks</a>
           <p class="mt-2 text-sm" style="color:var(--muted-foreground)">Sign in to your account</p>
         </div>
@@ -114,3 +114,4 @@ export class LoginComponent {
     }
   }
 }
+

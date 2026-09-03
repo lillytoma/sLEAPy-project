@@ -2,7 +2,7 @@ import { Component, signal, computed } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ThemeService } from '../services/theme.service';
-
+// Component for handling user signup, including personal information, email, and password input with validation.
 function passwordStrength(password: string): number {
   if (!password) return 0;
   let score = 0;

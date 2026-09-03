@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
-
+// Service for handling user authentication, including login and logout functionality.
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   isLoggedIn = signal<boolean>(false);

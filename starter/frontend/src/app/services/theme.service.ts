@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-
+// Service for managing the application's theme, including dark mode toggle.
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
   dark = signal<boolean>(false);
