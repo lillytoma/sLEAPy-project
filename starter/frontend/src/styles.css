@@ -1,1 +1,134 @@
-/* global styles */
+/* CSS Variables */
+:root {
+  --background: #F4F1DE;
+  --foreground: #18251E;
+  --card: #EDEACC;
+  --primary: #1B0066;
+  --primary-foreground: #F4F1DE;
+  --muted: #DDD9BB;
+  --muted-foreground: #4A5E53;
+  --accent: #57886C;
+  --border: rgba(24, 37, 30, 0.15);
+  --error: #7D121E;
+  --success: #57886C;
+  --radius: 6px;
+}
+
+.dark {
+  --background: #0E1612;
+  --foreground: #EAE8D5;
+  --card: #18251E;
+  --primary: #3D1FBF;
+  --primary-foreground: #EAE8D5;
+  --muted: #1E2E26;
+  --muted-foreground: #8AA396;
+  --border: rgba(234, 232, 213, 0.1);
+  --error: #C4303F;
+  --success: #57886C;
+  --accent: #57886C;
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+  min-height: 100vh;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+/* Scrollbar hide utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--muted);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: 3px;
+}
+
+/* Ticker animation */
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.ticker-track {
+  animation: ticker 30s linear infinite;
+}
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
+/* Slide-in animation for sign-in panel */
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+.slide-in-right {
+  animation: slideInFromRight 0.4s ease-out forwards;
+}
+
+/* Fade in */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* App-level variables as Tailwind won't know about them */
+.bg-app { background-color: var(--background); }
+.bg-card { background-color: var(--card); }
+.bg-muted { background-color: var(--muted); }
+.bg-primary { background-color: var(--primary); }
+.text-app { color: var(--foreground); }
+.text-muted { color: var(--muted-foreground); }
+.text-primary-color { color: var(--primary); }
+.text-accent { color: var(--accent); }
+.text-error { color: var(--error); }
+.text-success { color: var(--success); }
+.border-app { border-color: var(--border); }
+
+/* Input base */
+input, select, textarea {
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* Number font */
+.font-mono {
+  font-family: 'DM Mono', monospace;
+}
+
+/* Logo font */
+.font-serif {
+  font-family: 'Instrument Serif', serif;
+}
