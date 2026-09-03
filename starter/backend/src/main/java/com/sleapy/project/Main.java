@@ -1,6 +1,5 @@
-package com.sleapy.backend;
+package com.sleapy.project;
 
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 
