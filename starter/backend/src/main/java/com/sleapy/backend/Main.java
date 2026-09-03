@@ -1,5 +1,10 @@
-package com.neueda.leap;
+package com.sleapy.backend;
 
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+
+@SpringBootApplication
 public class Main {
 
 
@@ -19,3 +24,4 @@ public class Main {
         calcBumbleBee(5, 8);
     }
 }
+
