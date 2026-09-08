@@ -5,9 +5,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 public class Main {
-
-
     public static void greeter(String name) {
+     
         System.out.printf("Hello %s, welcome to the sLEAPy!\n", name);
     }
 
