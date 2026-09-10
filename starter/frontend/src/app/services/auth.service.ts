@@ -20,6 +20,6 @@ export class AuthService {
 
   logout(): void {
     this.isLoggedIn.set(false);
-    this.router.navigate(['/']);
+    this.router.navigate(['/login']);
   }
 }

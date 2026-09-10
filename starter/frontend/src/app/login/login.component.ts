@@ -32,7 +32,7 @@ import { ThemeService } from '../services/theme.service';
       <div class="w-full max-w-md">
         <!-- Logo -->
         <div class="text-center mb-9">
-          <a routerLink="/" class="font-serif text-3xl font-bold" style="color:var(--primary)">sLEAPy Stocks</a>
+          <div class="font-serif text-3xl font-bold" style="color:var(--primary)">sLEAPy Stocks</div>
           <p class="mt-2 text-sm" style="color:var(--muted-foreground)">Sign in to your account</p>
         </div>
 
@@ -88,9 +88,6 @@ import { ThemeService } from '../services/theme.service';
         <p class="mt-6 text-center text-sm" style="color:var(--muted-foreground)">
           Don't have an account?
           <a routerLink="/signup" class="font-semibold" style="color:var(--primary)">Sign up free</a>
-        </p>
-        <p class="mt-2 text-center text-xs" style="color:var(--muted-foreground)">
-          <a routerLink="/" class="hover:underline">← Back to home</a>
         </p>
       </div>
     </div>
