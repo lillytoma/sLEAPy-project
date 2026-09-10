@@ -1,104 +1,51 @@
---clients
-create table clients (
-	client_id BIGSERIAL PRIMARY KEY,
-	
-	username VARCHAR(50) UNIQUE NOT NULL,
-	email VARCHAR(255) UNIQUE NOT NULL,
-	password_hash TEXT NOT NULL,
-	
-	first_name VARCHAR(100) NOT NULL,
-	last_name VARCHAR(100) NOT NULL,
-	
-	address VARCHAR(255) NOT NULL,
-	phone VARCHAR(20) NOT NULL,
-	
-	account_role VARCHAR(20) NOT NULL
-		CHECK (account_role IN ('CLIENT', 'ADMIN', 'ANALYST')),
-
-	created_at TIMESTAMP NOT NULL,
-	last_logged_in TIMESTAMP
+-- Client_Status
+CREATE TABLE Client_Status (
+    ClientStatus_ID SERIAL PRIMARY KEY,
+    ClientStatus_Name VARCHAR(100) NOT NULL
 );
-
-
-
---orders
-CREATE TABLE orders (
-	order_id BIGserial PRIMARY KEY,
-
-	client_id BIGINT NOT NULL,
-	instrument_id BIGINT NOT NULL,
-
-	order_type VARCHAR(20) NOT NULL
-		CHECK (order_type IN ('MARKET', 'LIMIT')),
-
-	transaction_type VARCHAR(10) NOT NULL
-		CHECK (transaction_type In ('BUY', 'SELL')),
-
-	quantity NUMERIC(18,0) NOT NULL
-		CHECK (quantity > 0),
-
-	requested_price NUMERIC(18,8)
-		CHECK (requested_price >= 0),
-
-	status VARCHAR(20) NOT NULL
-		CHECK (
-			status in (
-					'SUBMITTED',
-					'ACCEPTED',
-					'REJECTED',
-					'CANCELED'
-			)
-		),
-
-	submitted_at TIMESTAMP NOT NULL,
-	accepted_at TIMESTAMP,
-	filled_at TIMESTAMP,
-
-	rejected_reason TEXT,
-
-	CONSTRAINT fk_orders_clients
-		FOREIGN KEY (client_id)
-		REFERENCES clients(client_id),
-
-	CONSTRAINT fk_orders_instruments
-		FOREIGN KEY (client_id)
-		REFERENCES clients(client_id),
-
-	CONSTRAINT chk_orders_dates
-		CHECK (
-			accepted_at IS NULL
-			OR accepted_at >= submitted_at
-		),
-
-	CONSTRAINT chk_filled_dates
-		CHECK (
-			filled_at IS NULL
-			OR filled_at >= submitted_at
-		)
+-- Order_Status
+CREATE TABLE Order_Status (
+    OrderStatus_ID SERIAL PRIMARY KEY,
+    OrderStatus_Name VARCHAR(100) NOT NULL
 );
-
-
-
---instruments
-CREATE TABLE instruments (
-	instrument_id BIGSERIAL PRIMARY KEY,
-
-	symbol VARCHAR(20) UNIQUE NOT NULL,
-	instrument_name VARCHAR(255) NOT NULL,
-
-	instrument_type VARCHAR(20) NOT NULL
-		CHECK (
-			instrument_type IN (
-				'EQUITY',
-				'CRYPTO',
-				'FOREX'
-			)
-		),
-	exchange VARCHAR(50),
-	currency VARCHAR(10),
-	
-	is_active BOOLEAN DEFAULT TRUE,
-	
-	created_at TIMESTAMP NOT NULL
+-- Instrument_Type
+CREATE TABLE Instrument_Type (
+    InstrumentType_ID SERIAL PRIMARY KEY,
+    InstrumentType VARCHAR(100) NOT NULL
 );
- 
+-- Clients
+CREATE TABLE Clients (
+    Client_ID SERIAL PRIMARY KEY,
+    ClientStatus_ID INTEGER NOT NULL REFERENCES Client_Status(ClientStatus_ID),
+    email VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    phone_number VARCHAR(50),
+    "address" VARCHAR(255) NOT NULL,
+    ssn VARCHAR(20),
+    balance NUMERIC(15,2)
+);
+-- Instruments
+CREATE TABLE Instruments (
+    Instrument_ID SERIAL PRIMARY KEY,
+    Symbol VARCHAR(20) NOT NULL,
+    Symbol_Name VARCHAR(255) NOT NULL,
+    InstrumentType_ID INTEGER NOT NULL REFERENCES Instrument_Type(InstrumentType_ID)
+);
+-- Holdings
+CREATE TABLE Holdings (
+    Holdings_ID SERIAL PRIMARY KEY,
+    Client_ID INTEGER NOT NULL REFERENCES Clients(Client_ID),
+    Instrument_ID INTEGER NOT NULL REFERENCES Instruments(Instrument_ID),
+    Quantity_Shares NUMERIC(15,4),
+    Purchase_Price NUMERIC(15,2)
+);
+-- Orders 
+CREATE TABLE Orders (
+    Order_ID SERIAL PRIMARY KEY,
+    Client_ID INTEGER NOT NULL REFERENCES Clients(Client_ID),
+    Instrument_ID INTEGER NOT NULL REFERENCES Instruments(Instrument_ID),
+    Quantity NUMERIC(15,4),
+    Time_of_purchase TIMESTAMP,
+    Purchase_Price NUMERIC(15,2),
+    Status INTEGER NOT NULL REFERENCES Order_Status(OrderStatus_ID)
+);
