@@ -15,12 +15,13 @@
 }
 
 .dark {
-  --background: #0E1612;
+  --background: #000000;
   --foreground: #EAE8D5;
   --card: #18251E;
-  --primary: #3D1FBF;
-  --primary-foreground: #EAE8D5;
-  --muted: #1E2E26;
+  --primary: #a097ff;
+  --primary-foreground: #ffffff
+  ;
+  --muted: #082015;
   --muted-foreground: #8AA396;
   --border: rgba(234, 232, 213, 0.1);
   --error: #C4303F;
