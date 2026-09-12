@@ -11,7 +11,7 @@ public class ClientDTO {
 
     private Long id;
     private String email;
-    private String name;
-    private double currentBalance;
+    // private String name;
+    private double balance;
     
 }

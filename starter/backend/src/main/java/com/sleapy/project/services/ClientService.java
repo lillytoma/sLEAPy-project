@@ -11,10 +11,10 @@ public class ClientService {
 
     private ClientRepository clientRepository;
 
-    public double getCurrentBalance(Long clientId) {
+    public double getBalance(Long clientId) {
         
         ClientEntity client = clientRepository.findById(clientId).orElseThrow(() -> new RuntimeException("Client not found"));  
-        return client.getCurrentBalance(); // Return the actual current balance from the client entity
+        return client.getBalance(); // Return the actual current balance from the client entity
     }
     
 }
