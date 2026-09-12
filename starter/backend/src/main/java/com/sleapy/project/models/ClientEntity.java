@@ -22,13 +22,27 @@ public class ClientEntity {
     private Long id; // primary key
 
     @Column(name = "email", nullable = false, unique = true)
-    private String email;
+    private String email; // unique email for each client
 
-    @Column(name = "name")
-    private String name;
+    @Column(name = "balance")
+    private double balance; // client's account balance
 
-    @Column(name = "current_balance")
-    private double currentBalance;
+    @Column(name = "password_hash", nullable = false)
+    private String passwordHash; // hashed password for security
+
+    @Column(name = "address", nullable = false)
+    private String address; // client's address
+
+    @Column(name = "phone_number")
+    private String phoneNumber; // client's phone number
+    
+    @Column(name = "ssn")
+    private String ssn; // client's social security number
+
+    @Column(name = "ClientStatus_ID")
+    private Long clientStatusId; // foreign key to ClientStatus entity
+
+
 
 
 }
