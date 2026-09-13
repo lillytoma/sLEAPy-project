@@ -1,7 +1,6 @@
 package com.sleapy.project;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 
 @SpringBootApplication
@@ -19,7 +18,6 @@ public class Main {
     
     public static void main(String[] args) {
         // TODO: replace <team-name> with your team's actual name
-        System.out.println(new BCryptPasswordEncoder().encode("TestPassword123"));
         System.out.println("Hello world from the sLEAPy");
         calcBumbleBee(5, 8);
         SpringApplication.run(Main.class, args);
