@@ -19,6 +19,7 @@ public class ClientEntity {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "client_id")
     private Long id; // primary key
 
     @Column(name = "email", nullable = false, unique = true)
@@ -39,7 +40,7 @@ public class ClientEntity {
     @Column(name = "ssn")
     private String ssn; // client's social security number
 
-    @Column(name = "ClientStatus_ID")
+    @Column(name = "clientstatus_id")
     private Long clientStatusId; // foreign key to ClientStatus entity
 
 
