@@ -137,6 +137,32 @@ To access PostgreSQL from your Windows machine securely:
 
 View logs with `docker logs sleapy-backend` and stop with `docker rm -f sleapy-backend`.
 
+### Backend — Running Locally for Development
+
+The steps above build a deployable Docker image. Day to day, it's faster to just run the backend directly with Maven and point it at the real database. From `starter/backend`:
+
+1. Make sure `mvnw` is executable (only needed once per machine):
+   ```bash
+   chmod +x mvnw
+   ```
+
+2. Load the real database credentials from the `.env` file (the same one described under [PostgreSQL Database Setup](#postgresql-database-setup)) into your shell:
+   ```bash
+   set -a && source ../.env && set +a
+   ```
+   `.env` files aren't automatically picked up by Maven/Java the way they are by `docker-compose` — this line explicitly loads the values as real environment variables for your current terminal session. You'll need to re-run it in every new terminal.
+
+3. Run the app:
+   ```bash
+   ./mvnw spring-boot:run
+   ```
+   If you see `HikariPool-1 - Start completed.` and `Tomcat started on port(s): 8080`, it's up and connected to the real database.
+
+   If port `8080` is already taken on your machine (e.g. Jenkins uses it on some of our EC2 boxes), run on a different port instead of fighting for `8080`:
+   ```bash
+   SERVER_PORT=8081 ./mvnw spring-boot:run
+   ```
+
 ### Frontend (Angular)
 
 1. Navigate to the frontend directory:
@@ -158,6 +184,33 @@ View logs with `docker logs sleapy-backend` and stop with `docker rm -f sleapy-b
 
 ---
 
+## Testing the API
+
+While the frontend is still catching up, endpoints can be tested directly with `curl` once the backend is running (see [Backend — Running Locally for Development](#backend--running-locally-for-development)).
+
+**Login** (`POST /api/auth/login`) — put the request body in a file first rather than inlining it, to avoid shell-quoting headaches:
+```bash
+cat > login.json << 'EOF'
+{
+  "email": "test@example.com",
+  "password": "yourpassword"
+}
+EOF
+
+curl -i -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d @login.json
+```
+Expect `200 OK` for correct credentials, and `401 Unauthorized` for either a wrong password or an email that doesn't exist — both cases return the same response on purpose, so a failed attempt never reveals which part was wrong.
+
+**Client balance** (`GET /api/clients/{clientId}/balance`):
+```bash
+curl http://localhost:8080/api/clients/1/balance
+```
+
+(swap `8080` for `8081`, or whatever port you're actually running on, if you overrode it)
+
+---
 
 ## Notes
 This README will evolve throughout the sprint as more details are finalized.
