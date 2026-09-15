@@ -1,9 +1,7 @@
 package com.sleapy.project.models;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+
 import com.sleapy.project.models.InstrumentEntity;
 
 import java.math.BigDecimal;
@@ -11,11 +9,84 @@ import java.time.LocalDate;
 
 
 @Table(name = "orders")
-@Data
 @Entity
-@NoArgsConstructor
-@AllArgsConstructor
+
 public class OrderEntity {
+    public OrderEntity(Long id,
+                       Integer quantity,
+                       LocalDate timeOfPurchase,
+                       BigDecimal purchasePrice,
+                       OrderStatus status,
+                       ClientEntity client,
+                       InstrumentEntity instrument) {
+        this.id = id;
+        this.quantity = quantity;
+        this.timeOfPurchase = timeOfPurchase;
+        this.purchasePrice = purchasePrice;
+        this.status = status;
+        this.client = client;
+        this.instrument = instrument;
+    }
+
+    public OrderEntity() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
+    public LocalDate getTimeOfPurchase() {
+        return timeOfPurchase;
+    }
+
+    public void setTimeOfPurchase(LocalDate timeOfPurchase) {
+        this.timeOfPurchase = timeOfPurchase;
+    }
+
+    public BigDecimal getPurchasePrice() {
+        return purchasePrice;
+    }
+
+    public void setPurchasePrice(BigDecimal purchasePrice) {
+        this.purchasePrice = purchasePrice;
+    }
+
+    public OrderStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(OrderStatus status) {
+        this.status = status;
+    }
+
+    public ClientEntity getClient() {
+        return client;
+    }
+
+    public void setClient(ClientEntity client) {
+        this.client = client;
+    }
+
+    public InstrumentEntity getInstrument() {
+        return instrument;
+    }
+
+    public void setInstrument(InstrumentEntity instrument) {
+        this.instrument = instrument;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
