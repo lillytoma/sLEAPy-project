@@ -1,0 +1,19 @@
+sequenceDiagram
+    participant C as OrderController
+    participant O as Order
+    participant V as OrderValidation
+    participant S as OrderService
+    participant D as DataAccessObject
+
+    C->>O: new Order object
+    O-->>C: order object
+    C->>V: validateOrder(order)
+    V-->>C: validateOrder() -> true
+    C->>S: placeOrder(order)
+    S->>D: doMagicOperation(order)
+    D-->>S: Price at Time
+    D-->>S: Check Funds
+    D-->>S: etc...
+    S-->>C: Success
+
+
