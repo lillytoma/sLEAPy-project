@@ -1,5 +1,5 @@
 import { Component, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../services/auth.service';
 import { ThemeService } from '../services/theme.service';
@@ -18,14 +18,24 @@ export class LoginComponent {
 
   constructor(
     private authService: AuthService,
-    public themeService: ThemeService
+    public themeService: ThemeService,
+    private router: Router
   ) {}
 
   doLogin(): void {
-    const success = this.authService.login(this.email, this.password);
-    if (!success) {
-      this.loginError.set(true);
-    }
+    this.authService.login(this.email, this.password).subscribe({
+      next: (response) => {
+        this.authService.isLoggedIn.set(true);
+        this.authService.userName.set(response.userName);
+        this.authService.userInitials.set(response.userInitials);
+      // This will direct users to the dashboard when we implement the dashbpoard
+       //this.router.navigate(['/dashboard']);
+      },
+      error: (err) =>{
+        console.error('Login failed', err);
+      }
+    
+    });
   }
 }
 
