@@ -22,9 +22,9 @@ public class ClientController {
     }
 
     @GetMapping("/{clientId}/balance")
-    public ResponseEntity<Double> getCurrentBalance(@PathVariable Long clientId) {
+    public ResponseEntity<Double> getBalance(@PathVariable Long clientId) {
 
-        double balance = clientService.getCurrentBalance(clientId);
+        double balance = clientService.getBalance(clientId);
         return new ResponseEntity<>(balance, HttpStatus.OK);
     }
   

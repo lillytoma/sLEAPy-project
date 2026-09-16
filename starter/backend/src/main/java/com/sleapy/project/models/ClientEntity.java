@@ -6,57 +6,41 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-
+import lombok.Data;
 
 
 @Entity
 @Table(name = "clients")
+@Data
 public class ClientEntity {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "client_id")
     private Long id; // primary key
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public double getCurrentBalance() {
-        return currentBalance;
-    }
-
-    public void setCurrentBalance(double currentBalance) {
-        this.currentBalance = currentBalance;
-    }
-
     @Column(name = "email", nullable = false, unique = true)
-    private String email;
+    private String email; // unique email for each client
 
-    @Column(name = "name")
-    private String name;
+    @Column(name = "balance")
+    private double balance; // client's account balance
 
-    @Column(name = "current_balance")
-    private double currentBalance;
+    @Column(name = "password_hash", nullable = false)
+    private String passwordHash; // hashed password for security
+
+    @Column(name = "address", nullable = false)
+    private String address; // client's address
+
+    @Column(name = "phone_number")
+    private String phoneNumber; // client's phone number
+    
+    @Column(name = "ssn")
+    private String ssn; // client's social security number
+
+    @Column(name = "clientstatus_id")
+    private Long clientStatusId; // foreign key to ClientStatus entity
+
+
 
 
 }

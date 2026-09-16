@@ -12,8 +12,8 @@ public class ClientMapper {
 
         dto.setId(entity.getId());
         dto.setEmail(entity.getEmail());
-        dto.setName(entity.getName());
-        dto.setCurrentBalance(entity.getCurrentBalance());
+        //dto.setName(entity.getName());
+        dto.setBalance(entity.getBalance());
 
         return dto;
     }
@@ -27,8 +27,8 @@ public class ClientMapper {
 
         entity.setId(dto.getId());
         entity.setEmail(dto.getEmail());
-        entity.setName(dto.getName());
-        entity.setCurrentBalance(dto.getCurrentBalance());
+        //entity.setName(dto.getName());
+        entity.setBalance(dto.getBalance());
 
         return entity;
     }
