@@ -2,14 +2,16 @@ package com.sleapy.project.services;
 
 import com.sleapy.project.models.ClientEntity;
 import com.sleapy.project.repositories.ClientRepository;
-import lombok.AllArgsConstructor;
+
 import org.springframework.stereotype.Service;
 
 @Service
-@AllArgsConstructor 
 public class ClientService {
+    public ClientService(ClientRepository clientRepository) {
+        this.clientRepository = clientRepository;
+    }
 
-    private ClientRepository clientRepository;
+    private final ClientRepository clientRepository;
 
     public double getCurrentBalance(Long clientId) {
         
