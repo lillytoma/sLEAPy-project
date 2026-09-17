@@ -17,11 +17,12 @@ CREATE TABLE Instrument_Type (
 CREATE TABLE Clients (
     Client_ID SERIAL PRIMARY KEY,
     ClientStatus_ID INTEGER NOT NULL REFERENCES Client_Status(ClientStatus_ID),
+    username VARCHAR(25) NOT NULL 
     email VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     phone_number VARCHAR(50),
-    "address" VARCHAR(255) NOT NULL,
-    ssn VARCHAR(20),
+    address VARCHAR(255), NOT NULL
+    ssn VARCHAR(20), NOT NULL
     balance NUMERIC(15,2)
 );
 -- Instruments
@@ -45,7 +46,8 @@ CREATE TABLE Orders (
     Client_ID INTEGER NOT NULL REFERENCES Clients(Client_ID),
     Instrument_ID INTEGER NOT NULL REFERENCES Instruments(Instrument_ID),
     Quantity NUMERIC(15,4),
-    Time_of_purchase TIMESTAMP,
+    Time_purchased TIMESTAMP,
+    Time_filled TIMESTAMP,
     Purchase_Price NUMERIC(15,2),
     Status INTEGER NOT NULL REFERENCES Order_Status(OrderStatus_ID)
 );
