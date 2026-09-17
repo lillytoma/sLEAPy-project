@@ -17,13 +17,13 @@ CREATE TABLE Instrument_Type (
 CREATE TABLE Clients (
     Client_ID SERIAL PRIMARY KEY,
     ClientStatus_ID INTEGER NOT NULL REFERENCES Client_Status(ClientStatus_ID),
-    username VARCHAR(25) NOT NULL 
+    username VARCHAR(25) NOT NULL, 
     email VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     phone_number VARCHAR(50),
-    address VARCHAR(255), NOT NULL
-    ssn VARCHAR(20), NOT NULL
-    balance NUMERIC(15,2)
+    address VARCHAR(255) NOT NULL,
+    ssn VARCHAR(20) NOT NULL,
+    cash_balance NUMERIC(15,2)
 );
 -- Instruments
 CREATE TABLE Instruments (
