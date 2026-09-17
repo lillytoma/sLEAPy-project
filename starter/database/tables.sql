@@ -23,7 +23,7 @@ CREATE TABLE Clients (
     phone_number VARCHAR(50),
     address VARCHAR(255) NOT NULL,
     ssn VARCHAR(20) NOT NULL,
-    cash_balance NUMERIC(15,2)
+    cash_balance NUMERIC(15,2) NOT NULL
 );
 -- Instruments
 CREATE TABLE Instruments (
