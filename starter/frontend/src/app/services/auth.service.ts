@@ -9,7 +9,7 @@ export class AuthService {
   isLoggedIn =signal<boolean>(false);
   userName =signal<string>('');
   userInitials =signal<string>('');
-  private apiURL = `${environment.apiUrl}/api/login`;
+  private apiURL = `${environment.apiUrl}/api/auth/login`;
   constructor(private router: Router, private http: HttpClient) {}
 
   login(email: string, password: string): Observable<any> {

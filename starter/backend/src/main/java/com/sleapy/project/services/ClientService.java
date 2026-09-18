@@ -5,8 +5,10 @@ import com.sleapy.project.repositories.ClientRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.Optional;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 @Service
+@CrossOrigin(origins = "http://localhost:4200")
 @AllArgsConstructor 
 public class ClientService {
 
