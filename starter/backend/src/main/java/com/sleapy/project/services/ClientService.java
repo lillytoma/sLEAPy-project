@@ -1,6 +1,7 @@
 package com.sleapy.project.services;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import com.sleapy.project.models.ClientEntity;
+
+import com.sleapy.project.models.entities.ClientEntity;
 import com.sleapy.project.repositories.ClientRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,10 +15,10 @@ public class ClientService {
 
     private ClientRepository clientRepository;
 
-    public double getBalance(Long clientId) {
+    public double getCashBalance(Long clientId) {
         
         ClientEntity client = clientRepository.findById(clientId).orElseThrow(() -> new RuntimeException("Client not found"));  
-        return client.getBalance(); // Return the actual current balance from the client entity
+        return client.getCashBalance(); // Return the actual current balance from the client entity
     }
     
 //Entry point for checking a login attempt. Given an email and the plaintext password. It returns a bool answering whether the credentials exist in the db
