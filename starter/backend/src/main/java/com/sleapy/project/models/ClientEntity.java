@@ -25,7 +25,7 @@ public class ClientEntity {
     @Column(name = "email", nullable = false, unique = true)
     private String email; // unique email for each client
 
-    @Column(name = "balance")
+    @Column(name = "cash_balance")
     private double balance; // client's account balance
 
     @Column(name = "password_hash", nullable = false)

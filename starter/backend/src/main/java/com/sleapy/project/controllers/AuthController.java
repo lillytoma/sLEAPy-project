@@ -1,5 +1,6 @@
 package com.sleapy.project.controllers;
 
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,9 +11,11 @@ import com.sleapy.project.models.LoginRequestDTO;
 import com.sleapy.project.services.ClientService;
 import lombok.AllArgsConstructor;
 
+
 @RestController
 @RequestMapping("/api/auth")
 @AllArgsConstructor
+@CrossOrigin("http://localhost:4200")
 //This class is responsible for handling authentication-related requests, such as login. It uses the ClientService to check user credentials and returns appropriate responses based on the validity of the provided email and password.
 public class AuthController {
     //The ClientService is injected into the AuthController to handle authentication logic, such as checking user credentials against the database.
