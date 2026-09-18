@@ -1,6 +1,7 @@
 package com.sleapy.project.services;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import com.sleapy.project.models.ClientEntity;
+
+import com.sleapy.project.models.entities.ClientEntity;
 import com.sleapy.project.repositories.ClientRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;

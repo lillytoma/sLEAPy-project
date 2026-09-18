@@ -1,6 +1,6 @@
 package com.sleapy.project.util;
-import com.sleapy.project.models.ClientDTO;
-import com.sleapy.project.models.ClientEntity;
+import com.sleapy.project.models.dtos.ClientDTO;
+import com.sleapy.project.models.entities.ClientEntity;
 
 public class ClientMapper {
     public static ClientDTO toDTO(ClientEntity entity) {
