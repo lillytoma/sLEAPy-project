@@ -16,9 +16,9 @@ public class ClientController {
     private final ClientService clientService;
 
     @GetMapping("/{clientId}/balance")
-    public ResponseEntity<Double> getBalance(@PathVariable Long clientId) {
+    public ResponseEntity<Double> getCashBalance(@PathVariable Long clientId) {
 
-        double balance = clientService.getBalance(clientId);
+        double balance = clientService.getCashBalance(clientId);
         return new ResponseEntity<>(balance, HttpStatus.OK);
     }
   
