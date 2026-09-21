@@ -1,4 +1,4 @@
-package com.sleapy.project.models;
+package com.sleapy.project.models.entities;
 
 import jakarta.persistence.*;
 

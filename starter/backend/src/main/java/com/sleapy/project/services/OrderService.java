@@ -1,8 +1,8 @@
 package com.sleapy.project.services;
 
 
-import com.sleapy.project.models.OrderDTO;
-import com.sleapy.project.models.OrderEntity;
+import com.sleapy.project.models.dtos.OrderDTO;
+import com.sleapy.project.models.entities.OrderEntity;
 import com.sleapy.project.repositories.OrderRepository;
 import org.springframework.stereotype.Service;
 

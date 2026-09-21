@@ -1,8 +1,6 @@
-package com.sleapy.project.models;
+package com.sleapy.project.models.entities;
 
 import jakarta.persistence.*;
-
-import com.sleapy.project.models.InstrumentEntity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

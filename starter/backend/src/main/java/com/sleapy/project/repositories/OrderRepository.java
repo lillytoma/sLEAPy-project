@@ -1,7 +1,8 @@
 package com.sleapy.project.repositories;
 
-import com.sleapy.project.models.OrderEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.sleapy.project.models.entities.OrderEntity;
 
 import java.util.List;
 

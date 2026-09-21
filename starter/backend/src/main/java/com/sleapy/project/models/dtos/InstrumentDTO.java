@@ -1,4 +1,7 @@
-package com.sleapy.project.models;
+package com.sleapy.project.models.dtos;
+
+import com.sleapy.project.models.entities.InstrumentEntity;
+import com.sleapy.project.models.entities.InstrumentType;
 
 public class InstrumentDTO {
     InstrumentDTO(InstrumentEntity entity){

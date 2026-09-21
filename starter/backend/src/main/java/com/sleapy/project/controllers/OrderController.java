@@ -1,6 +1,6 @@
 package com.sleapy.project.controllers;
 
-import com.sleapy.project.models.OrderDTO;
+import com.sleapy.project.models.dtos.OrderDTO;
 import com.sleapy.project.services.OrderService;
 import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
