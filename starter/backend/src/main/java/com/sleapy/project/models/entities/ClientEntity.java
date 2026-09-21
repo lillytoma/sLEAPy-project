@@ -10,6 +10,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * JPA entity representing a client record in the database.
+ * Persists client identity, credentials, and account information.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -20,27 +24,27 @@ public class ClientEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "client_id")
-    private Long id; // primary key
+    private Long id; // Primary key
 
     @Column(name = "email", nullable = false, unique = true)
-    private String email; // unique email for each client
+    private String email; // Unique email used for authentication
 
     @Column(name = "cash_balance")
-    private double cashBalance; // client's account balance
+    private double cashBalance; // Available cash balance in account
 
     @Column(name = "password_hash", nullable = false)
-    private String passwordHash; // hashed password for security
+    private String passwordHash; // Bcrypt hashed password
 
     @Column(name = "address", nullable = false)
-    private String address; // client's address
+    private String address; // Residential address
 
     @Column(name = "phone_number")
-    private String phoneNumber; // client's phone number
+    private String phoneNumber; // Contact phone number
     
     @Column(name = "ssn")
-    private String ssn; // client's social security number
+    private String ssn; // Social security number (encrypted)
 
     @Column(name = "clientstatus_id")
-    private Long clientStatusId; // foreign key to ClientStatus entity
+    private Long clientStatusId; // Foreign key to account status
 
 }
