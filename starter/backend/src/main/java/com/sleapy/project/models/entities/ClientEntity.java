@@ -1,4 +1,4 @@
-package com.sleapy.project.models;
+package com.sleapy.project.models.entities;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -22,8 +22,8 @@ public class ClientEntity {
     @Column(name = "email", nullable = false, unique = true)
     private String email; // unique email for each client
 
-    @Column(name = "balance")
-    private double balance; // client's account balance
+    @Column(name = "cash_balance")
+    private double cashBalance; // client's account balance
 
     @Column(name = "password_hash", nullable = false)
     private String passwordHash; // hashed password for security
@@ -39,8 +39,5 @@ public class ClientEntity {
 
     @Column(name = "clientstatus_id")
     private Long clientStatusId; // foreign key to ClientStatus entity
-
-
-
 
 }

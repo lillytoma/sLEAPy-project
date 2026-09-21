@@ -1,6 +1,6 @@
 package com.sleapy.project.util;
-import com.sleapy.project.models.ClientDTO;
-import com.sleapy.project.models.ClientEntity;
+import com.sleapy.project.models.dtos.ClientDTO;
+import com.sleapy.project.models.entities.ClientEntity;
 
 public class ClientMapper {
     public static ClientDTO toDTO(ClientEntity entity) {
@@ -13,7 +13,7 @@ public class ClientMapper {
         dto.setId(entity.getId());
         dto.setEmail(entity.getEmail());
         //dto.setName(entity.getName());
-        dto.setBalance(entity.getBalance());
+        dto.setCashBalance(entity.getCashBalance());
 
         return dto;
     }
@@ -28,7 +28,7 @@ public class ClientMapper {
         entity.setId(dto.getId());
         entity.setEmail(dto.getEmail());
         //entity.setName(dto.getName());
-        entity.setBalance(dto.getBalance());
+        entity.setCashBalance(dto.getCashBalance());
 
         return entity;
     }

@@ -2,14 +2,7 @@ spring:
   application:
     name: project
   datasource:
-    url: jdbc:postgresql://localhost:8101/${POSTGRES_DB}
-    #added a JDBC connection to the PostgreSQL database
-    username: ${POSTGRES_USER}
-    password: ${POSTGRES_PASSWORD}
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
   jpa:
-    properties:
-      hibernate:
-        dialect: org.hibernate.PostgreSQLDialect
-    hibernate:
-      ddl-auto: update
-
+    database-platform: org.hibernate.dialect.H2Dialect
