@@ -4,6 +4,8 @@ package com.sleapy.project.models.dtos;
 
 import java.time.LocalDate;
 
+import com.sleapy.project.models.entities.OrderEntity;
+
 
 public class OrderDTO{
     public OrderDTO(OrderEntity entity){

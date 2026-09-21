@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 
 @Service
 @CrossOrigin(origins = "http://localhost:4200")
-@AllArgsConstructor 
 public class ClientService {
     public ClientService(ClientRepository clientRepository) {
         this.clientRepository = clientRepository;
