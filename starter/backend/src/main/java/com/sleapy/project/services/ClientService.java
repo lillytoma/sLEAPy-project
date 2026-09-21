@@ -3,17 +3,19 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.sleapy.project.models.entities.ClientEntity;
 import com.sleapy.project.repositories.ClientRepository;
-import lombok.AllArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import java.util.Optional;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
 @Service
 @CrossOrigin(origins = "http://localhost:4200")
-@AllArgsConstructor 
 public class ClientService {
+    public ClientService(ClientRepository clientRepository) {
+        this.clientRepository = clientRepository;
+    }
 
-    private ClientRepository clientRepository;
+    private final ClientRepository clientRepository;
 
     public double getCashBalance(Long clientId) {
         

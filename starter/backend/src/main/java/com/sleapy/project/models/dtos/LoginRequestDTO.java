@@ -1,10 +1,9 @@
 package com.sleapy.project.models.dtos;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 //This class represents a data transfer object (DTO) for login requests. It contains two fields: email and password, which are used to capture the user's login credentials when they attempt to authenticate with the system.
