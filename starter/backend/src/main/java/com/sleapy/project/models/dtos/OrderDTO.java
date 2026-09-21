@@ -17,9 +17,9 @@ public class OrderDTO {
  
     private Long orderId; // Unique order identifier
     private InstrumentDTO instrument; // The instrument being ordered
-    private int quantity; // Number of shares/units
     private String timePurchased; // Order creation timestamp
     private String timeFilled; // Order execution timestamp (null if not filled)
+    private int quantity; // Number of shares/units
     private double purchasePrice; // Price per unit
     private OrderStatus status; // Current order state 
     
