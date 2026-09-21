@@ -1,25 +1,25 @@
 import { Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 // Service for handling user authentication, including login and logout functionality.
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  isLoggedIn = signal<boolean>(false);
-  userName = signal<string>('Jane');
-  userInitials = signal<string>('JS');
+  isLoggedIn =signal<boolean>(false);
+  userName =signal<string>('');
+  userInitials =signal<string>('');
+  private apiURL = `${environment.apiUrl}/api/auth/login`;
+  constructor(private router: Router, private http: HttpClient) {}
 
-  constructor(private router: Router) {}
-
-  login(email: string, password: string): boolean {
-    if (email === 'demo@sleapystocks.com' && password === 'password123') {
-      this.isLoggedIn.set(true);
-      this.router.navigate(['/dashboard']);
-      return true;
-    }
-    return false;
+  login(email: string, password: string): Observable<any> {
+     return this.http.post(this.apiURL, {email, password})
   }
 
   logout(): void {
     this.isLoggedIn.set(false);
-    this.router.navigate(['/']);
+    this.userName.set('')
+    this.userInitials.set(''),
+    this.router.navigate(['/login']);
   }
 }
