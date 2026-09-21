@@ -5,20 +5,14 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-/**
- * JPA entity representing a client record in the database.
- * Persists client identity, credentials, and account information.
- */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "clients")
+@Data
 public class ClientEntity {
     
     @Id
@@ -29,8 +23,8 @@ public class ClientEntity {
     @Column(name = "email", nullable = false, unique = true)
     private String email; // Unique email used for authentication
 
-    @Column(name = "cash_balance")
-    private double cashBalance; // Available cash balance in account
+    @Column(name = "balance")
+    private double cashBalance; // client's account balance
 
     @Column(name = "password_hash", nullable = false)
     private String passwordHash; // Bcrypt hashed password
@@ -44,7 +38,8 @@ public class ClientEntity {
     @Column(name = "ssn")
     private String ssn; // Social security number (encrypted)
 
-    @Column(name = "clientstatus_id")
-    private Long clientStatusId; // Foreign key to account status
+    @ManyToOne 
+    @JoinColumn(name = "clientstatus_id")
+    private ClientStatus clientStatus; // foreign key to ClientStatus entity
 
 }

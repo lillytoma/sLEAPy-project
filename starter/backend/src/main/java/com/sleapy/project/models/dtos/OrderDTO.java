@@ -1,26 +1,31 @@
 package com.sleapy.project.models.dtos;
 
-import com.sleapy.project.models.enums.OrderStatus;
+import java.time.LocalDate;
 
-import lombok.AllArgsConstructor;
+import com.sleapy.project.models.entities.OrderEntity;
+
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-/**
- * Data transfer object for order information.
- * Used for API requests/responses.
- */
-@Data
-@NoArgsConstructor 
-@AllArgsConstructor 
-public class OrderDTO {
+@Data 
+public class OrderDTO{
+    public OrderDTO(OrderEntity entity){
+        this.instrument = new InstrumentDTO(entity.getInstrument());
+        this.timeOfPurchase = entity.getTimeOfPurchase();
+        this.quantity = entity.getQuantity();
+        this.timeFilled = entity.getTimeFilled();
+    }
+
+    public OrderDTO(LocalDate timeOfPurchase, Integer quantity, InstrumentDTO instrument) {
+        this.timeOfPurchase = timeOfPurchase;
+        this.quantity = quantity;
+        this.instrument = instrument;
+    }
+
+    private LocalDate timeOfPurchase;
+    private Integer quantity;
+    private LocalDate timeFilled;
+
  
-    private Long orderId; // Unique order identifier
-    private InstrumentDTO instrument; // The instrument being ordered
-    private String timePurchased; // Order creation timestamp
-    private String timeFilled; // Order execution timestamp (null if not filled)
-    private int quantity; // Number of shares/units
-    private double purchasePrice; // Price per unit
-    private OrderStatus status; // Current order state 
-    
+
+    private InstrumentDTO instrument;
 }

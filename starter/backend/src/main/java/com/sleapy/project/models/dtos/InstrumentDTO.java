@@ -1,22 +1,40 @@
 package com.sleapy.project.models.dtos;
 
-import com.sleapy.project.models.enums.InstrumentType;
+import com.sleapy.project.models.entities.InstrumentEntity;
+import com.sleapy.project.models.entities.InstrumentType;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-/**
- * Data transfer object for instrument (stock, bond, etc.) information.
- * Used for API requests/responses and data exchange with external APIs.
- */
-@Data
-@NoArgsConstructor 
-@AllArgsConstructor 
 public class InstrumentDTO {
-     
-    private String symbolId; // Unique symbol identifier (e.g., AAPL)
-    private String symbolName; // Display name (e.g., Apple Inc.)
-    private InstrumentType instrumentType; // Classification (BOND, EQUITY, CRYPTO, FUND)
-    private double currentMarketPrice; // Current market price (from external APIs)
+    InstrumentDTO(InstrumentEntity entity){
+        this.symbol = entity.getSymbol();
+        this.instrumentType = entity.getInstrumentType();
+        this.symbolName = entity.getSymbolName();
+    }
+
+    public String getSymbol() {
+        return symbol;
+    }
+
+    public void setSymbol(String symbol) {
+        this.symbol = symbol;
+    }
+
+    public String getSymbolName() {
+        return symbolName;
+    }
+
+    public void setSymbolName(String symbolName) {
+        this.symbolName = symbolName;
+    }
+
+    public InstrumentType getInstrumentType() {
+        return instrumentType;
+    }
+
+    public void setInstrumentType(InstrumentType instrumentType) {
+        this.instrumentType = instrumentType;
+    }
+
+    private String symbol;
+    private String symbolName;
+    private InstrumentType instrumentType;
 }

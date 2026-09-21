@@ -1,14 +1,9 @@
 package com.sleapy.project.models.dtos;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-/**
- * Data transfer object for login requests.
- * Captures user credentials for authentication.
- */
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginRequestDTO {
