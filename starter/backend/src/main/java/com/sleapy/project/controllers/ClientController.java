@@ -7,12 +7,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.sleapy.project.config.APIRoutnig;
+import com.sleapy.project.config.APIRouting;
 import com.sleapy.project.services.ClientService;
 import lombok.AllArgsConstructor;
 
 @RestController
-@RequestMapping(APIRoutnig.CLIENTS_ENDPOINT)
+@RequestMapping(APIRouting.CLIENTS_ENDPOINT)
 @AllArgsConstructor
 public class ClientController {
     private final ClientService clientService;
