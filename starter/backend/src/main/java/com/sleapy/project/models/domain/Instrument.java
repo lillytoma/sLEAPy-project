@@ -30,22 +30,19 @@ public class Instrument {
     public void setCurrentMarketPrice(double currentMarketPrice) {
         this.currentMarketPrice = currentMarketPrice;
     }
-    /** Returns the unique symbol identifier */
+
     public String getId() {
         return this.id;
     }
 
-    /** Returns the display name */
     public String getName() {
         return this.name;
     }
 
-    /** Returns the instrument classification */
     public InstrumentType getInstrumentType() {
         return this.instrumentType;
     }
 
-    /** Returns the current market price */
     public double getCurrentMarketPrice() {
         return this.currentMarketPrice;
     }

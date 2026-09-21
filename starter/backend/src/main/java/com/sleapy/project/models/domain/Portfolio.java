@@ -90,9 +90,7 @@ public class Portfolio {
         return arr;
     }
 
-    /**
-     * Returns the map of holdings keyed by instrument symbol.
-     */
+    // Getters
     public HashMap<String, Holding> getHoldingsMap() {
         return this.holdingsMap;
     }
