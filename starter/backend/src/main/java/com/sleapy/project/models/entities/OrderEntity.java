@@ -1,6 +1,7 @@
 package com.sleapy.project.models.entities;
 
 import jakarta.persistence.*;
+import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -8,7 +9,7 @@ import java.time.LocalDate;
 
 @Table(name = "orders")
 @Entity
-
+@Data 
 public class OrderEntity {
     public OrderEntity(Long id,
                        Integer quantity,
@@ -29,64 +30,11 @@ public class OrderEntity {
     public OrderEntity() {
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Integer getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-
-    public LocalDate getTimeOfPurchase() {
-        return timeOfPurchase;
-    }
-
-    public void setTimeOfPurchase(LocalDate timeOfPurchase) {
-        this.timeOfPurchase = timeOfPurchase;
-    }
-
-    public BigDecimal getPurchasePrice() {
-        return purchasePrice;
-    }
-
-    public void setPurchasePrice(BigDecimal purchasePrice) {
-        this.purchasePrice = purchasePrice;
-    }
-
-    public OrderStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(OrderStatus status) {
-        this.status = status;
-    }
-
-    public ClientEntity getClient() {
-        return client;
-    }
-
-    public void setClient(ClientEntity client) {
-        this.client = client;
-    }
-
-    public InstrumentEntity getInstrument() {
-        return instrument;
-    }
-
-    public void setInstrument(InstrumentEntity instrument) {
-        this.instrument = instrument;
-    }
+   
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "order_id")
     private Long id;
 
     @Column(name = "quantity")
@@ -95,10 +43,16 @@ public class OrderEntity {
     @Column(name = "time_of_purchase")
     private LocalDate timeOfPurchase;
 
-    @Column(name = "purchace_price")
+    @Column(name = "time_filled")
+    private LocalDate timeFilled;
+
+
+
+    @Column(name = "purchase_price")
     private BigDecimal purchasePrice;
 
-    @Enumerated(EnumType.ORDINAL)
+    @ManyToOne
+    @JoinColumn(name = "status")
     private OrderStatus status;
 
     @ManyToOne

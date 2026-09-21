@@ -1,10 +1,14 @@
 package com.sleapy.project.models.entities;
 
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 
 @Table(name = "instruments")
 @Entity
+@Data 
+@NoArgsConstructor 
 public class InstrumentEntity {
     public InstrumentEntity(Long id, String symbol, String symbolName, InstrumentType instrumentType) {
         this.id = id;
@@ -13,10 +17,10 @@ public class InstrumentEntity {
         this.instrumentType = instrumentType;
     }
 
-    public InstrumentEntity() {
-    }
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "instrument_id")
     private Long id;
 
     //AAPL
@@ -27,39 +31,10 @@ public class InstrumentEntity {
     @Column(name = "symbol_name")
     private String symbolName;
 
-    public Long getId() {
-        return id;
-    }
+ 
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getSymbol() {
-        return symbol;
-    }
-
-    public void setSymbol(String symbol) {
-        this.symbol = symbol;
-    }
-
-    public String getSymbolName() {
-        return symbolName;
-    }
-
-    public void setSymbolName(String symbolName) {
-        this.symbolName = symbolName;
-    }
-
-    public InstrumentType getInstrumentType() {
-        return instrumentType;
-    }
-
-    public void setInstrumentType(InstrumentType instrumentType) {
-        this.instrumentType = instrumentType;
-    }
-
-    @Enumerated(EnumType.ORDINAL)
+   @ManyToOne 
+   @JoinColumn(name = "instrumenttype_id")
     private InstrumentType instrumentType;
 
 

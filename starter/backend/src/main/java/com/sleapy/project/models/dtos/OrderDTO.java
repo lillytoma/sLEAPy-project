@@ -6,12 +6,15 @@ import java.time.LocalDate;
 
 import com.sleapy.project.models.entities.OrderEntity;
 
+import lombok.Data;
 
+@Data 
 public class OrderDTO{
     public OrderDTO(OrderEntity entity){
         this.instrument = new InstrumentDTO(entity.getInstrument());
         this.timeOfPurchase = entity.getTimeOfPurchase();
         this.quantity = entity.getQuantity();
+        this.timeFilled = entity.getTimeFilled();
     }
 
     public OrderDTO(LocalDate timeOfPurchase, Integer quantity, InstrumentDTO instrument) {
@@ -22,30 +25,9 @@ public class OrderDTO{
 
     private LocalDate timeOfPurchase;
     private Integer quantity;
+    private LocalDate timeFilled;
 
-    public LocalDate getTimeOfPurchase() {
-        return timeOfPurchase;
-    }
-
-    public void setTimeOfPurchase(LocalDate timeOfPurchase) {
-        this.timeOfPurchase = timeOfPurchase;
-    }
-
-    public Integer getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-
-    public InstrumentDTO getInstrument() {
-        return instrument;
-    }
-
-    public void setInstrument(InstrumentDTO instrument) {
-        this.instrument = instrument;
-    }
+ 
 
     private InstrumentDTO instrument;
 }

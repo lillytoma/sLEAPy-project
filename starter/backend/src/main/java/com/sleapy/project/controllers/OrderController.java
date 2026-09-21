@@ -23,7 +23,7 @@ public class OrderController {
     private final OrderService orderService;
 
     //fetch and render transaction list
-    // test with: curl -Xi GET localhost:8081/api/orders/?clientId=1
+    // test with: curl -iX GET localhost:8081/api/orders/?clientId=1
     @GetMapping("/")
     public ResponseEntity<?> getTransactions(@RequestParam Long clientId) {
         try{
