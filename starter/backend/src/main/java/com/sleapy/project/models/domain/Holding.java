@@ -69,6 +69,10 @@ public class Holding {
         this.totalPrice = totalPrice;
     }
 
+    /**
+     * Adds shares to the holding (typically when acquiring more of the same instrument).
+     * Throws exception if amount is negative.
+     */
     public void addShares(double amount) {
         if (amount < 0) {
             throw new IllegalArgumentException("Amount to add cannot be negative");
@@ -76,6 +80,10 @@ public class Holding {
         this.totalShares += amount;
     }
 
+    /**
+     * Adds to the total purchase cost (typically when acquiring more shares).
+     * Throws exception if amount is negative.
+     */
     public void addPrice(double amount) {
         if (amount < 0) {
             throw new IllegalArgumentException("Amount to add cannot be negative");
@@ -83,6 +91,10 @@ public class Holding {
         this.totalPrice += amount;
     }
 
+    /**
+     * Removes shares from the holding (typically when selling).
+     * Throws exception if amount is negative or exceeds available shares.
+     */
     public void removeShares(double amount) {
         if (amount < 0) {
             throw new IllegalArgumentException("Amount to remove cannot be negative");
@@ -93,6 +105,10 @@ public class Holding {
         this.totalShares -= amount;
     }
 
+    /**
+     * Removes from the total purchase cost (typically when selling shares).
+     * Throws exception if amount is negative or exceeds total cost.
+     */
     public void removePrice(double amount) {
         if (amount < 0) {
             throw new IllegalArgumentException("Amount to remove cannot be negative");
