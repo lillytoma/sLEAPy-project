@@ -7,6 +7,6 @@ import com.sleapy.project.models.entities.OrderEntity;
 import java.util.List;
 
 public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
-    List<OrderEntity> findByClient_IdOrderByTimeOfPurchaseAsc(Long clientId);
+    List<OrderEntity> findByClient_IdOrderByTimePurchasedAsc(Long clientId);
 
 }

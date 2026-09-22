@@ -18,7 +18,7 @@ public class OrderService {
     }
 
     public List<OrderDTO> getTransactionsPerClient(Long clientId){
-        List<OrderEntity> entities = orderRepository.findByClient_IdOrderByTimeOfPurchaseAsc(clientId);
+        List<OrderEntity> entities = orderRepository.findByClient_IdOrderByTimePurchasedAsc(clientId);
         System.out.println(entities.size());
         if(entities.isEmpty()){
             throw new NoSuchElementException("Could not find transactions for client id " + clientId);

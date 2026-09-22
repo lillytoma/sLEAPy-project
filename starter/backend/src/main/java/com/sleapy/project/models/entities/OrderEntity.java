@@ -20,7 +20,7 @@ public class OrderEntity {
                        InstrumentEntity instrument) {
         this.id = id;
         this.quantity = quantity;
-        this.timeOfPurchase = timeOfPurchase;
+        this.timePurchased = timeOfPurchase;
         this.purchasePrice = purchasePrice;
         this.status = status;
         this.client = client;
@@ -40,8 +40,8 @@ public class OrderEntity {
     @Column(name = "quantity")
     private Integer quantity;
 
-    @Column(name = "time_of_purchase")
-    private LocalDate timeOfPurchase;
+    @Column(name = "time_purchased")
+    private LocalDate timePurchased;
 
     @Column(name = "time_filled")
     private LocalDate timeFilled;
