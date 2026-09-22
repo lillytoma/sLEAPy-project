@@ -8,13 +8,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import com.sleapy.project.config.APIRouting;
 import com.sleapy.project.models.dtos.LoginRequestDTO;
 import com.sleapy.project.services.ClientService;
 import lombok.AllArgsConstructor;
 
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping(APIRouting.AUTH_ENDPOINT)
 @AllArgsConstructor
 @CrossOrigin("http://localhost:4200")
 //This class is responsible for handling authentication-related requests, such as login. It uses the ClientService to check user credentials and returns appropriate responses based on the validity of the provided email and password.

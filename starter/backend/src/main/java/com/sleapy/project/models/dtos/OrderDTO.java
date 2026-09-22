@@ -1,7 +1,5 @@
 package com.sleapy.project.models.dtos;
 
-
-
 import java.time.LocalDate;
 
 import com.sleapy.project.models.entities.OrderEntity;
@@ -12,7 +10,7 @@ import lombok.Data;
 public class OrderDTO{
     public OrderDTO(OrderEntity entity){
         this.instrument = new InstrumentDTO(entity.getInstrument());
-        this.timeOfPurchase = entity.getTimePurchased();
+        this.timeOfPurchase = entity.getTimeOfPurchase();
         this.quantity = entity.getQuantity();
         this.timeFilled = entity.getTimeFilled();
     }

@@ -10,7 +10,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 
-
 @Entity
 @Table(name = "clients")
 @Data
@@ -19,25 +18,25 @@ public class ClientEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "client_id")
-    private Long id; // primary key
+    private Long id; // Primary key
 
     @Column(name = "email", nullable = false, unique = true)
-    private String email; // unique email for each client
+    private String email; // Unique email used for authentication
 
-    @Column(name = "balance")
+    @Column(name = "cash_balance")
     private double cashBalance; // client's account balance
 
     @Column(name = "password_hash", nullable = false)
-    private String passwordHash; // hashed password for security
+    private String passwordHash; // Bcrypt hashed password
 
     @Column(name = "address", nullable = false)
-    private String address; // client's address
+    private String address; // Residential address
 
     @Column(name = "phone_number")
-    private String phoneNumber; // client's phone number
+    private String phoneNumber; // Contact phone number
     
     @Column(name = "ssn")
-    private String ssn; // client's social security number
+    private String ssn; // Social security number (encrypted)
 
     @ManyToOne 
     @JoinColumn(name = "clientstatus_id")
