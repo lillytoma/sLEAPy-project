@@ -1,0 +1,58 @@
+classDiagram
+    class OrderExecutor {
+        +executeOrder(order Order)
+    }
+    class OrderValidator {
+        +validateOrder(order Order) boolean
+    }
+
+    class Client {
+        -clientId Long
+        -email String
+        -cashBalance float
+        -phoneNumber String
+        -address String
+        -lastFourSSN String
+        +getPortfolio() Portfolio
+        +getCashBalance() float
+    }
+
+    class Portfolio {
+        -holdings List~Holding~
+        +getNetBalance() double
+        +updateHoldings() double
+    }
+
+    class Holding {
+        -holdingId Long 
+        -instrument Instrument
+        -client Client
+        -quantityShares double
+        -purchasePrice double
+        +getHoldingValue() double
+    }
+
+    class Instrument {
+        -symbolName String
+        -symbolType String
+    }
+
+    class Order {
+        -client Client
+        -instrument Instrument
+        -quantity double
+        -price double
+        -side String
+        -status String
+    }
+
+    Client *-- Portfolio : has
+    Portfolio --* Holding : composition - a Holding is meaningless without its Portfolio
+    Holding o-- Instrument : aggregation - an Instrument exists in the market regardless
+    Holding --o Client : belongs to
+    Order *-- Client : refers to
+    Order o-- Instrument : refers to
+    OrderValidator ..> Order : validates
+    OrderExecutor ..> OrderValidator : uses
+    OrderExecutor ..> Order : executes
+    OrderExecutor ..> Portfolio : updates
