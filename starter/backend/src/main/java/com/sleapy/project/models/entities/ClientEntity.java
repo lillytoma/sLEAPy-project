@@ -23,7 +23,7 @@ public class ClientEntity {
     @Column(name = "email", nullable = false, unique = true)
     private String email; // Unique email used for authentication
 
-    @Column(name = "balance")
+    @Column(name = "cash_balance")
     private double cashBalance; // client's account balance
 
     @Column(name = "password_hash", nullable = false)
