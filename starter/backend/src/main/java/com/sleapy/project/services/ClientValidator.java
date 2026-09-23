@@ -31,7 +31,7 @@ public class ClientValidator {
         Matcher matcher = this.emailRegex.matcher(email);
         
         if(!matcher.find()){
-            throw new InvalidEmailFormatException("Invalid Email format");
+            throw new InvalidEmailFormatException("Invalid email format");
         }
 
 
