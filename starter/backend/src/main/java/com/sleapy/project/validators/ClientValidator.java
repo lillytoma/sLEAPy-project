@@ -28,13 +28,16 @@ public class ClientValidator {
         if(email == null || email.isBlank()){
             throw new InvalidEmailFormatException("Email must not be empty");
         }
+        email = email.trim();
+        boolean hasWhitespace = email.chars().anyMatch(Character::isWhitespace);
+        if (hasWhitespace){
+            throw new InvalidEmailFormatException("Email must not contain whitespace");
+        }
         Matcher matcher = this.emailRegex.matcher(email);
         
         if(!matcher.find()){
             throw new InvalidEmailFormatException("Invalid email format");
         }
 
-
-        
     }
 }
