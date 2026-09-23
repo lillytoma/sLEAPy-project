@@ -14,7 +14,7 @@ import com.sleapy.project.config.APIRouting;
 import com.sleapy.project.exceptions.InvalidEmailFormatException;
 import com.sleapy.project.models.dtos.LoginRequestDTO;
 import com.sleapy.project.services.ClientService;
-import com.sleapy.project.services.ClientValidator;
+import com.sleapy.project.validators.ClientValidator;
 
 import lombok.AllArgsConstructor;
 

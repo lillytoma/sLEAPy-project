@@ -1,4 +1,4 @@
-package com.sleapy.project.services;
+package com.sleapy.project.validators;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
