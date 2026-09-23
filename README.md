@@ -218,16 +218,16 @@ curl http://localhost:8080/api/clients/1/balance
 
 2. Fill in the connection details:
 
-   Name: sleapy-postgres
-   Host: localhost
-   Port: 5432 (or your PostgreSQL port)
-   Username/Password: Your local PostgreSQL credentials
+  - Name: sleapy-postgres
+  - Host: localhost
+  - Port: 5432 (or your PostgreSQL port)
+  - Username/Password: Your local PostgreSQL credentials
 
 3. Click Save. Once connected, right-click your database and select Query Tool.
 
 4. Copy the entire contents of tables.sql (starter\database\tables.sql) and paste it into the Query Tool. Click Execute (or press F5).
 
-Repeat step 4 with mockdata.sql (starter\database\mockdata.sql) to seed test data.
+5. Repeat step 4 with mockdata.sql (starter\database\mockdata.sql) to seed test data.
 
 Your local database is now ready to use!
 
