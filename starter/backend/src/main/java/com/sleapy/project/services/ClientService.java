@@ -2,7 +2,7 @@ package com.sleapy.project.services;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.sleapy.project.models.entities.ClientEntity;
-import com.sleapy.project.repositories.ClientMapper;
+import com.sleapy.project.mappers.ClientMapper;
 
 import org.springframework.stereotype.Service;
 import java.util.Optional;
