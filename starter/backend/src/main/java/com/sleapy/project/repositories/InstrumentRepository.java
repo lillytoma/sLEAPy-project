@@ -1,5 +1,12 @@
 package com.sleapy.project.repositories;
 
-public class InstrumentRepository {
-    
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.sleapy.project.models.entities.InstrumentEntity;
+
+import java.util.List;
+
+public interface InstrumentRepository extends JpaRepository<InstrumentEntity, Long> {
+    List<InstrumentEntity> findByInstrument_Id(Long instrument_id);
+
 }
