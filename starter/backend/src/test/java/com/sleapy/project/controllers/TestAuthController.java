@@ -5,12 +5,15 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.sleapy.project.exceptions.InvalidEmailFormatException;
 import com.sleapy.project.models.dtos.LoginRequestDTO;
 import com.sleapy.project.services.ClientService;
 import com.sleapy.project.validators.ClientValidator;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -60,6 +63,30 @@ class TestAuthController {
                             .content("{\"email\":\"" + request.getEmail() + "\", \"password\":\"" + request.getPassword() + "\"}"))
                     .andExpect(status().isUnauthorized())
                     .andExpect(content().string("Invalid email or password"))
+        );
+    
+    }
+    @Test
+    void loginReturnsBadRequestForInvalidEmail() {
+        //Arrange
+        LoginRequestDTO request = new LoginRequestDTO(
+            "This isn't even an email",
+            "WrongPassword123"
+        );
+        when(clientService.checkCredentials(anyString(), anyString())).thenReturn(false);
+
+        //this assert is just to shut up the compiler
+        assertDoesNotThrow(() ->
+            doThrow(new InvalidEmailFormatException("wassaaaaaaaap"))
+                .when(clientValidator)
+                .validateEmail(anyString())
+        );
+
+        assertDoesNotThrow(() ->
+            mockMvc.perform(post("/api/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"email\":\"" + request.getEmail() + "\", \"password\":\"" + request.getPassword() + "\"}"))
+                    .andExpect(status().isBadRequest())
         );
     
     }
