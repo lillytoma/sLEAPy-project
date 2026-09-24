@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sleapy.project.repositories.OrderMapper">
+
+  <!-- ResultMap maps database columns to OrderEntity fields -->
+  <!-- Includes nested associations for related entities -->
+  <resultMap id="OrderResultMap" type="com.sleapy.project.models.entities.OrderEntity">
+    <!-- Primary key -->
+    <id column="order_id" property="id" />
+    
+    <!-- Order fields -->
+    <result column="quantity" property="quantity" />
+    <result column="time_purchased" property="timeOfPurchase" />
+    <result column="time_filled" property="timeFilled" />
+    <result column="purchase_price" property="purchasePrice" />
+    
+    <!-- Foreign key relationship: order_status -->
+    <association property="status" javaType="com.sleapy.project.models.entities.OrderStatus">
+      <id column="orderstatus_id" property="id" />
+      <result column="orderstatus_name" property="name" />
+    </association>
+    
+    <!-- Foreign key relationship: client (nested ClientEntity object) -->
+    <association property="client" javaType="com.sleapy.project.models.entities.ClientEntity">
+      <id column="client_id" property="id" />
+      <result column="client_email" property="email" />
+      <result column="client_cash_balance" property="cashBalance" />
+      <result column="client_password_hash" property="passwordHash" />
+      <result column="client_address" property="address" />
+      <result column="client_phone_number" property="phoneNumber" />
+      <result column="client_ssn" property="ssn" />
+    </association>
+    
+    <!-- Foreign key relationship: instrument (nested InstrumentEntity object) -->
+    <association property="instrument" javaType="com.sleapy.project.models.entities.InstrumentEntity">
+      <id column="instrument_id" property="id" />
+      <result column="instrument_symbol" property="symbol" />
+      <result column="instrument_symbol_name" property="symbolName" />
+    </association>
+  </resultMap>
+
+  <!-- Find order by ID with all related entities -->
+  <select id="findById" parameterType="Long" resultMap="OrderResultMap">
+    SELECT o.order_id, 
+           o.quantity, o.time_purchased, o.time_filled, o.purchase_price,
+           o.status AS orderstatus_id, os.orderstatus_name,
+           c.client_id, c.email AS client_email, c.cash_balance AS client_cash_balance, 
+           c.password_hash AS client_password_hash, c.address AS client_address, 
+           c.phone_number AS client_phone_number, c.ssn AS client_ssn,
+           i.instrument_id, i.symbol AS instrument_symbol, i.symbol_name AS instrument_symbol_name
+    FROM orders o
+    LEFT JOIN order_status os ON o.status = os.orderstatus_id
+    LEFT JOIN clients c ON o.client_id = c.client_id
+    LEFT JOIN instruments i ON o.instrument_id = i.instrument_id
+    WHERE o.order_id = #{id}
+  </select>
+
+  <!-- Retrieve all orders with related entities -->
+  <select id="findAll" resultMap="OrderResultMap">
+    SELECT o.order_id, 
+           o.quantity, o.time_purchased, o.time_filled, o.purchase_price,
+           o.status AS orderstatus_id, os.orderstatus_name,
+           c.client_id, c.email AS client_email, c.cash_balance AS client_cash_balance, 
+           c.password_hash AS client_password_hash, c.address AS client_address, 
+           c.phone_number AS client_phone_number, c.ssn AS client_ssn,
+           i.instrument_id, i.symbol AS instrument_symbol, i.symbol_name AS instrument_symbol_name
+    FROM orders o
+    LEFT JOIN order_status os ON o.status = os.orderstatus_id
+    LEFT JOIN clients c ON o.client_id = c.client_id
+    LEFT JOIN instruments i ON o.instrument_id = i.instrument_id
+  </select>
+
+  <!-- Find orders by client ID, ordered by purchase time (ascending) -->
+  <!-- This replaces the JPA nested property query with explicit SQL JOIN -->
+  <select id="findByClient_IdOrderByTimeOfPurchaseAsc" parameterType="Long" resultMap="OrderResultMap">
+    SELECT o.order_id, 
+           o.quantity, o.time_purchased, o.time_filled, o.purchase_price,
+           o.status AS orderstatus_id, os.orderstatus_name,
+           c.client_id, c.email AS client_email, c.cash_balance AS client_cash_balance, 
+           c.password_hash AS client_password_hash, c.address AS client_address, 
+           c.phone_number AS client_phone_number, c.ssn AS client_ssn,
+           i.instrument_id, i.symbol AS instrument_symbol, i.symbol_name AS instrument_symbol_name
+    FROM orders o
+    LEFT JOIN order_status os ON o.status = os.orderstatus_id
+    LEFT JOIN clients c ON o.client_id = c.client_id
+    LEFT JOIN instruments i ON o.instrument_id = i.instrument_id
+    WHERE c.client_id = #{clientId}
+    ORDER BY o.time_purchased ASC
+  </select>
+
+  <!-- Insert new order (auto-generated ID) -->
+  <insert id="save" parameterType="com.sleapy.project.models.entities.OrderEntity" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO orders (client_id, instrument_id, quantity, time_purchased, time_filled, purchase_price, status)
+    VALUES (#{client.id}, #{instrument.id}, #{quantity}, #{timeOfPurchase}, #{timeFilled}, #{purchasePrice}, #{status.id})
+  </insert>
+
+  <!-- Update existing order -->
+  <update id="update" parameterType="com.sleapy.project.models.entities.OrderEntity">
+    UPDATE orders
+    SET client_id = #{client.id}, 
+        instrument_id = #{instrument.id}, 
+        quantity = #{quantity},
+        time_purchased = #{timeOfPurchase}, 
+        time_filled = #{timeFilled}, 
+        purchase_price = #{purchasePrice}, 
+        status = #{status.id}
+    WHERE order_id = #{id}
+  </update>
+
+  <!-- Delete order by ID -->
+  <delete id="deleteById" parameterType="Long">
+    DELETE FROM orders WHERE order_id = #{id}
+  </delete>
+
+</mapper>

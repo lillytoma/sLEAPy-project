@@ -23,16 +23,16 @@ import lombok.AllArgsConstructor;
 @RequestMapping(APIRouting.AUTH_ENDPOINT)
 @AllArgsConstructor
 @CrossOrigin("http://localhost:4200")
-//This class is responsible for handling authentication-related requests, such as login. It uses the ClientService to check user credentials and returns appropriate responses based on the validity of the provided email and password.
 public class AuthController {
-    //The ClientService is injected into the AuthController to handle authentication logic, such as checking user credentials against the database.
+    //The ClientService is injected into the AuthController to handle authentication logic, 
+    // such as checking user credentials against the database.
     private final ClientService clientService;
     private final ClientValidator clientValidator;
 
 
     //The login method handles POST requests to the /login endpoint. It takes a LoginRequestDTO object containing the user's email and password, checks the credentials using the ClientService, and returns a ResponseEntity indicating whether the login was successful or not.
     @PostMapping("/login")
-    //The login method handles POST requests to the /login endpoint. It takes a LoginRequestDTO object containing the user's email and password, checks the credentials using the ClientService, and returns a ResponseEntity indicating whether the login was successful or not.
+    //The login method handles POST requests to the /login endpoint.
     public ResponseEntity<String> login(@RequestBody LoginRequestDTO request) {
         //The login method handles POST requests to the /login endpoint. It takes a LoginRequestDTO object containing the user's email and password, checks the credentials using the ClientService, and returns a ResponseEntity indicating whether the login was successful or not.
         try {
@@ -41,7 +41,7 @@ public class AuthController {
             return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
         }
         boolean isValid = clientService.checkCredentials(request.getEmail(), request.getPassword());
-        //The login method handles POST requests to the /login endpoint. It takes a LoginRequestDTO object containing the user's email and password, checks the credentials using the ClientService, and returns a ResponseEntity indicating whether the login was successful or not.
+        //The login method handles POST requests to the /login endpoint.
         if (isValid) {
             return new ResponseEntity<>("Login successful", HttpStatus.OK);
         } else {

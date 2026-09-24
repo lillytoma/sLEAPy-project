@@ -2,7 +2,7 @@ package com.sleapy.project.services;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.sleapy.project.models.entities.ClientEntity;
-import com.sleapy.project.repositories.ClientRepository;
+import com.sleapy.project.repositories.ClientMapper;
 
 import org.springframework.stereotype.Service;
 import java.util.Optional;
@@ -11,22 +11,22 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 @Service
 @CrossOrigin(origins = "http://localhost:4200")
 public class ClientService {
-    public ClientService(ClientRepository clientRepository) {
-        this.clientRepository = clientRepository;
+    public ClientService(ClientMapper clientMapper) {
+        this.clientMapper = clientMapper;
     }
 
-    private final ClientRepository clientRepository;
+    private final ClientMapper clientMapper;
 
     public double getCashBalance(Long clientId) {
         
-        ClientEntity client = clientRepository.findById(clientId).orElseThrow(() -> new RuntimeException("Client not found"));  
+        ClientEntity client = clientMapper.findById(clientId).orElseThrow(() -> new RuntimeException("Client not found"));  
         return client.getCashBalance(); // Return the actual current balance from the client entity
     }
     
 //Entry point for checking a login attempt. Given an email and the plaintext password. It returns a bool answering whether the credentials exist in the db
     public boolean checkCredentials(String email, String rawPassword) { 
         //Loos up the database for a client with the following email and stores it in clientInfo
-        Optional<ClientEntity> clientInfo = clientRepository.findByEmail(email);
+        Optional<ClientEntity> clientInfo = clientMapper.findByEmail(email);
 
         //checks if clientInfo is empty, if it is then -> return false, meaning the email was not found.
         if (clientInfo.isEmpty()) {

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sleapy.project.repositories.ClientStatusMapper">
+
+    <!-- Result map for ClientStatus -->
+    <resultMap id="ClientStatusResultMap" type="com.sleapy.project.models.entities.ClientStatus">
+        <id column="clientstatus_id" property="id"/>
+        <result column="clientstatus_name" property="name"/>
+    </resultMap>
+
+    <!-- Find client status by ID -->
+    <select id="findById" parameterType="Long" resultMap="ClientStatusResultMap">
+        SELECT clientstatus_id, clientstatus_name
+        FROM client_status
+        WHERE clientstatus_id = #{id}
+    </select>
+
+    <!-- Get all client statuses -->
+    <select id="findAll" resultMap="ClientStatusResultMap">
+        SELECT clientstatus_id, clientstatus_name
+        FROM client_status
+        ORDER BY clientstatus_id ASC
+    </select>
+
+    <!-- Insert new client status -->
+    <insert id="save" parameterType="com.sleapy.project.models.entities.ClientStatus" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO client_status (clientstatus_name)
+        VALUES (#{name})
+    </insert>
+
+    <!-- Update client status -->
+    <update id="update" parameterType="com.sleapy.project.models.entities.ClientStatus">
+        UPDATE client_status
+        SET clientstatus_name = #{name}
+        WHERE clientstatus_id = #{id}
+    </update>
+
+    <!-- Delete client status by ID -->
+    <delete id="deleteById" parameterType="Long">
+        DELETE FROM client_status WHERE clientstatus_id = #{id}
+    </delete>
+
+</mapper>

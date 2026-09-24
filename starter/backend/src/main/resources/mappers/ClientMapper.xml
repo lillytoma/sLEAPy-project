@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sleapy.project.repositories.ClientMapper">
+
+  <!-- ResultMap maps database columns to ClientEntity fields -->
+  <resultMap id="ClientResultMap" type="com.sleapy.project.models.entities.ClientEntity">
+    <!-- Primary key -->
+    <id column="client_id" property="id" />
+    
+    <!-- Client fields -->
+    <result column="email" property="email" />
+    <result column="cash_balance" property="cashBalance" />
+    <result column="password_hash" property="passwordHash" />
+    <result column="address" property="address" />
+    <result column="phone_number" property="phoneNumber" />
+    <result column="ssn" property="ssn" />
+    
+    <!-- Foreign key relationship: client_status -->
+    <association property="clientStatus" javaType="com.sleapy.project.models.entities.ClientStatus">
+      <id column="clientstatus_id" property="id" />
+      <result column="clientstatus_name" property="name" />
+    </association>
+  </resultMap>
+
+  <!-- Find client by ID with status lookup -->
+  <select id="findById" parameterType="Long" resultMap="ClientResultMap">
+    SELECT c.client_id, c.email, c.cash_balance, c.password_hash, c.address, 
+           c.phone_number, c.ssn, c.clientstatus_id, cs.clientstatus_name
+    FROM clients c
+    LEFT JOIN client_status cs ON c.clientstatus_id = cs.clientstatus_id
+    WHERE c.client_id = #{id}
+  </select>
+
+  <!-- Find client by email with status lookup -->
+  <select id="findByEmail" parameterType="String" resultMap="ClientResultMap">
+    SELECT c.client_id, c.email, c.cash_balance, c.password_hash, c.address, 
+           c.phone_number, c.ssn, c.clientstatus_id, cs.clientstatus_name
+    FROM clients c
+    LEFT JOIN client_status cs ON c.clientstatus_id = cs.clientstatus_id
+    WHERE c.email = #{email}
+  </select>
+
+  <!-- Retrieve all clients with status lookup -->
+  <select id="findAll" resultMap="ClientResultMap">
+    SELECT c.client_id, c.email, c.cash_balance, c.password_hash, c.address, 
+           c.phone_number, c.ssn, c.clientstatus_id, cs.clientstatus_name
+    FROM clients c
+    LEFT JOIN client_status cs ON c.clientstatus_id = cs.clientstatus_id
+  </select>
+
+  <!-- Insert new client (auto-generated ID) -->
+  <insert id="save" parameterType="com.sleapy.project.models.entities.ClientEntity" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO clients (email, cash_balance, password_hash, address, phone_number, ssn, clientstatus_id)
+    VALUES (#{email}, #{cashBalance}, #{passwordHash}, #{address}, #{phoneNumber}, #{ssn}, #{clientStatus.id})
+  </insert>
+
+  <!-- Update existing client -->
+  <update id="update" parameterType="com.sleapy.project.models.entities.ClientEntity">
+    UPDATE clients
+    SET email = #{email}, 
+        cash_balance = #{cashBalance}, 
+        password_hash = #{passwordHash},
+        address = #{address}, 
+        phone_number = #{phoneNumber}, 
+        ssn = #{ssn}, 
+        clientstatus_id = #{clientStatus.id}
+    WHERE client_id = #{id}
+  </update>
+
+  <!-- Delete client by ID -->
+  <delete id="deleteById" parameterType="Long">
+    DELETE FROM clients WHERE client_id = #{id}
+  </delete>
+
+  <!-- Count total clients -->
+  <select id="count" resultType="long">
+    SELECT COUNT(*) FROM clients
+  </select>
+
+</mapper>
