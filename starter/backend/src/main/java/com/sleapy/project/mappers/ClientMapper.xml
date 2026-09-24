@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sleapy.project.repositories.ClientMapper">
+
+  <!-- ResultMap: Maps database columns to ClientEntity fields -->
+  <resultMap id="ClientResultMap" type="com.sleapy.project.models.entities.ClientEntity">
+    <id column="id" property="id" />
+    <result column="email" property="email" />
+    <result column="name" property="name" />
+    <!-- Add other fields from your ClientEntity if they exist -->
+  </resultMap>
+
+  <!-- Find by email -->
+  <select id="findByEmail" parameterType="String" resultMap="ClientResultMap">
+    SELECT id, email, name
+    FROM clients
+    WHERE email = #{email}
+  </select>
+
+  <!-- Find all clients -->
+  <select id="findAll" resultMap="ClientResultMap">
+    SELECT id, email, name
+    FROM clients
+  </select>
+
+</mapper>

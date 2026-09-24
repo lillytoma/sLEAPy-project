@@ -1,7 +1,11 @@
-package com.sleapy.project.util;
+package com.sleapy.project.mappers;
 import com.sleapy.project.models.dtos.ClientDTO;
 import com.sleapy.project.models.entities.ClientEntity;
 
+/**
+ * DTO Mapper utility class for converting between ClientEntity and ClientDTO.
+ * Note: This is separate from the MyBatis ClientMapper in repositories/.
+ */
 public class ClientMapper {
     public static ClientDTO toDTO(ClientEntity entity) {
         if (entity == null) {
