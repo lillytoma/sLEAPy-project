@@ -1,38 +1,45 @@
 package com.sleapy.project.services;
 
 import com.sleapy.project.exceptions.DuplicateInstrumentIDException;
+import com.sleapy.project.exceptions.InvalidInstrumentFormatException;
 import com.sleapy.project.models.dtos.InstrumentDTO;
 import com.sleapy.project.models.entities.InstrumentEntity;
-import com.sleapy.project.repositories.InstrumentRepository;
+import com.sleapy.project.repositories.InstrumentMapper;
 import com.sleapy.project.validators.InstrumentValidator;
-
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.NoSuchElementException;
-//The method assumes that the instrument ID passed is valid and exists in the 
-//database (Validation must happen in the validation layer). If the value does exist, 
-//the service should call upon the repo and add a new entry into the database. 
-//The service should throw a custom error if the instrument ID already exists:
-//throw new DuplicateInstrumentIDException("Cannot add the id because it already exists in the database: ", dto.getSymbol());
+import java.util.Optional;
+
 @Service
 public class InstrumentService {
-    private final InstrumentRepository instrumentRepository;
+    private final InstrumentMapper instrumentMapper;
     private final InstrumentValidator instrumentValidator;
     
-    public InstrumentService(InstrumentRepository instrumentRepository, InstrumentValidator instrumentValidator) {
-        this.instrumentRepository = instrumentRepository;
+    public InstrumentService(InstrumentMapper instrumentMapper, InstrumentValidator instrumentValidator) {
+        this.instrumentMapper = instrumentMapper;
         this.instrumentValidator = instrumentValidator;
     }
 
-    public InstrumentEntity addNewInstrument(InstrumentDTO dto){
+    /**
+     * Adds a new instrument to the database after validation
+     * @param dto the InstrumentDTO to add
+     * @return the saved InstrumentEntity
+     * @throws DuplicateInstrumentIDException if symbol already exists
+     * @throws InvalidInstrumentFormatException 
+     */
+    public InstrumentEntity addNewInstrument(InstrumentDTO dto) throws DuplicateInstrumentIDException, InvalidInstrumentFormatException {
+        // Validate instrument symbol
+        instrumentValidator.validateInstrumentSymbol(dto.getSymbol());
 
-         // Check if instrument with this symbol already exists
-/*         if (instrumentRepository.existsBySymbol(dto.getSymbol())) {
+        // Check if instrument with this symbol already exists
+        Optional<InstrumentEntity> existingInstrument = instrumentMapper.findBySymbol(dto.getSymbol());
+        if (existingInstrument.isPresent()) {
             throw new DuplicateInstrumentIDException(
                 "Cannot add the instrument because it already exists in the database: " + dto.getSymbol()
             );
-        } */
+        }
 
         // Create and save the new instrument entity
         InstrumentEntity entity = new InstrumentEntity(
@@ -42,7 +49,41 @@ public class InstrumentService {
             dto.getInstrumentType()
         );
 
-        return instrumentRepository.save(entity);
+        instrumentMapper.save(entity);
+        return entity;
     }
 
+    /**
+     * Retrieves an instrument by ID
+     * @param id the instrument ID
+     * @return the InstrumentDTO
+     * @throws NoSuchElementException if instrument not found
+     */
+    public InstrumentDTO getInstrumentById(Long id) {
+        InstrumentEntity entity = instrumentMapper.findById(id)
+            .orElseThrow(() -> new NoSuchElementException(
+                "Could not find Instrument by id of " + id
+            ));
+        return new InstrumentDTO(entity);
+    }
+
+    /**
+     * Retrieves all instruments
+     * @return list of all InstrumentEntity objects
+     */
+    public List<InstrumentEntity> getAllInstruments() {
+        return instrumentMapper.findAll();
+    }
+
+    /**
+     * Deletes an instrument by ID
+     * @param id the instrument ID
+     */
+    public void deleteInstrument(Long id) {
+        InstrumentEntity entity = instrumentMapper.findById(id)
+            .orElseThrow(() -> new NoSuchElementException(
+                "Could not find Instrument by id of " + id
+            ));
+        instrumentMapper.deleteById(id);
+    }
 }
