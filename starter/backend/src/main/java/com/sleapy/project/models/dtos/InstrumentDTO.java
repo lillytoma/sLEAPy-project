@@ -4,7 +4,7 @@ import com.sleapy.project.models.entities.InstrumentEntity;
 import com.sleapy.project.models.entities.InstrumentType;
 
 public class InstrumentDTO {
-    InstrumentDTO(InstrumentEntity entity){
+    public InstrumentDTO(InstrumentEntity entity){
         this.symbol = entity.getSymbol();
         this.instrumentType = entity.getInstrumentType();
         this.symbolName = entity.getSymbolName();
