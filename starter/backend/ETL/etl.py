@@ -44,8 +44,8 @@ def main():
         save_to_csv(dataframes)
         
         # Load to warehouse ( i will uncomment when destination DB is ready)
-        # destination_config = load_db_config("path/to/destination/docker-compose.yml")
-        # load_to_warehouse(dataframes, destination_config)
+        print("\nLoading data to warehouse schema...")
+        load_to_warehouse(dataframes, engine,  schema_name="sleapy_analytics")
         
         print("\nETL pipeline finished successfully.")
         

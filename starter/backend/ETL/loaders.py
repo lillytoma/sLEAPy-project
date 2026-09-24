@@ -1,14 +1,24 @@
-def load_to_warehouse(dataframes, destination_config):
-    """Load dataframes to the destination warehouse database"""
-    from database import create_engine_connection
-    
+from sqlalchemy import text
+
+def load_to_warehouse(dataframes, engine, schema_name="sleapy_analytics"):
+    """Load dataframes to a different schema in the same database"""
     try:
-        engine = create_engine_connection(destination_config)
+        # Create schema if it doesn't exist
+        with engine.connect() as connection:
+            connection.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
+            connection.commit()
         
+        # Load each dataframe to the schema
         for name, df in dataframes.items():
             table_name = name.lower()
-            df.to_sql(table_name, engine, if_exists='replace', index=False)
-            print(f"Loaded dataframe '{name}' to table '{table_name}'")
+            df.to_sql(
+                table_name, 
+                engine, 
+                schema=schema_name,
+                if_exists='replace', 
+                index=False
+            )
+            print(f"Loaded dataframe '{name}' to {schema_name}.{table_name}")
         
     except Exception as e:
         print(f"Error loading data to warehouse: {e}")
