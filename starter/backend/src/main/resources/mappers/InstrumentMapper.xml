@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sleapy.project.repositories.InstrumentMapper">
+
+    <!-- Result map for InstrumentEntity with nested InstrumentType -->
+    <resultMap id="InstrumentResultMap" type="com.sleapy.project.models.entities.InstrumentEntity">
+        <id column="instrument_id" property="id"/>
+        <result column="symbol" property="symbol"/>
+        <result column="symbol_name" property="symbolName"/>
+        <association property="instrumentType" javaType="com.sleapy.project.models.entities.InstrumentType">
+            <id column="instrumenttype_id" property="instrumentType_id"/>
+            <result column="instrumenttype_name" property="name"/>
+        </association>
+    </resultMap>
+
+    <!-- Find instrument by ID with type information -->
+    <select id="findById" parameterType="Long" resultMap="InstrumentResultMap">
+        SELECT 
+            i.instrument_id,
+            i.symbol,
+            i.symbol_name,
+            i.instrumenttype_id,
+            it.instrumenttype as instrumenttype_name
+        FROM instruments i
+        LEFT JOIN instrument_type it ON i.instrumenttype_id = it.instrumenttype_id
+        WHERE i.instrument_id = #{id}
+    </select>
+
+    <!-- Find instrument by symbol -->
+    <select id="findBySymbol" parameterType="String" resultMap="InstrumentResultMap">
+        SELECT 
+            i.instrument_id,
+            i.symbol,
+            i.symbol_name,
+            i.instrumenttype_id,
+            it.instrumenttype as instrumenttype_name
+        FROM instruments i
+        LEFT JOIN instrument_type it ON i.instrumenttype_id = it.instrumenttype_id
+        WHERE i.symbol = #{symbol}
+    </select>
+
+    <!-- Get all instruments -->
+    <select id="findAll" resultMap="InstrumentResultMap">
+        SELECT 
+            i.instrument_id,
+            i.symbol,
+            i.symbol_name,
+            i.instrumenttype_id,
+            it.instrumenttype as instrumenttype_name
+        FROM instruments i
+        LEFT JOIN instrument_type it ON i.instrumenttype_id = it.instrumenttype_id
+        ORDER BY i.symbol ASC
+    </select>
+
+    <!-- Insert new instrument -->
+    <insert id="save" parameterType="com.sleapy.project.models.entities.InstrumentEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO instruments (symbol, symbol_name, instrumenttype_id)
+        VALUES (#{symbol}, #{symbolName}, #{instrumentType.instrumentType_id})
+    </insert>
+
+    <!-- Update instrument -->
+    <update id="update" parameterType="com.sleapy.project.models.entities.InstrumentEntity">
+        UPDATE instruments
+        SET symbol = #{symbol},
+            symbol_name = #{symbolName},
+            instrumenttype_id = #{instrumentType.instrumentType_id}
+        WHERE instrument_id = #{id}
+    </update>
+
+    <!-- Delete instrument by ID -->
+    <delete id="deleteById" parameterType="Long">
+        DELETE FROM instruments WHERE instrument_id = #{id}
+    </delete>
+
+    <!-- Count total instruments -->
+    <select id="count" resultType="int">
+        SELECT COUNT(*) FROM instruments
+    </select>
+
+</mapper>

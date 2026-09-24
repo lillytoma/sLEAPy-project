@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sleapy.project.repositories.OrderStatusMapper">
+
+    <!-- Result map for OrderStatus -->
+    <resultMap id="OrderStatusResultMap" type="com.sleapy.project.models.entities.OrderStatus">
+        <id column="orderstatus_id" property="id"/>
+        <result column="orderstatus_name" property="name"/>
+    </resultMap>
+
+    <!-- Find order status by ID -->
+    <select id="findById" parameterType="Long" resultMap="OrderStatusResultMap">
+        SELECT orderstatus_id, orderstatus_name
+        FROM order_status
+        WHERE orderstatus_id = #{id}
+    </select>
+
+    <!-- Get all order statuses -->
+    <select id="findAll" resultMap="OrderStatusResultMap">
+        SELECT orderstatus_id, orderstatus_name
+        FROM order_status
+        ORDER BY orderstatus_id ASC
+    </select>
+
+    <!-- Insert new order status -->
+    <insert id="save" parameterType="com.sleapy.project.models.entities.OrderStatus" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO order_status (orderstatus_name)
+        VALUES (#{name})
+    </insert>
+
+    <!-- Update order status -->
+    <update id="update" parameterType="com.sleapy.project.models.entities.OrderStatus">
+        UPDATE order_status
+        SET orderstatus_name = #{name}
+        WHERE orderstatus_id = #{id}
+    </update>
+
+    <!-- Delete order status by ID -->
+    <delete id="deleteById" parameterType="Long">
+        DELETE FROM order_status WHERE orderstatus_id = #{id}
+    </delete>
+
+</mapper>

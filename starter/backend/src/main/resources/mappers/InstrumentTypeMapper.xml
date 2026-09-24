@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sleapy.project.repositories.InstrumentTypeMapper">
+
+    <!-- Result map for InstrumentType -->
+    <resultMap id="InstrumentTypeResultMap" type="com.sleapy.project.models.entities.InstrumentType">
+        <id column="instrumenttype_id" property="instrumentType_id"/>
+        <result column="instrumenttype" property="name"/>
+    </resultMap>
+
+    <!-- Find instrument type by ID -->
+    <select id="findById" parameterType="Long" resultMap="InstrumentTypeResultMap">
+        SELECT instrumenttype_id, instrumenttype
+        FROM instrument_type
+        WHERE instrumenttype_id = #{id}
+    </select>
+
+    <!-- Get all instrument types -->
+    <select id="findAll" resultMap="InstrumentTypeResultMap">
+        SELECT instrumenttype_id, instrumenttype
+        FROM instrument_type
+        ORDER BY instrumenttype_id ASC
+    </select>
+
+    <!-- Insert new instrument type -->
+    <insert id="save" parameterType="com.sleapy.project.models.entities.InstrumentType" useGeneratedKeys="true" keyProperty="instrumentType_id">
+        INSERT INTO instrument_type (instrumenttype)
+        VALUES (#{name})
+    </insert>
+
+    <!-- Update instrument type -->
+    <update id="update" parameterType="com.sleapy.project.models.entities.InstrumentType">
+        UPDATE instrument_type
+        SET instrumenttype = #{name}
+        WHERE instrumenttype_id = #{instrumentType_id}
+    </update>
+
+    <!-- Delete instrument type by ID -->
+    <delete id="deleteById" parameterType="Long">
+        DELETE FROM instrument_type WHERE instrumenttype_id = #{id}
+    </delete>
+
+</mapper>

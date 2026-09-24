@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sleapy.project.repositories.HoldingMapper">
+
+    <!-- Result map for HoldingEntity with nested objects -->
+    <resultMap id="HoldingResultMap" type="com.sleapy.project.models.entities.HoldingEntity">
+        <id column="holdings_id" property="id"/>
+        <result column="quantity_shares" property="quantityShares"/>
+        <result column="purchase_price" property="purchasePrice"/>
+        <association property="client" javaType="com.sleapy.project.models.entities.ClientEntity">
+            <id column="client_id" property="id"/>
+            <result column="client_email" property="email"/>
+            <result column="client_username" property="username"/>
+        </association>
+        <association property="instrument" javaType="com.sleapy.project.models.entities.InstrumentEntity">
+            <id column="instrument_id" property="id"/>
+            <result column="instrument_symbol" property="symbol"/>
+            <result column="instrument_symbol_name" property="symbolName"/>
+        </association>
+    </resultMap>
+
+    <!-- Find holding by ID -->
+    <select id="findById" parameterType="Long" resultMap="HoldingResultMap">
+        SELECT 
+            h.holdings_id,
+            h.client_id,
+            h.instrument_id,
+            h.quantity_shares,
+            h.purchase_price,
+            c.email as client_email,
+            c.username as client_username,
+            i.symbol as instrument_symbol,
+            i.symbol_name as instrument_symbol_name
+        FROM holdings h
+        LEFT JOIN clients c ON h.client_id = c.client_id
+        LEFT JOIN instruments i ON h.instrument_id = i.instrument_id
+        WHERE h.holdings_id = #{id}
+    </select>
+
+    <!-- Find all holdings for a client -->
+    <select id="findByClientId" parameterType="Long" resultMap="HoldingResultMap">
+        SELECT 
+            h.holdings_id,
+            h.client_id,
+            h.instrument_id,
+            h.quantity_shares,
+            h.purchase_price,
+            c.email as client_email,
+            c.username as client_username,
+            i.symbol as instrument_symbol,
+            i.symbol_name as instrument_symbol_name
+        FROM holdings h
+        LEFT JOIN clients c ON h.client_id = c.client_id
+        LEFT JOIN instruments i ON h.instrument_id = i.instrument_id
+        WHERE h.client_id = #{clientId}
+        ORDER BY i.symbol ASC
+    </select>
+
+    <!-- Find holding by client and instrument -->
+    <select id="findByClientIdAndInstrumentId" parameterType="map" resultMap="HoldingResultMap">
+        SELECT 
+            h.holdings_id,
+            h.client_id,
+            h.instrument_id,
+            h.quantity_shares,
+            h.purchase_price,
+            c.email as client_email,
+            c.username as client_username,
+            i.symbol as instrument_symbol,
+            i.symbol_name as instrument_symbol_name
+        FROM holdings h
+        LEFT JOIN clients c ON h.client_id = c.client_id
+        LEFT JOIN instruments i ON h.instrument_id = i.instrument_id
+        WHERE h.client_id = #{clientId} AND h.instrument_id = #{instrumentId}
+    </select>
+
+    <!-- Get all holdings -->
+    <select id="findAll" resultMap="HoldingResultMap">
+        SELECT 
+            h.holdings_id,
+            h.client_id,
+            h.instrument_id,
+            h.quantity_shares,
+            h.purchase_price,
+            c.email as client_email,
+            c.username as client_username,
+            i.symbol as instrument_symbol,
+            i.symbol_name as instrument_symbol_name
+        FROM holdings h
+        LEFT JOIN clients c ON h.client_id = c.client_id
+        LEFT JOIN instruments i ON h.instrument_id = i.instrument_id
+        ORDER BY c.username ASC, i.symbol ASC
+    </select>
+
+    <!-- Insert new holding -->
+    <insert id="save" parameterType="com.sleapy.project.models.entities.HoldingEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO holdings (client_id, instrument_id, quantity_shares, purchase_price)
+        VALUES (#{client.id}, #{instrument.id}, #{quantityShares}, #{purchasePrice})
+    </insert>
+
+    <!-- Update holding -->
+    <update id="update" parameterType="com.sleapy.project.models.entities.HoldingEntity">
+        UPDATE holdings
+        SET quantity_shares = #{quantityShares},
+            purchase_price = #{purchasePrice}
+        WHERE holdings_id = #{id}
+    </update>
+
+    <!-- Delete holding by ID -->
+    <delete id="deleteById" parameterType="Long">
+        DELETE FROM holdings WHERE holdings_id = #{id}
+    </delete>
+
+    <!-- Count total holdings -->
+    <select id="count" resultType="int">
+        SELECT COUNT(*) FROM holdings
+    </select>
+
+</mapper>
