@@ -1,4 +1,4 @@
-package com.sleapy.project.repositories;
+package com.sleapy.project.mappers;
 
 import com.sleapy.project.models.entities.ClientStatus;
 import org.apache.ibatis.annotations.Mapper;

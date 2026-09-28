@@ -48,7 +48,7 @@ public class AuthController {
         if (isValid) {
             return new ResponseEntity<>("Login successful", HttpStatus.OK);
         } else {
-            return new ResponseEntity<>("Invalid email or password", HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>("Invalid email or password\n", HttpStatus.UNAUTHORIZED);
         }
     }
 

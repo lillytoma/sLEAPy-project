@@ -1,4 +1,4 @@
-package com.sleapy.project.repositories;
+package com.sleapy.project.mappers;
 
 import com.sleapy.project.models.entities.InstrumentType;
 import org.apache.ibatis.annotations.Mapper;

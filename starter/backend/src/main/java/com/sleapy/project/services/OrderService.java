@@ -3,7 +3,7 @@ package com.sleapy.project.services;
 
 import com.sleapy.project.models.dtos.OrderDTO;
 import com.sleapy.project.models.entities.OrderEntity;
-import com.sleapy.project.repositories.OrderMapper;
+import com.sleapy.project.mappers.OrderMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

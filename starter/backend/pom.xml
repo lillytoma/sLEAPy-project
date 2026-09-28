@@ -82,6 +82,9 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<mainClass>com.sleapy.project.Main</mainClass>
+				</configuration>
 			</plugin>
 			 <plugin>
      <groupId>org.apache.maven.plugins</groupId>

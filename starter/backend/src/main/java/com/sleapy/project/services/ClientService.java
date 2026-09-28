@@ -7,7 +7,6 @@ import com.sleapy.project.validators.ClientValidator;
 import com.sleapy.project.exceptions.InvalidEmailFormatException;
 
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.stereotype.Service;
 import java.util.Optional;
 import org.springframework.web.bind.annotation.CrossOrigin;

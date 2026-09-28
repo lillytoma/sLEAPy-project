@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.sleapy.project.repositories.InstrumentTypeMapper">
+<mapper namespace="com.sleapy.project.mappers.InstrumentTypeMapper">
 
     <!-- Result map for InstrumentType -->
     <resultMap id="InstrumentTypeResultMap" type="com.sleapy.project.models.entities.InstrumentType">

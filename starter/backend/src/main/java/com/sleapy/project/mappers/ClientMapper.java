@@ -1,39 +1,60 @@
 package com.sleapy.project.mappers;
-import com.sleapy.project.models.dtos.ClientDTO;
+
 import com.sleapy.project.models.entities.ClientEntity;
+import org.apache.ibatis.annotations.Mapper;
+import java.util.List;
+import java.util.Optional;
 
 /**
- * DTO Mapper utility class for converting between ClientEntity and ClientDTO.
- * Note: This is separate from the MyBatis ClientMapper in repositories/.
+ * MyBatis mapper interface for ClientEntity.
+ * 
+ * Defines database operations for the clients table.
+ * SQL implementation is in ClientMapper.xml
  */
-public class ClientMapper {
-    public static ClientDTO toDTO(ClientEntity entity) {
-        if (entity == null) {
-            return null;
-        }
-
-        ClientDTO dto = new ClientDTO();
-
-        dto.setId(entity.getId());
-        dto.setEmail(entity.getEmail());
-        //dto.setName(entity.getName());
-        dto.setCashBalance(entity.getCashBalance());
-
-        return dto;
-    }
-
-    public static ClientEntity toEntity(ClientDTO dto) {
-        if (dto == null) {
-            return null;
-        }
-
-        ClientEntity entity = new ClientEntity();
-
-        entity.setId(dto.getId());
-        entity.setEmail(dto.getEmail());
-        //entity.setName(dto.getName());
-        entity.setCashBalance(dto.getCashBalance());
-
-        return entity;
-    }
+@Mapper
+public interface ClientMapper {
+    
+    /**
+     * Find a client by ID.
+     * @param id the client ID
+     * @return Optional containing the client, or empty if not found
+     */
+    Optional<ClientEntity> findById(Long id);
+    
+    /**
+     * Find a client by email.
+     * @param email the client email
+     * @return Optional containing the client, or empty if not found
+     */
+    Optional<ClientEntity> findByEmail(String email);
+    
+    /**
+     * Retrieve all clients.
+     * @return list of all clients
+     */
+    List<ClientEntity> findAll();
+    
+    /**
+     * Insert a new client.
+     * @param client the client entity to insert
+     */
+    void save(ClientEntity client);
+    
+    /**
+     * Update an existing client.
+     * @param client the client entity with updated values
+     */
+    void update(ClientEntity client);
+    
+    /**
+     * Delete a client by ID.
+     * @param id the client ID
+     */
+    void deleteById(Long id);
+    
+    /**
+     * Count total number of clients.
+     * @return total count
+     */
+    long count();
 }
