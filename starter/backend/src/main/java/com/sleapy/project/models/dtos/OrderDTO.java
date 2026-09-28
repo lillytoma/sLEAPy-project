@@ -19,6 +19,7 @@ import lombok.NoArgsConstructor;
 public class OrderDTO{
 
     @NotNull(message = "order id is required")
+    @Positive(message = "order id must be positive")
     private Long id;
 
     @NotNull(message = "time of purchase is required")

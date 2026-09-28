@@ -1,6 +1,7 @@
 package com.sleapy.project.models.dtos;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.Valid;
 
@@ -18,6 +19,7 @@ import lombok.NoArgsConstructor;
 public class HoldingDTO {
     
     @NotNull(message = "holding id is required")
+    @Positive(message = "holding id must be positive")
     private Long id; // Unique holding identifier
 
     @NotNull(message = "instrument is required")

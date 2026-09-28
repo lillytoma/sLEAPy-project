@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 
 /**
@@ -22,6 +23,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 public class ClientDTO {
 
     @NotNull(message = "client id is required")
+    @Positive(message = "client id must be positive")
     private Long id; // Unique client identifier
 
     @NotBlank(message = "email is required")
