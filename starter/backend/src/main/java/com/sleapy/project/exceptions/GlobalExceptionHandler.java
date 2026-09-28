@@ -69,6 +69,19 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles invalid email format errors when email validation fails against the strict RFC 5322 standard.
+     * The ClientValidator uses comprehensive RFC 5322 regex to enforce strict email formatting requirements,
+     * including support for quoted strings, special characters, and IP address literals.
+     * Returns 422 Unprocessable Entity (business logic error).
+     */
+    @ExceptionHandler(InvalidEmailFormatException.class)
+    ResponseEntity<ErrorResponse> handleInvalidEmail(InvalidEmailFormatException e, HttpServletRequest request) {
+        return ResponseEntity.status(422).body(
+            ErrorResponse.of(422, "Invalid Email", e.getMessage(), request.getRequestURI())
+        );   
+    }
+
+    /**
      * Catches all unexpected exceptions not handled by other handlers.
      * Returns 500 Internal Server Error for unrecognized runtime errors.
      */
