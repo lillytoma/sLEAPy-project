@@ -14,10 +14,11 @@ import com.sleapy.project.config.APIRouting;
 import com.sleapy.project.exceptions.InvalidEmailFormatException;
 import com.sleapy.project.models.dtos.LoginRequestDTO;
 import com.sleapy.project.models.dtos.SignUpRequestDTO;
+import com.sleapy.project.models.dtos.SignUpResponseDTO;
 import com.sleapy.project.models.entities.ClientEntity;
 import com.sleapy.project.services.ClientService;
+import com.sleapy.project.services.JwtService;
 import com.sleapy.project.validators.ClientValidator;
-import com.sleapy.project.models.entities.ClientEntity;
 
 import lombok.AllArgsConstructor;
 
@@ -31,6 +32,7 @@ public class AuthController {
     // such as checking user credentials against the database.
     private final ClientService clientService;
     private final ClientValidator clientValidator;
+    private final JwtService jwtService;
 
 
     //The login method handles POST requests to the /login endpoint. It takes a LoginRequestDTO object containing the user's email and password, checks the credentials using the ClientService, and returns a ResponseEntity indicating whether the login was successful or not.
@@ -53,22 +55,42 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<?> signUp(@RequestBody SignUpRequestDTO request){
-        //convert requestdto to client entity and sa
-        try{
-            //checking if the email is in valid format
+    public ResponseEntity<?> signUp(@RequestBody SignUpRequestDTO request) {
+        try {
+            // Step 1: Validate email format
             clientValidator.validateEmail(request.getEmail());
-            if(clientService.isUniqueEmail(request.getEmail())){
+            
+            // Step 2: Check if email already exists
+            if (clientService.isUniqueEmail(request.getEmail())) {
                 return new ResponseEntity<>(
-                    "email already registered",
+                    "Email already registered", 
                     HttpStatus.CONFLICT
                 );
             }
             
-            ClientEntity newClientEntity = new ClientEntity();
-
-        
+            // Step 3: Create new client in database
+            ClientEntity newClient = clientService.signup(request);
             
+            // Step 4: Generate JWT token
+            String jwtToken = jwtService.generateToken(newClient.getEmail(), newClient.getId());
+            
+            // Step 5: Build response
+            SignUpResponseDTO response = new SignUpResponseDTO(
+                "Signup successful. Welcome!",
+                newClient.getId(),
+                jwtToken
+            );
+            
+            // Step 6: Return 201 CREATED (RESTful standard)
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+            
+        } catch (InvalidEmailFormatException ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception ex) {
+            return new ResponseEntity<>(
+                "Signup failed: " + ex.getMessage(), 
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
         }
     }
 }

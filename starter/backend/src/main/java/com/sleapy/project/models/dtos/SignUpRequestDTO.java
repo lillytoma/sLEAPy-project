@@ -6,13 +6,11 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-
-public class SignUpRequestDTO{
+public class SignUpRequestDTO {
     
-    private String email; //user email
-    private String password; //users password
-    private String address; //client address
-    private String phoneNumber; 
-    private String ssn; //social
-
+    private String email;        // user email
+    private String password;     // user's password
+    private String address;      // client address
+    private String phoneNumber;  // client phone number
+    private String ssn;          // social security number
 }

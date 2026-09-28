@@ -2,12 +2,15 @@ package com.sleapy.project.services;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.sleapy.project.models.entities.ClientEntity;
-import com.sleapy.project.repositories.ClientMapper;
+import com.sleapy.project.models.entities.ClientStatus;
+import com.sleapy.project.mappers.ClientMapper;
+import com.sleapy.project.models.dtos.SignUpRequestDTO;
 import com.sleapy.project.validators.ClientValidator;
 import com.sleapy.project.exceptions.InvalidEmailFormatException;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
 import java.util.Optional;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
@@ -43,7 +46,7 @@ public class ClientService {
         return passwordEncoder.matches(rawPassword, client.getPasswordHash());
     }
 
-    public boolean isUniqueEmail(String email)throws InvalidEmailFormatException {
+    public boolean isUniqueEmail(String email) throws InvalidEmailFormatException {
         clientValidator.validateEmail(email);
         Optional<ClientEntity> clientInfo = clientMapper.findByEmail(email);
         if(!clientInfo.isPresent()){
@@ -51,9 +54,32 @@ public class ClientService {
         }
         return true;
     }
-    // Controller -> Service -> Mapper -> DB
-    public void storeSignupClientInfo(){
-        clientMapper.save();
-    }
 
+    /**
+     * Register a new client (signup flow)
+     * @param request SignUpRequestDTO containing email, password, address, phone, ssn
+     * @return the newly created ClientEntity with auto-generated ID
+     */
+    public ClientEntity signup(SignUpRequestDTO request) {
+        // Hash password with BCrypt
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        String hashedPassword = passwordEncoder.encode(request.getPassword());
+        
+        // Create new client entity
+        ClientEntity newClient = new ClientEntity();
+        newClient.setEmail(request.getEmail());
+        newClient.setPasswordHash(hashedPassword);
+        newClient.setAddress(request.getAddress());
+        newClient.setPhoneNumber(request.getPhoneNumber());
+        newClient.setSsn(request.getSsn());
+        newClient.setCashBalance(0.0);  // Default balance for new users
+        
+        // Set active status (assuming 1 = ACTIVE in your database)
+        ClientStatus activeStatus = new ClientStatus();
+        activeStatus.setId(1L);
+        newClient.setClientStatus(activeStatus);
+        
+        // Save and return the client with generated ID
+        return clientMapper.save(newClient);
+    }
 }
