@@ -8,6 +8,7 @@ import lombok.*;
 @AllArgsConstructor
 public class SignUpRequestDTO {
     
+    private String username;     // unique username for login
     private String email;        // user email
     private String password;     // user's password
     private String address;      // client address

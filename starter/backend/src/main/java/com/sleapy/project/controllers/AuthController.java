@@ -72,8 +72,10 @@ public class AuthController {
         } catch (InvalidEmailFormatException ex) {
             return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception ex) {
+            ex.printStackTrace();
+            String errorMsg = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();
             return new ResponseEntity<>(
-                "Login failed: " + ex.getMessage(), 
+                "Login failed: " + errorMsg, 
                 HttpStatus.INTERNAL_SERVER_ERROR
             );
         }
@@ -112,8 +114,10 @@ public class AuthController {
         } catch (InvalidEmailFormatException ex) {
             return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception ex) {
+            ex.printStackTrace();
+            String errorMsg = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();
             return new ResponseEntity<>(
-                "Signup failed: " + ex.getMessage(), 
+                "Signup failed: " + errorMsg, 
                 HttpStatus.INTERNAL_SERVER_ERROR
             );
         }

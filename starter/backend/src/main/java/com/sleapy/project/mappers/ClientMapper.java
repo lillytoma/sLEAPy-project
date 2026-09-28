@@ -36,10 +36,9 @@ public interface ClientMapper {
     
     /**
      * Insert a new client.
-     * @param client the client entity to insert
-     * @return
+     * @param client the client entity to insert (will be modified with auto-generated ID)
      */
-    ClientEntity save(ClientEntity client);
+    void save(ClientEntity client);
     
     /**
      * Update an existing client.

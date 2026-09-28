@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 public class ClientEntity {
     
     private Long id; // Primary key
+    private String username; // Unique username for login
     private String email; // Unique email used for authentication
     private double cashBalance; // client's account balance
     private String passwordHash; // Bcrypt hashed password

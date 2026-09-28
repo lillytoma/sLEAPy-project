@@ -67,6 +67,7 @@ public class ClientService {
         
         // Create new client entity
         ClientEntity newClient = new ClientEntity();
+        newClient.setUsername(request.getUsername());
         newClient.setEmail(request.getEmail());
         newClient.setPasswordHash(hashedPassword);
         newClient.setAddress(request.getAddress());
@@ -79,7 +80,8 @@ public class ClientService {
         activeStatus.setId(1L);
         newClient.setClientStatus(activeStatus);
         
-        // Save and return the client with generated ID
-        return clientMapper.save(newClient);
+        // Save to database (ID will be auto-generated and populated in newClient)
+        clientMapper.save(newClient);
+        return newClient;
     }
 }
