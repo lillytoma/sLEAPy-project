@@ -3,17 +3,21 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.sleapy.project.models.entities.ClientEntity;
 import com.sleapy.project.repositories.ClientMapper;
+import com.sleapy.project.validators.ClientValidator;
+import com.sleapy.project.exceptions.InvalidEmailFormatException;
+
+import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
 import java.util.Optional;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
 @Service
+@RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:4200")
 public class ClientService {
-    public ClientService(ClientMapper clientMapper) {
-        this.clientMapper = clientMapper;
-    }
+
+    private final ClientValidator clientValidator;
 
     private final ClientMapper clientMapper;
 
@@ -39,4 +43,18 @@ public class ClientService {
         //checks the incoming hashed password against the stored hash and returns true if they match, (bool).
         return passwordEncoder.matches(rawPassword, client.getPasswordHash());
     }
+
+    public boolean isUniqueEmail(String email)throws InvalidEmailFormatException {
+        clientValidator.validateEmail(email);
+        Optional<ClientEntity> clientInfo = clientMapper.findByEmail(email);
+        if(!clientInfo.isPresent()){
+            return false;
+        }
+        return true;
+    }
+    // Controller -> Service -> Mapper -> DB
+    public void storeSignupClientInfo(){
+        clientMapper.save();
+    }
+
 }

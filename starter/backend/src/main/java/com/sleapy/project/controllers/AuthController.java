@@ -13,8 +13,11 @@ import org.springframework.http.ResponseEntity;
 import com.sleapy.project.config.APIRouting;
 import com.sleapy.project.exceptions.InvalidEmailFormatException;
 import com.sleapy.project.models.dtos.LoginRequestDTO;
+import com.sleapy.project.models.dtos.SignUpRequestDTO;
+import com.sleapy.project.models.entities.ClientEntity;
 import com.sleapy.project.services.ClientService;
 import com.sleapy.project.validators.ClientValidator;
+import com.sleapy.project.models.entities.ClientEntity;
 
 import lombok.AllArgsConstructor;
 
@@ -46,6 +49,26 @@ public class AuthController {
             return new ResponseEntity<>("Login successful", HttpStatus.OK);
         } else {
             return new ResponseEntity<>("Invalid email or password", HttpStatus.UNAUTHORIZED);
+        }
+    }
+
+    @PostMapping("/signup")
+    public ResponseEntity<?> signUp(@RequestBody SignUpRequestDTO request){
+        //convert requestdto to client entity and sa
+        try{
+            //checking if the email is in valid format
+            clientValidator.validateEmail(request.getEmail());
+            if(clientService.isUniqueEmail(request.getEmail())){
+                return new ResponseEntity<>(
+                    "email already registered",
+                    HttpStatus.CONFLICT
+                );
+            }
+            
+            ClientEntity newClientEntity = new ClientEntity();
+
+        
+            
         }
     }
 }
