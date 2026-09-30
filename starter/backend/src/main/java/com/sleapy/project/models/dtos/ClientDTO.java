@@ -9,9 +9,11 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 
 /**
  * Data transfer object for client information.
@@ -31,9 +33,9 @@ public class ClientDTO {
     private String email; // Email address (login credential)
 
     @NotBlank(message = "username is required")
+    @Size(min = 1, max = 25, message = "username must be between 1 and 25 characters")
     private String username; // Display username
 
-    @NotNull(message = "cash balance cannot be null")
     @PositiveOrZero(message = "cash balance must be zero or positive")
     private double cashBalance; // Available cash balance
 
@@ -48,9 +50,10 @@ public class ClientDTO {
     private String fullAddress; // Residential address
 
     @NotBlank(message = "birth date is required")
-    @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "birth date must be in YYYY-MM-DD format")
+    @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "birth date must be in YYYY-MM-DD format") 
     private String birthDate; // Birth date (YYYY-MM-DD format)
 
+    @NotNull(message = "holding list cannot be intialized to null") 
     @Valid
     private ArrayList<HoldingDTO> holdings; // List of all holdings owned
 }

@@ -2,7 +2,7 @@ package com.sleapy.project.models.dtos;
 
 import java.time.LocalDate;
 
-import com.sleapy.project.models.entities.OrderStatus;
+import com.sleapy.project.models.enums.OrderStatus;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -16,14 +16,13 @@ import lombok.NoArgsConstructor;
 @Data 
 @NoArgsConstructor 
 @AllArgsConstructor 
-public class OrderDTO{
+public class OrderDTO {
 
     @NotNull(message = "order id is required")
     @Positive(message = "order id must be positive")
     private Long id;
 
     @NotNull(message = "time of purchase is required")
-    @PastOrPresent(message = "time of purchase cannot be in the future")
     private LocalDate timeOfPurchase;
 
     @NotNull(message = "quantity is required")

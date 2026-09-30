@@ -1,6 +1,6 @@
 package com.sleapy.project.models.dtos;
 
-import com.sleapy.project.models.entities.InstrumentType;
+import com.sleapy.project.models.enums.InstrumentType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
