@@ -4,7 +4,7 @@
 <mapper namespace="com.sleapy.project.repositories.InstrumentTypeMapper">
 
     <!-- Result map for InstrumentType -->
-    <resultMap id="InstrumentTypeResultMap" type="com.sleapy.project.models.entities.InstrumentType">
+    <resultMap id="InstrumentTypeResultMap" type="com.sleapy.project.models.entities.InstrumentTypeEntity">
         <id column="instrumenttype_id" property="instrumentType_id"/>
         <result column="instrumenttype" property="name"/>
     </resultMap>
@@ -24,13 +24,13 @@
     </select>
 
     <!-- Insert new instrument type -->
-    <insert id="save" parameterType="com.sleapy.project.models.entities.InstrumentType" useGeneratedKeys="true" keyProperty="instrumentType_id">
+    <insert id="save" parameterType="com.sleapy.project.models.entities.InstrumentTypeEntity" useGeneratedKeys="true" keyProperty="instrumentType_id">
         INSERT INTO instrument_type (instrumenttype)
         VALUES (#{name})
     </insert>
 
     <!-- Update instrument type -->
-    <update id="update" parameterType="com.sleapy.project.models.entities.InstrumentType">
+    <update id="update" parameterType="com.sleapy.project.models.entities.InstrumentTypeEntity">
         UPDATE instrument_type
         SET instrumenttype = #{name}
         WHERE instrumenttype_id = #{instrumentType_id}
