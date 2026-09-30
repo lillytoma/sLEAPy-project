@@ -53,6 +53,7 @@ export class SignupComponent {
       dob: ['', [Validators.required, this.ageValidator]],
       phone: ['', [Validators.required, Validators.pattern(/^\(\d{3}\) \d{3}-\d{4}$/)]],
       street: ['', Validators.required],
+      city: ['', Validators.required],
       zip: ['', [Validators.required, Validators.pattern(/^\d{5}(-\d{4})?$/)]],
       region: ['', Validators.required],
       state: [''],
@@ -136,30 +137,52 @@ export class SignupComponent {
   }
 
   onSubmit(): void {
+    console.log('Form submitted. Form valid:', this.form.valid, 'Form errors:', this.form.errors);
     if (this.form.invalid) {
+      console.log('Form is invalid. Marking all fields as touched.');
       this.form.markAllAsTouched();
       return;
     }
     this.submitted.set(true);
-    // Here I'm getting the data the user inputed on the form and preparing to send it to the backend  
+    // Combine address fields into a single string
+    const street = this.form.get('street')?.value || '';
+    const region = this.form.get('region')?.value || '';
+    //const state = this.form.get('state')?.value || '';
+   // const zip = this.form.get('zip')?.value || '';
+   // const address = `${street}, ${region}, ${state} ${zip}`.trim();
+
+    // Prepare data matching backend DTO field names
     const signupData = {
-      FirstName: this.form.get('firstName')?.value,
-      LastName : this.form.get('lastname')?.value,
-      birthday: this.form.get('dob')?.value, 
-      region : this.form.get('region')?.value,
-      phone : this.form.get('phone')?.value,
-      zipcode : this.form.get('zip')?.value,
-
-      //street
-      //state
+      firstname: this.form.get('firstname')?.value,
+      lastname: this.form.get('lastname')?.value,
+      username: this.form.get('username')?.value,
+      email: this.form.get('email')?.value,
+      password: this.form.get('passwords')?.get('password')?.value,
+      //address: address,
+      phoneNumber: this.form.get('phone')?.value,
       ssn: this.form.get('ssn')?.value,
-      // username 
-      //email 
-      //password    
+      state: this.form.get('state')?.value,
+      zip: this.form.get('zip')?.value,
+      street: this.form.get('street')?.value,
+      city: this.form.get('city')?.value,
+      region: this.form.get('region')?.value
+      
     };
-    // send form information to java controller class  
-
-    // redirect users to login page 
-    setTimeout(() => this.router.navigate(['/login']), 2000);
+    
+    // Log data without password for security
+    //const { password, ...safeData } = signupData;
+    //console.log('Sending signup data to backend:', safeData);
+    // Send data to backend
+    this.signupService.signup(signupData).subscribe(
+     {next: (response) => {
+        console.log('Signup successful:', response);
+        setTimeout(() => this.router.navigate(['/login']), 2000);
+      },
+      error:(error) => {
+        console.error('Signup failed:', error);
+        console.error('Error details - Status:', error.status, 'Message:', error.message, 'URL:', error.url);
+        this.submitted.set(false);
+      }}
+    );
   }
 }

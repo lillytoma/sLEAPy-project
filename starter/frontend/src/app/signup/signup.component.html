@@ -85,6 +85,15 @@
                     <p class="text-xs mt-1" style="color:var(--error)">Street address is required</p>
                   }
                 </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1.5" style="color:var(--foreground)">City</label>
+                  <input type="text" formControlName="city" placeholder="New York"
+                    class="w-full px-4 py-2.5 rounded-md text-sm border outline-none"
+                    style="background-color:var(--background);color:var(--foreground);border-color:var(--border)" />
+                  @if (f['city'].invalid && f['city'].touched) {
+                    <p class="text-xs mt-1" style="color:var(--error)">City is required</p>
+                  }
+                </div>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label class="block text-sm font-medium mb-1.5" style="color:var(--foreground)">ZIP Code</label>
@@ -102,8 +111,6 @@
                       style="background-color:var(--background);color:var(--foreground);border-color:var(--border)">
                       <option value="">Select region</option>
                       <option value="USA">USA</option>
-                      <option value="India">India</option>
-                      <option value="UK">UK</option>
                     </select>
                     @if (f['region'].invalid && f['region'].touched) {
                       <p class="text-xs mt-1" style="color:var(--error)">Region is required</p>
