@@ -39,8 +39,8 @@ def main():
         # Step 3: Extract data from source database using different queries
         print("\nExtracting data from source database...")
         
-        # Extract all transactions from the last 6 months
-        transactions_6months = extract_transactions_last_6_months(engine)
+        # Extract all transactions from the last 6 years
+        transactions_6years = extract_transactions_last_6_months(engine)
         
         # Extract transactions for specific client (example: client_id = 1)
         transactions_client = extract_transactions_by_client(engine, client_id=1)
@@ -50,13 +50,13 @@ def main():
         
         # Display extraction summary
         print("\nDataframes created successfully:")
-        print(f"- Transactions (last 6 months): {len(transactions_6months)} rows")
+        print(f"- Transactions (last 6 years): {len(transactions_6years)} rows")
         print(f"- Transactions (client 1): {len(transactions_client)} rows")
         print(f"- Most expensive trades: {len(expensive_trades)} rows")
         
         # Step 4: Organize extracted data into a dictionary for processing
         dataframes = {
-            "Transactions_6Months": transactions_6months,
+            "Transactions_6Years": transactions_6years,
             "Transactions_Client": transactions_client,
             "Expensive_Trades": expensive_trades
         }

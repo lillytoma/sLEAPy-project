@@ -8,9 +8,9 @@ import pandas as pd
 from sqlalchemy import text, create_engine
 
 def extract_transactions_last_6_months(engine):
-    """Extract all transactions from the last 6 months.
+    """Extract all transactions from the last 6 years.
     
-    Retrieves order data for the past 6 months with associated client information,
+    Retrieves order data for the past 6 years with associated client information,
     instrument details, and order status, ordered by most recent first.
     
     Args:
@@ -22,7 +22,7 @@ def extract_transactions_last_6_months(engine):
                        quantity, purchase_price, time_purchased, time_filled, status
     
     Raises:
-        ValueError: If no transactions are found in the last 6 months.
+        ValueError: If no transactions are found in the last 6 years.
         Exception: If there's an error executing the query.
     """
     try:
@@ -43,8 +43,8 @@ def extract_transactions_last_6_months(engine):
         JOIN clients c ON o.client_ID = c.client_ID
         JOIN instruments i ON o.instrument_id = i.instrument_id
         JOIN order_status os ON o.status = os.orderstatus_id
-        -- Filter for transactions within the last 6 months
-        WHERE o.time_purchased >= NOW() - INTERVAL '6 months'
+        -- Filter for transactions within the last 6 years
+        WHERE o.time_purchased >= NOW() - INTERVAL '6 years'
         -- Order by most recent transactions first
         ORDER BY o.time_purchased DESC
         """)
@@ -56,13 +56,13 @@ def extract_transactions_last_6_months(engine):
         
         # Validate that data was returned
         if df.empty:
-            raise ValueError("No transactions found in the last 6 months")
+            raise ValueError("No transactions found in the last 6 years")
         
-        print(f"Extracted {len(df)} transactions from last 6 months")
+        print(f"Extracted {len(df)} transactions from last 6 years")
         return df
         
     except Exception as e:
-        print(f"Error extracting transactions from last 6 months: {e}")
+        print(f"Error extracting transactions from last 6 years: {e}")
         raise
 
 def extract_transactions_by_client(engine, client_id):
