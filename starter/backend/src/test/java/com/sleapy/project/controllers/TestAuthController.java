@@ -7,6 +7,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import com.sleapy.project.models.dtos.LoginRequestDTO;
 import com.sleapy.project.services.ClientService;
+import com.sleapy.project.validators.ClientValidator;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -20,6 +21,9 @@ class TestAuthController {
  
     @MockitoBean // Mocks the controller dependency used by the web layer
     private ClientService clientService;
+
+    @MockitoBean
+    private ClientValidator clientValidator;
  
     // Test cases will go here
     @Test
@@ -52,7 +56,7 @@ class TestAuthController {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"" + request.getEmail() + "\", \"password\":\"" + request.getPassword() + "\"}"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(content().string("Login Unauthroized"));
+                .andExpect(content().string("Invalid email or password"));
     
     }
 }
