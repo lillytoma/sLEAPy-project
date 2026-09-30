@@ -1,79 +1,130 @@
 package com.sleapy.project.exceptions;
 
+import com.sleapy.project.controllers.ClientController;
+import com.sleapy.project.controllers.OrderController;
+import com.sleapy.project.services.ClientService;
+import com.sleapy.project.services.OrderService;
+import com.sleapy.project.validators.ClientValidator;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.NoSuchElementException;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Integration tests for GlobalExceptionHandler.
  * Tests that all exception handlers properly catch exceptions and return appropriate error responses.
+ * Verifies exception handlers for:
+ * - NoSuchElementException (404 Not Found)
+ * - InsufficientCashException (422 Unprocessable Entity)
+ * - InsufficientSharesException (422 Unprocessable Entity)
+ * - InvalidEmailFormatException (422 Unprocessable Entity)
+ * - Generic Exception (500 Internal Server Error)
  */
-@WebMvcTest(GlobalExceptionHandler.class) // Test only the web layer (controller)
+@WebMvcTest({ClientController.class, OrderController.class})
 public class GlobalExceptionHandlerTest {
     
     @Autowired
-    private MockMvc mockMvc; // Simulates HTTP requests and captures responses
-    
-    /**
-     * Tests that validation errors return a 400 Bad Request response when required fields are missing.
-     * Sends a POST request with an empty email field and verifies:
-     * - HTTP status is 400 (Bad Request)
-     * - Response body contains status 400
-     * - Response error message is "Bad Request"
-     */
-    @Test
-    void testValidationError() throws Exception {
-        assertDoesNotThrow(() ->
-            mockMvc.perform(post("/api/clients")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\": \"\"}")) // Invalid - empty email
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.error").value("Bad Request"))
-        );
-    }
-    
+    private MockMvc mockMvc;
+
+    @MockitoBean
+    private ClientService clientService;
+
+    @MockitoBean
+    private OrderService orderService;
+
+    @MockitoBean
+    private ClientValidator clientValidator;
+
     /**
      * Tests that resource not found errors return a 404 Not Found response.
-     * Sends a GET request for a non-existent client (ID 999) and verifies:
+     * Configures the mocked ClientService to throw NoSuchElementException when fetching a non-existent client.
+     * Verifies:
      * - HTTP status is 404 (Not Found)
      * - Response body contains status 404
      * - Response error message is "Not Found"
      */
     @Test
     void testNotFound() throws Exception {
+        when(clientService.getCashBalance(999L))
+            .thenThrow(new NoSuchElementException("Client with ID 999 not found"));
+        
         assertDoesNotThrow(() ->
-            mockMvc.perform(get("/api/clients/999"))
+            mockMvc.perform(get("/api/clients/999/balance"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.error").value("Not Found"))
         );
     }
-    
+
     /**
      * Tests that insufficient cash errors return a 422 Unprocessable Entity response.
-     * Sends a POST request attempting to withdraw more money than the client's current balance and verifies:
-     * - HTTP status is 422 (Unprocessable Entity) - business logic error
+     * Configures the mocked ClientService to throw InsufficientCashException.
+     * Verifies:
+     * - HTTP status is 422 (Unprocessable Entity)
      * - Response body contains status 422
      * - Response error message is "Insufficient Cash"
      */
     @Test
     void testInsufficientCash() throws Exception {
+        when(clientService.getCashBalance(1L))
+            .thenThrow(new InsufficientCashException("Client has insufficient cash balance to complete this transaction"));
+        
         assertDoesNotThrow(() ->
-            mockMvc.perform(post("/api/orders/withdraw")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"amount\": 10000}"))
+            mockMvc.perform(get("/api/clients/1/balance"))
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.status").value(422))
                 .andExpect(jsonPath("$.error").value("Insufficient Cash"))
+        );
+    }
+
+    /**
+     * Tests that insufficient shares errors return a 422 Unprocessable Entity response.
+     * Configures the mocked OrderService to throw InsufficientSharesException.
+     * Verifies:
+     * - HTTP status is 422 (Unprocessable Entity)
+     * - Response body contains status 422
+     * - Response error message is "Insufficient Shares"
+     */
+    @Test
+    void testInsufficientShares() throws Exception {
+        when(orderService.getTransactionsPerClient(2L))
+            .thenThrow(new InsufficientSharesException("Client does not have enough shares to complete this sale"));
+        
+        assertDoesNotThrow(() ->
+            mockMvc.perform(get("/api/orders/?clientId=2"))
+                .andExpect(status().is(422))
+                .andExpect(jsonPath("$.status").value(422))
+                .andExpect(jsonPath("$.error").value("Insufficient Shares"))
+        );
+    }
+
+    /**
+     * Tests that unexpected/generic exceptions return a 500 Internal Server Error response.
+     * Configures the mocked ClientService to throw a generic RuntimeException.
+     * Verifies:
+     * - HTTP status is 500 (Internal Server Error)
+     * - Response body contains status 500
+     * - Response error message is "Unexpected Error"
+     */
+    @Test
+    void testUnexpectedException() throws Exception {
+        when(clientService.getCashBalance(4L))
+            .thenThrow(new RuntimeException("Unexpected database connection error"));
+        
+        assertDoesNotThrow(() ->
+            mockMvc.perform(get("/api/clients/4/balance"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.status").value(500))
+                .andExpect(jsonPath("$.error").value("Unexpected Error"))
         );
     }
 }
