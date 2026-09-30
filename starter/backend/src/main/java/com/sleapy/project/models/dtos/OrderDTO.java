@@ -1,6 +1,6 @@
 package com.sleapy.project.models.dtos;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import com.sleapy.project.models.enums.OrderStatus;
 
@@ -23,14 +23,15 @@ public class OrderDTO {
     private Long id;
 
     @NotNull(message = "time of purchase is required")
-    private LocalDate timeOfPurchase;
+    @PastOrPresent(message = "time of purchase cannot be in the future")
+    private LocalDateTime timeOfPurchase;
 
     @NotNull(message = "quantity is required")
     @Positive(message = "quantity must be positive")
     private int quantity;
 
     @PastOrPresent(message = "time filled cannot be in the future")
-    private LocalDate timeFilled;
+    private LocalDateTime timeFilled;
 
     @NotNull(message = "purchase price is required")
     @PositiveOrZero(message = "price must be non-negative")

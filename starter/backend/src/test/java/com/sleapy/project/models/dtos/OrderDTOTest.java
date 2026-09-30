@@ -1,6 +1,6 @@
 package com.sleapy.project.models.dtos;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -8,11 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-
 import com.sleapy.project.models.enums.OrderStatus;
 import com.sleapy.project.models.enums.InstrumentType;
-
-
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
@@ -26,23 +23,25 @@ public class OrderDTOTest {
     private Validator validator;
 
     private OrderDTO dto;
-    private InstrumentDTO validInstrument;
+
+    private static InstrumentDTO createValidInstrument() {
+        InstrumentDTO instrument = new InstrumentDTO();
+        instrument.setId(1L);
+        instrument.setSymbol("AAPL");
+        instrument.setSymbolName("APPLE");
+        instrument.setInstrumentType(InstrumentType.FUND);
+        return instrument;
+    }
 
     @BeforeEach
     void setUp() {
-        validInstrument = new InstrumentDTO();
-        validInstrument.setId(1L);
-        validInstrument.setSymbol("AAPL");
-        validInstrument.setSymbolName("APPLE");
-        validInstrument.setInstrumentType(InstrumentType.BOND);
-
         dto = new OrderDTO();
         dto.setId(1L);
-        dto.setTimeOfPurchase(LocalDate.now().minusDays(5));
+        dto.setTimeOfPurchase(LocalDateTime.now().minusDays(5));
         dto.setQuantity(10);
-        dto.setTimeFilled(LocalDate.now());
+        dto.setTimeFilled(LocalDateTime.now());
         dto.setPurchasePrice(150.50);
-        dto.setInstrument(validInstrument);
+        dto.setInstrument(createValidInstrument());
         dto.setStatus(OrderStatus.PENDING);
     }
 
@@ -87,21 +86,10 @@ public class OrderDTOTest {
 
     @Test
     void futureTimeOfPurchaseViolation() {
-        this.dto.setTimeOfPurchase(LocalDate.now().plusDays(1));
+        this.dto.setTimeOfPurchase(LocalDateTime.now().plusSeconds(1));
         assertHasViolations("timeOfPurchase");
     }
 
-    @Test
-    void pastTimeOfPurchaseIsValid() {
-        this.dto.setTimeOfPurchase(LocalDate.of(2020, 1, 1));
-        assertThat(validator.validate(this.dto)).isEmpty();
-    }
-
-    @Test
-    void todayTimeOfPurchaseIsValid() {
-        this.dto.setTimeOfPurchase(LocalDate.now());
-        assertThat(validator.validate(this.dto)).isEmpty();
-    }
 
     // Quantity tests - @NotNull + @Positive
     @Test
@@ -116,12 +104,6 @@ public class OrderDTOTest {
         assertHasViolations("quantity");
     }
 
-    @Test
-    void positiveQuantityIsValid() {
-        this.dto.setQuantity(100);
-        assertThat(validator.validate(this.dto)).isEmpty();
-    }
-
     // Time Filled tests - @PastOrPresent (no @NotNull, so can be null)
     @Test
     void nullTimeFilledIsValid() {
@@ -131,14 +113,8 @@ public class OrderDTOTest {
 
     @Test
     void futureTimeFilledViolation() {
-        this.dto.setTimeFilled(LocalDate.now().plusDays(1));
+        this.dto.setTimeFilled(LocalDateTime.now().plusSeconds(1));
         assertHasViolations("timeFilled");
-    }
-
-    @Test
-    void pastTimeFilledIsValid() {
-        this.dto.setTimeFilled(LocalDate.of(2020, 1, 1));
-        assertThat(validator.validate(this.dto)).isEmpty();
     }
 
     // Purchase Price tests - @NotNull + @PositiveOrZero

@@ -30,11 +30,9 @@ public class HoldingDTO {
     @Valid
     private ClientDTO client; // The owner of this holding
 
-    @NotNull(message = "total shares cannot be null")
     @PositiveOrZero(message = "total shares must be zero or positive")
     private double totalShares; // Total number of shares owned
 
-    @NotNull(message = "total price cannot be null")
     @PositiveOrZero(message = "total price must be zero or positive")
     private double totalPrice; // Total cost basis (shares × purchase price)
     
