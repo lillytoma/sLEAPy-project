@@ -61,12 +61,12 @@ const TICKER_ITEMS = [
       </div>
 
       <!-- Hero Section -->
-      <section class="relative flex-1 overflow-hidden flex" style="min-height:600px">
-        <!-- Left: Hero (compresses to 50% when sign-in is open) -->
-        <div class="flex flex-col justify-center px-10 py-20 transition-all duration-500"
-          [style.width]="showSignIn() ? '50%' : '100%'"
+      <section class="relative flex-1 overflow-hidden flex" style="min-height:600px;background-color:var(--background)">
+        <!-- Left: Hero content (animates width) -->
+        <div class="flex flex-col justify-center items-center px-10 py-20 transition-all duration-500 flex-1"
+          [style.width.%]="showSignIn() ? 50 : 100"
           [style.min-width]="showSignIn() ? '320px' : '0'">
-          <div class="max-w-xl">
+          <div class="max-w-2xl text-center">
             <p class="text-sm font-medium mb-4 tracking-wider uppercase" style="color:var(--accent)">Smart trading for everyone</p>
             <h1 class="font-serif text-5xl lg:text-6xl font-bold leading-tight mb-6" style="color:var(--foreground)">
               Welcome to<br>
@@ -75,7 +75,7 @@ const TICKER_ITEMS = [
             <p class="text-xl mb-8" style="color:var(--muted-foreground)">
               Trading made so easy<br>you can do it in your <em class="font-serif" style="color:var(--accent)">sLEAP</em>
             </p>
-            <div class="flex flex-wrap gap-4">
+            <div class="flex flex-wrap gap-4 justify-center">
               <a routerLink="/signup"
                 class="px-8 py-3 text-base font-semibold rounded-md"
                 style="background-color:var(--primary);color:var(--primary-foreground)">
@@ -90,9 +90,9 @@ const TICKER_ITEMS = [
           </div>
         </div>
 
-        <!-- Right: Sign-in panel (slides in from right) -->
+        <!-- Right: Sign-in Panel (slides in from right) -->
         @if (showSignIn()) {
-          <div class="slide-in-right flex items-center justify-center p-10 overflow-y-auto" style="background-color:var(--card);width:50%;min-width:320px;flex-shrink:0">
+          <div class="slide-in-right flex items-center justify-center p-10 overflow-y-auto transition-all duration-500" style="background-color:var(--card);width:50%;min-width:320px;flex-shrink:0">
             <div class="w-full max-w-sm">
               <div class="flex items-center justify-between mb-8">
                 <h2 class="font-serif text-3xl font-bold" style="color:var(--foreground)">Welcome back</h2>
@@ -134,54 +134,6 @@ const TICKER_ITEMS = [
         }
       </section>
 
-      <!-- Stats Band -->
-      <section class="py-14" style="background-color:var(--primary)">
-        <div class="max-w-6xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          @for (stat of stats; track stat.label) {
-            <div>
-              <div class="font-serif text-4xl font-bold mb-1" style="color:var(--primary-foreground)">{{ stat.value }}</div>
-              <div class="text-sm" style="color:rgba(244,241,222,0.7)">{{ stat.label }}</div>
-            </div>
-          }
-        </div>
-      </section>
-
-      <!-- Features Grid -->
-      <section class="py-20 px-6">
-        <div class="max-w-6xl mx-auto">
-          <h2 class="font-serif text-4xl font-bold text-center mb-4" style="color:var(--foreground)">Everything you need to trade smarter</h2>
-          <p class="text-center mb-16 max-w-2xl mx-auto" style="color:var(--muted-foreground)">
-            sLEAPy Stocks gives you professional-grade tools with a simple, intuitive interface that won't keep you up at night.
-          </p>
-          <div class="grid md:grid-cols-3 gap-8">
-            @for (feature of features; track feature.title) {
-              <div class="p-6 rounded-xl border" style="background-color:var(--card);border-color:var(--border)">
-                <div class="text-3xl mb-4">{{ feature.icon }}</div>
-                <h3 class="font-semibold text-lg mb-2" style="color:var(--foreground)">{{ feature.title }}</h3>
-                <p class="text-sm leading-relaxed" style="color:var(--muted-foreground)">{{ feature.desc }}</p>
-              </div>
-            }
-          </div>
-        </div>
-      </section>
-
-      <!-- CTA Section -->
-      <section class="py-20 px-6" style="background-color:var(--card)">
-        <div class="max-w-3xl mx-auto text-center">
-          <h2 class="font-serif text-5xl font-bold mb-6" style="color:var(--foreground)">
-            Start trading in your <em style="color:var(--accent)">sLEAP</em>
-          </h2>
-          <p class="text-lg mb-10" style="color:var(--muted-foreground)">
-            Join thousands of investors who trust sLEAPy Stocks to grow their wealth effortlessly.
-          </p>
-          <a routerLink="/signup"
-            class="inline-block px-10 py-4 text-lg font-semibold rounded-md"
-            style="background-color:var(--primary);color:var(--primary-foreground)">
-            Create Your Free Account
-          </a>
-        </div>
-      </section>
-
       <!-- Footer -->
       <footer class="py-10 px-6 border-t" style="border-color:var(--border)">
         <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
@@ -221,12 +173,21 @@ export class LandingComponent {
     { icon: '📱', title: 'Trade Anywhere', desc: 'Full-featured mobile experience so you can manage your portfolio from anywhere.' },
   ];
 
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService, private router: Router) {}
 
   doLogin(): void {
-    const success = this.authService.login(this.email, this.password);
-    if (!success) {
-      this.loginError.set(true);
-    }
+    this.authService.login(this.email, this.password).subscribe({
+      next: (response) => {
+        this.authService.isLoggedIn.set(true);
+        this.authService.userName.set(response.userName);
+        this.authService.userInitials.set(response.userInitials);
+        this.router.navigate(['/dashboard']);
+        this.loginError.set(false);
+      },
+      error: (err) => {
+        console.error('Login failed', err);
+        this.loginError.set(true);
+      }
+    });
   }
 }

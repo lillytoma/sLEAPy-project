@@ -135,12 +135,12 @@ export class DashboardComponent {
   }
 
   navItems: NavItem[] = [
-    { label: 'Dashboard', icon: '📊', route: '/dashboard/home' },
-    { label: 'Portfolio', icon: '💼', route: '/dashboard/portfolio' },
-    { label: 'Markets', icon: '📈', route: '/dashboard/markets' },
-    { label: 'Watchlist', icon: '⭐', route: '/dashboard/watchlist' },
-    { label: 'History', icon: '📋', route: '/dashboard/history' },
-    { label: 'Settings', icon: '⚙️', route: '/dashboard/settings' },
+    { label: 'Dashboard', icon: '', route: '/dashboard/home' },
+    { label: 'Portfolio', icon: '', route: '/dashboard/portfolio' },
+    { label: 'Markets', icon: '', route: '/dashboard/markets' },
+    { label: 'Watchlist', icon: '', route: '/dashboard/watchlist' },
+    { label: 'History', icon: '', route: '/dashboard/history' },
+    { label: 'Settings', icon: '', route: '/dashboard/settings' },
   ];
 
   constructor(
