@@ -25,6 +25,8 @@ public class GlobalExceptionHandler {
         List<FieldError> errors = e.getBindingResult().getFieldErrors().stream()
         .map(field -> new FieldError(field.getObjectName(), field.getField(), field.getDefaultMessage()))
         .toList();
+
+        e.printStackTrace();
     
         return ResponseEntity.badRequest().body(
             ErrorResponse.withFieldErrors(
@@ -39,6 +41,8 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(NoSuchElementException.class)
     ResponseEntity<ErrorResponse> handleNotFound(NoSuchElementException e, HttpServletRequest request) {
+        e.printStackTrace();
+
         return ResponseEntity.status(404).body(
             ErrorResponse.of(404, "Not Found", e.getMessage(), request.getRequestURI())
         );     
@@ -51,6 +55,8 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(InsufficientCashException.class)
     ResponseEntity<ErrorResponse> handleInsufficentCash(InsufficientCashException e, HttpServletRequest request) {
+        e.printStackTrace();
+
         return ResponseEntity.status(422).body(
             ErrorResponse.of(422, "Insufficient Cash", e.getMessage(), request.getRequestURI())
         );   
@@ -63,6 +69,8 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(InsufficientSharesException.class)
     ResponseEntity<ErrorResponse> handleInsufficentShares(InsufficientSharesException e, HttpServletRequest request) {
+        e.printStackTrace();
+
         return ResponseEntity.status(422).body(
             ErrorResponse.of(422, "Insufficient Shares", e.getMessage(), request.getRequestURI())
         );   
@@ -76,6 +84,8 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(InvalidEmailFormatException.class)
     ResponseEntity<ErrorResponse> handleInvalidEmail(InvalidEmailFormatException e, HttpServletRequest request) {
+        e.printStackTrace();
+
         return ResponseEntity.status(422).body(
             ErrorResponse.of(422, "Invalid Email", e.getMessage(), request.getRequestURI())
         );   
@@ -87,6 +97,8 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     ResponseEntity<ErrorResponse> handleUnexpected(Exception e, HttpServletRequest request) {
+        e.printStackTrace();
+
         return ResponseEntity.status(500).body(
             ErrorResponse.of(500, "Unexpected Error", "Something unexpected occured", request.getRequestURI())
         );   
