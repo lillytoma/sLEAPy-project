@@ -6,20 +6,25 @@ spring:
     username: ${POSTGRES_USER:postgres}
     password: ${POSTGRES_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
-  jpa:
-    # Disable JPA auto-configuration (using MyBatis instead)
-    enabled: false
-    hibernate:
-      ddl-auto: none
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
-
+# spring:
+#   datasource:
+#     url: jdbc:postgresql://localhost:8101/sleapy_analyst
+#     username: ${POSTGRES_USER:postgres}
+#     password: ${POSTGRES_PASSWORD:postgres}
+#     driver-class-name: org.postgresql.Driver
 # MyBatis configuration
 mybatis:
   mapper-locations: classpath:mappers/*.xml
   configuration:
     map-underscore-to-camel-case: true
+
+# JWT Configuration
+jwt:
+  # Secret key must be at least 32 characters (256 bits) for HS256 algorithm
+  # In production, store this in environment variables, NOT in code!
+  secret: your_super_secret_key_change_this_in_production_at_least_32_chars
+  # Token expiration: 86400000 milliseconds = 24 hours
+  expiration: 86400000
 
 # Server configuration
 server:

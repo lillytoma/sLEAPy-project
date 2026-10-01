@@ -17,7 +17,7 @@ import javax.sql.DataSource;
  * XML mapper files are located in src/main/resources/mappers/
  */
 @Configuration
-@MapperScan("com.sleapy.project.repositories")
+@MapperScan("com.sleapy.project.mappers")
 public class MyBatisConfig {
     
     /**
