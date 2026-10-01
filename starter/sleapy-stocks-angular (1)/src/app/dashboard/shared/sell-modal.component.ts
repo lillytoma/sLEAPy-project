@@ -1,0 +1,195 @@
+import { Component, Input, Output, EventEmitter, signal, computed, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { PortfolioService } from '../../services/portfolio.service';
+
+@Component({
+  selector: 'app-sell-modal',
+  standalone: true,
+  imports: [FormsModule],
+  template: `
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style="background-color:rgba(0,0,0,0.6)"
+      (click)="onBackdropClick($event)">
+      <div class="w-full max-w-md rounded-xl border shadow-2xl fade-in"
+        style="background-color:var(--card);border-color:var(--border)"
+        (click)="$event.stopPropagation()">
+
+        @if (!success()) {
+          <!-- Header -->
+          <div class="flex items-center justify-between px-6 py-4 border-b" style="border-color:var(--border)">
+            <div>
+              <h2 class="text-lg font-semibold" style="color:var(--foreground)">Sell {{ symbol }}</h2>
+              <p class="text-sm" style="color:var(--muted-foreground)">You own {{ sharesOwned }} shares</p>
+            </div>
+            <button (click)="close.emit()" style="color:var(--muted-foreground)" class="p-1 hover:opacity-70">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="px-6 py-5 space-y-5">
+            <!-- Current price -->
+            <div class="flex items-center justify-between p-3 rounded-lg" style="background-color:var(--muted)">
+              <span class="text-sm" style="color:var(--muted-foreground)">Current Price</span>
+              <span class="font-mono font-semibold" style="color:var(--foreground)">\${{ currentPrice.toFixed(2) }}</span>
+            </div>
+
+            <!-- Quick sell buttons -->
+            <div>
+              <label class="block text-sm font-medium mb-2" style="color:var(--foreground)">Quick Sell</label>
+              <div class="grid grid-cols-4 gap-2">
+                @for (pct of quickSellPcts; track pct) {
+                  <button (click)="setSharesByPct(pct)"
+                    class="py-2 text-xs font-medium rounded-md border transition-colors"
+                    style="border-color:var(--border);color:var(--foreground);background-color:var(--background)">
+                    {{ pct === 100 ? 'All' : pct + '%' }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Order type toggle -->
+            <div>
+              <label class="block text-sm font-medium mb-2" style="color:var(--foreground)">Order Type</label>
+              <div class="flex rounded-md overflow-hidden border" style="border-color:var(--border)">
+                <button (click)="orderType.set('market')"
+                  class="flex-1 py-2 text-sm font-medium transition-colors"
+                  [style.background-color]="orderType() === 'market' ? 'var(--error)' : 'var(--background)'"
+                  [style.color]="orderType() === 'market' ? '#fff' : 'var(--muted-foreground)'">
+                  Market
+                </button>
+                <button (click)="orderType.set('limit')"
+                  class="flex-1 py-2 text-sm font-medium transition-colors"
+                  [style.background-color]="orderType() === 'limit' ? 'var(--error)' : 'var(--background)'"
+                  [style.color]="orderType() === 'limit' ? '#fff' : 'var(--muted-foreground)'">
+                  Limit
+                </button>
+              </div>
+            </div>
+
+            <!-- Shares input -->
+            <div>
+              <label class="block text-sm font-medium mb-1.5" style="color:var(--foreground)">Shares to Sell</label>
+              <input type="number" [(ngModel)]="sharesToSell" [min]="1" [max]="sharesOwned"
+                class="w-full px-4 py-2.5 rounded-md text-sm border outline-none font-mono"
+                style="background-color:var(--background);color:var(--foreground);border-color:var(--border)" />
+            </div>
+
+            <!-- Limit price -->
+            @if (orderType() === 'limit') {
+              <div>
+                <label class="block text-sm font-medium mb-1.5" style="color:var(--foreground)">Limit Price</label>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style="color:var(--muted-foreground)">$</span>
+                  <input type="number" [(ngModel)]="limitPrice" [placeholder]="currentPrice.toFixed(2)"
+                    class="w-full pl-7 pr-4 py-2.5 rounded-md text-sm border outline-none font-mono"
+                    style="background-color:var(--background);color:var(--foreground);border-color:var(--border)" />
+                </div>
+              </div>
+            }
+
+            <!-- Estimated proceeds -->
+            <div class="p-4 rounded-lg border" style="border-color:var(--border);background-color:var(--background)">
+              <div class="flex items-center justify-between">
+                <span class="text-sm" style="color:var(--muted-foreground)">Estimated Proceeds</span>
+                <span class="font-mono font-bold text-lg" style="color:var(--error)">\${{ estimatedProceeds().toFixed(2) }}</span>
+              </div>
+              <p class="text-xs mt-1" style="color:var(--muted-foreground)">
+                {{ sharesToSell || 0 }} shares × \${{ effectivePrice().toFixed(2) }}
+              </p>
+            </div>
+
+            <!-- Warning strip -->
+            <div class="flex items-start gap-2 p-3 rounded-md" style="background-color:rgba(125,18,30,0.1)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="flex-shrink-0 mt-0.5" style="color:var(--error)">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+              </svg>
+              <p class="text-xs" style="color:var(--error)">
+                Sell orders are executed at market price. Capital gains taxes may apply.
+              </p>
+            </div>
+
+            <!-- Submit -->
+            <button (click)="executeSell()"
+              [disabled]="!sharesToSell || sharesToSell < 1 || sharesToSell > sharesOwned"
+              class="w-full py-3 rounded-md font-semibold text-sm transition-opacity"
+              style="background-color:var(--error);color:#fff"
+              [style.opacity]="(!sharesToSell || sharesToSell < 1 || sharesToSell > sharesOwned) ? '0.5' : '1'">
+              Place Sell Order
+            </button>
+          </div>
+        } @else {
+          <!-- Success state -->
+          <div class="px-6 py-10 text-center">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+              style="background-color:var(--error);color:#fff">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold mb-2" style="color:var(--foreground)">Order Placed!</h3>
+            <p class="text-sm mb-1" style="color:var(--muted-foreground)">
+              Sold {{ confirmedShares() }} shares of <strong>{{ symbol }}</strong>
+            </p>
+            <p class="font-mono font-bold text-lg mb-6" style="color:var(--error)">
+              \${{ confirmedProceeds().toFixed(2) }}
+            </p>
+            <button (click)="close.emit()"
+              class="px-8 py-2.5 rounded-md font-semibold text-sm"
+              style="background-color:var(--primary);color:var(--primary-foreground)">
+              Done
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  `,
+})
+export class SellModalComponent implements OnInit {
+  @Input() symbol: string = '';
+  @Input() sharesOwned: number = 0;
+  @Input() currentPrice: number = 0;
+  @Output() close = new EventEmitter<void>();
+
+  orderType = signal<'market' | 'limit'>('market');
+  sharesToSell: number = 0;
+  limitPrice: number = 0;
+  success = signal(false);
+  confirmedShares = signal(0);
+  confirmedProceeds = signal(0);
+
+  quickSellPcts = [25, 50, 75, 100];
+
+  constructor(private portfolioService: PortfolioService) {}
+
+  ngOnInit(): void {
+    this.limitPrice = this.currentPrice;
+  }
+
+  effectivePrice = computed(() => {
+    if (this.orderType() === 'limit' && this.limitPrice > 0) return this.limitPrice;
+    return this.currentPrice;
+  });
+
+  estimatedProceeds = computed(() => (this.sharesToSell || 0) * this.effectivePrice());
+
+  setSharesByPct(pct: number): void {
+    this.sharesToSell = Math.floor(this.sharesOwned * pct / 100);
+  }
+
+  executeSell(): void {
+    if (!this.sharesToSell || this.sharesToSell < 1 || this.sharesToSell > this.sharesOwned) return;
+    const proceeds = this.sharesToSell * this.effectivePrice();
+    this.confirmedShares.set(this.sharesToSell);
+    this.confirmedProceeds.set(proceeds);
+    this.portfolioService.sellShares(this.symbol, this.sharesToSell);
+    this.success.set(true);
+  }
+
+  onBackdropClick(event: Event): void {
+    if (event.target === event.currentTarget) {
+      this.close.emit();
+    }
+  }
+}

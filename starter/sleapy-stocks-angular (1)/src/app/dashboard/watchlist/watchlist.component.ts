@@ -1,0 +1,155 @@
+import { Component, computed, signal } from '@angular/core';
+import { PortfolioService } from '../../services/portfolio.service';
+import { extendedWatchlist, MARKET_STOCKS, MarketStock, WatchlistStock } from '../../data/mock-data';
+import { BuyModalComponent } from '../shared/buy-modal.component';
+import { SellModalComponent } from '../shared/sell-modal.component';
+
+@Component({
+  selector: 'app-watchlist',
+  standalone: true,
+  imports: [BuyModalComponent, SellModalComponent],
+  template: `
+    <div class="space-y-5">
+      <!-- Header -->
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-semibold" style="color:var(--foreground)">Your Watchlist</h2>
+          <p class="text-sm mt-1" style="color:var(--muted-foreground)">{{ watchlistItems().length }} stocks being watched</p>
+        </div>
+      </div>
+
+      @if (watchlistItems().length === 0) {
+        <!-- Empty state -->
+        <div class="rounded-xl border p-16 text-center" style="background-color:var(--card);border-color:var(--border)">
+          <div class="text-5xl mb-4">⭐</div>
+          <h3 class="text-lg font-semibold mb-2" style="color:var(--foreground)">No stocks on your watchlist</h3>
+          <p class="text-sm" style="color:var(--muted-foreground)">
+            Star stocks on the Markets page to add them here.
+          </p>
+        </div>
+      } @else {
+        <!-- Watchlist Table -->
+        <div class="rounded-xl border overflow-hidden" style="background-color:var(--card);border-color:var(--border)">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr style="border-bottom:1px solid var(--border)">
+                  <th class="px-3 py-3 w-10 text-center font-medium" style="color:var(--muted-foreground)">☆</th>
+                  <th class="px-4 py-3 text-left font-medium" style="color:var(--muted-foreground)">Symbol</th>
+                  <th class="px-4 py-3 text-right font-medium" style="color:var(--muted-foreground)">Price</th>
+                  <th class="px-4 py-3 text-right font-medium" style="color:var(--muted-foreground)">Change</th>
+                  <th class="px-4 py-3 text-right font-medium hidden md:table-cell" style="color:var(--muted-foreground)">52W High</th>
+                  <th class="px-4 py-3 text-right font-medium hidden md:table-cell" style="color:var(--muted-foreground)">52W Low</th>
+                  <th class="px-4 py-3 text-right font-medium hidden sm:table-cell" style="color:var(--muted-foreground)">Mkt Cap</th>
+                  <th class="px-4 py-3 text-right font-medium" style="color:var(--muted-foreground)">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of watchlistItems(); track item.symbol) {
+                  <tr style="border-bottom:1px solid var(--border)">
+                    <td class="px-3 py-3 text-center">
+                      <button (click)="removeFromWatchlist(item.symbol)"
+                        class="text-lg transition-colors" style="color:#F59E0B">
+                        ★
+                      </button>
+                    </td>
+                    <td class="px-4 py-3">
+                      <p class="font-semibold" style="color:var(--foreground)">{{ item.symbol }}</p>
+                      <p class="text-xs" style="color:var(--muted-foreground)">{{ item.name }}</p>
+                    </td>
+                    <td class="px-4 py-3 text-right font-mono" style="color:var(--foreground)">\${{ item.price.toFixed(2) }}</td>
+                    <td class="px-4 py-3 text-right font-mono"
+                      [style.color]="item.change >= 0 ? 'var(--success)' : 'var(--error)'">
+                      {{ item.change >= 0 ? '+' : '' }}{{ item.change.toFixed(2) }}%
+                    </td>
+                    <td class="px-4 py-3 text-right font-mono hidden md:table-cell" style="color:var(--muted-foreground)">\${{ item.high52.toFixed(2) }}</td>
+                    <td class="px-4 py-3 text-right font-mono hidden md:table-cell" style="color:var(--muted-foreground)">\${{ item.low52.toFixed(2) }}</td>
+                    <td class="px-4 py-3 text-right font-mono hidden sm:table-cell" style="color:var(--muted-foreground)">{{ item.mktCap }}</td>
+                    <td class="px-4 py-3">
+                      <div class="flex items-center gap-2 justify-end">
+                        <button (click)="openBuy(item)"
+                          class="px-3 py-1 text-xs font-medium rounded-md whitespace-nowrap"
+                          style="background-color:rgba(87,136,108,0.15);color:var(--success)">
+                          Buy
+                        </button>
+                        @if (portfolioService.getHolding(item.symbol)) {
+                          <button (click)="openSell(item)"
+                            class="px-3 py-1 text-xs font-medium rounded-md whitespace-nowrap"
+                            style="background-color:rgba(125,18,30,0.1);color:var(--error)">
+                            Sell
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Buy Modal -->
+    @if (buyModalStock()) {
+      <app-buy-modal [stock]="buyModalStock()!" (close)="buyModalStock.set(null)"></app-buy-modal>
+    }
+
+    <!-- Sell Modal -->
+    @if (sellModal()) {
+      <app-sell-modal
+        [symbol]="sellModal()!.symbol"
+        [sharesOwned]="sellModal()!.shares"
+        [currentPrice]="sellModal()!.price"
+        (close)="sellModal.set(null)">
+      </app-sell-modal>
+    }
+  `,
+})
+export class WatchlistComponent {
+  buyModalStock = signal<MarketStock | null>(null);
+  sellModal = signal<{ symbol: string; shares: number; price: number } | null>(null);
+
+  constructor(public portfolioService: PortfolioService) {}
+
+  watchlistItems = computed((): WatchlistStock[] => {
+    const symbols = this.portfolioService.watchlistedSymbols();
+    return symbols
+      .map((sym) => extendedWatchlist.find((w) => w.symbol === sym))
+      .filter((item): item is WatchlistStock => item !== undefined);
+  });
+
+  removeFromWatchlist(symbol: string): void {
+    this.portfolioService.toggleWatchlist(symbol);
+  }
+
+  openBuy(item: WatchlistStock): void {
+    const marketStock = MARKET_STOCKS.find((s) => s.symbol === item.symbol);
+    if (marketStock) {
+      this.buyModalStock.set(marketStock);
+    } else {
+      this.buyModalStock.set({
+        symbol: item.symbol,
+        name: item.name,
+        chg: item.change,
+        price: item.price,
+        vol: '—',
+        relVol: '—',
+        mktCap: item.mktCap,
+        pe: '—',
+        eps: 0,
+        epsGrowth: 0,
+        divYield: '0.00%',
+        sector: '—',
+        rating: '—',
+      });
+    }
+  }
+
+  openSell(item: WatchlistStock): void {
+    const h = this.portfolioService.getHolding(item.symbol);
+    if (h) {
+      this.sellModal.set({ symbol: item.symbol, shares: h.shares, price: item.price });
+    }
+  }
+}
