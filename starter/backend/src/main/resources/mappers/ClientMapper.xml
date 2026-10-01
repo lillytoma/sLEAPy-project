@@ -9,6 +9,7 @@
     <id column="client_id" property="id" />
     
     <!-- Client fields -->
+    <result column="username" property="username" />
     <result column="email" property="email" />
     <result column="cash_balance" property="cashBalance" />
     <result column="password_hash" property="passwordHash" />
@@ -25,7 +26,7 @@
 
   <!-- Find client by ID with status lookup -->
   <select id="findById" parameterType="Long" resultMap="ClientResultMap">
-    SELECT c.client_id, c.email, c.cash_balance, c.password_hash, c.address, 
+    SELECT c.client_id, c.username, c.email, c.cash_balance, c.password_hash, c.address, 
            c.phone_number, c.ssn, c.clientstatus_id, cs.clientstatus_name
     FROM clients c
     LEFT JOIN client_status cs ON c.clientstatus_id = cs.clientstatus_id
@@ -34,7 +35,7 @@
 
   <!-- Find client by email with status lookup -->
   <select id="findByEmail" parameterType="String" resultMap="ClientResultMap">
-    SELECT c.client_id, c.email, c.cash_balance, c.password_hash, c.address, 
+    SELECT c.client_id, c.username, c.email, c.cash_balance, c.password_hash, c.address, 
            c.phone_number, c.ssn, c.clientstatus_id, cs.clientstatus_name
     FROM clients c
     LEFT JOIN client_status cs ON c.clientstatus_id = cs.clientstatus_id
@@ -43,7 +44,7 @@
 
   <!-- Retrieve all clients with status lookup -->
   <select id="findAll" resultMap="ClientResultMap">
-    SELECT c.client_id, c.email, c.cash_balance, c.password_hash, c.address, 
+    SELECT c.client_id, c.username, c.email, c.cash_balance, c.password_hash, c.address, 
            c.phone_number, c.ssn, c.clientstatus_id, cs.clientstatus_name
     FROM clients c
     LEFT JOIN client_status cs ON c.clientstatus_id = cs.clientstatus_id
@@ -51,14 +52,15 @@
 
   <!-- Insert new client (auto-generated ID) -->
   <insert id="save" parameterType="com.sleapy.project.models.entities.ClientEntity" useGeneratedKeys="true" keyProperty="id">
-    INSERT INTO clients (email, cash_balance, password_hash, address, phone_number, ssn, clientstatus_id)
-    VALUES (#{email}, #{cashBalance}, #{passwordHash}, #{address}, #{phoneNumber}, #{ssn}, #{clientStatus.id})
+    INSERT INTO clients (username, email, cash_balance, password_hash, address, phone_number, ssn, clientstatus_id)
+    VALUES (#{username}, #{email}, #{cashBalance}, #{passwordHash}, #{address}, #{phoneNumber}, #{ssn}, #{clientStatus.id})
   </insert>
 
   <!-- Update existing client -->
   <update id="update" parameterType="com.sleapy.project.models.entities.ClientEntity">
     UPDATE clients
-    SET email = #{email}, 
+    SET username = #{username},
+        email = #{email}, 
         cash_balance = #{cashBalance}, 
         password_hash = #{passwordHash},
         address = #{address}, 
