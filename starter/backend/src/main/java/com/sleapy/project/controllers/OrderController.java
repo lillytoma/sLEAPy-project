@@ -5,6 +5,7 @@ import com.sleapy.project.services.OrderService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,8 +26,9 @@ public class OrderController {
     //fetch and render transaction list
     // test with: curl -iX GET localhost:8081/api/orders/?clientId=1
     @GetMapping("/")
-    public ResponseEntity<?> getTransactions(@RequestParam Long clientId) {
+    public ResponseEntity<?> getTransactions(@RequestParam Long clientId, @RequestHeader("Authorization") String authHeader) {
         try{
+            
             List<OrderDTO> transactionList = orderService.getTransactionsPerClient(clientId);
             return  ResponseEntity.ok(transactionList);
         } catch (NoSuchElementException e) {
