@@ -22,7 +22,7 @@ public class ClientController {
         this.clientService = cs;
     }
 
-    @GetMapping("/{clientId}/balance")
+    @GetMapping("/{clientId}/cash-balance")
     public ResponseEntity<Double> getCashBalance(@PathVariable Long clientId) {
 
         double balance = clientService.getCashBalance(clientId);
