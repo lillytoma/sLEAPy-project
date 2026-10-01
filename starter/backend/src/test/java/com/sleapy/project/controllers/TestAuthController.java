@@ -7,9 +7,14 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.sleapy.project.exceptions.InvalidEmailFormatException;
+import com.sleapy.project.mappers.ClientMapper;
 import com.sleapy.project.models.dtos.LoginRequestDTO;
+import com.sleapy.project.models.entities.ClientEntity;
 import com.sleapy.project.services.ClientService;
+import com.sleapy.project.services.JwtService;
 import com.sleapy.project.validators.ClientValidator;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -29,6 +34,12 @@ class TestAuthController {
  
     @MockitoBean // Mocks the controller dependency used by the web layer
     private ClientValidator clientValidator;
+
+    @MockitoBean
+    private ClientMapper clientMapper;
+
+    @MockitoBean
+    private JwtService jwtService;
  
     // Test cases will go here
     @Test
@@ -39,13 +50,21 @@ class TestAuthController {
             "TestPassword123"
         );
 
+        ClientEntity user = new ClientEntity();
+        user.setId(1L);
+        user.setEmail(request.getEmail());
+
         when(clientService.checkCredentials(anyString(), anyString())).thenReturn(true);
+        when(clientMapper.findByEmail(request.getEmail())).thenReturn(Optional.of(user));
+        when(jwtService.generateToken(request.getEmail(), 1L)).thenReturn("mock-jwt-token");
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"" + request.getEmail() + "\",\"password\":\"" + request.getPassword() + "\"}"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Login successful"));
+            .andExpect(jsonPath("$.email").value("Login successful"))
+            .andExpect(jsonPath("$.userID").value(1))
+            .andExpect(jsonPath("$.token").value("mock-jwt-token"));
     }
 
     @Test
