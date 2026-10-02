@@ -19,11 +19,6 @@ import java.math.BigDecimal;
 @AllArgsConstructor 
 public class HoldingDTO {
     
-    private Long holdingId;                   // Unique holding identifier
-    private InstrumentDTO instrument;         // The financial instrument owned
-    private ClientDTO client;                 // The owner of this holding
-    private BigDecimal quantity;              // Number of shares owned
-    private BigDecimal costBasis;             // Total cost basis (quantity × purchase_price)
     private BigDecimal currentMarketValue;    // Current market value (quantity × current_price)
     private BigDecimal unrealizedGainLoss;    // Unrealized gain/loss (currentMarketValue - costBasis)
     
@@ -40,9 +35,9 @@ public class HoldingDTO {
     private ClientDTO client; // The owner of this holding
 
     @PositiveOrZero(message = "total shares must be zero or positive")
-    private double totalShares; // Total number of shares owned
+    private BigDecimal totalShares; // Total number of shares owned
 
     @PositiveOrZero(message = "total price must be zero or positive")
-    private double totalPrice; // Total cost basis (shares × purchase price)
+    private BigDecimal totalPrice; // Total cost basis (shares × purchase price)
     
 }

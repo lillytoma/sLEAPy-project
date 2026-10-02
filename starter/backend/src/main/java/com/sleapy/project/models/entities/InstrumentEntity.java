@@ -19,9 +19,8 @@ public class InstrumentEntity {
     private Long id; // AAPL
     private String symbol; // Apple Inc.
     private String symbolName; // instrument type lookup
-    private InstrumentType instrumentType;
-    private BigDecimal currentPrice; //current market price of the instrument
     private InstrumentTypeEntity instrumentType;
+    private BigDecimal currentPrice; //current market price of the instrument
 
 
 }

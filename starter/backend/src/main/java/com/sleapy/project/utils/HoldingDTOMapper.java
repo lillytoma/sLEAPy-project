@@ -4,6 +4,7 @@ import com.sleapy.project.models.dtos.HoldingDTO;
 import com.sleapy.project.models.dtos.InstrumentDTO;
 import com.sleapy.project.models.dtos.ClientDTO;
 import com.sleapy.project.models.entities.HoldingEntity;
+import com.sleapy.project.models.enums.InstrumentType;
 import java.math.BigDecimal;
 
 /**
@@ -21,16 +22,23 @@ public class HoldingDTOMapper {
 
         HoldingDTO dto = new HoldingDTO();
         
-        dto.setHoldingId(entity.getId());
-        dto.setQuantity(entity.getQuantityShares());
+        dto.setId(entity.getId());
+        dto.setTotalShares(entity.getQuantityShares());
         
-        // Calculate cost basis: quantity × purchase_price
-        BigDecimal costBasis = entity.getQuantityShares().multiply(entity.getPurchasePrice());
-        dto.setCostBasis(costBasis);
+        // Calculate total price (cost basis): quantity × purchase_price
+        BigDecimal totalPrice = entity.getQuantityShares().multiply(entity.getPurchasePrice());
+        dto.setTotalPrice(totalPrice);
         
         // Convert the instrument entity to DTO
         if (entity.getInstrument() != null) {
-            dto.setInstrument(new InstrumentDTO(entity.getInstrument()));
+            com.sleapy.project.models.entities.InstrumentEntity instEntity = entity.getInstrument();
+            dto.setInstrument(new InstrumentDTO(
+                instEntity.getId(),
+                instEntity.getSymbol(),
+                instEntity.getSymbolName(),
+                InstrumentType.valueOf(instEntity.getInstrumentType().getName()),
+                instEntity.getCurrentPrice()
+            ));
         }
         
         // Convert the client entity to DTO
@@ -48,13 +56,13 @@ public class HoldingDTOMapper {
 
         HoldingEntity entity = new HoldingEntity();
         
-        entity.setId(dto.getHoldingId());
-        entity.setQuantityShares(dto.getQuantity());
+        entity.setId(dto.getId());
+        entity.setQuantityShares(dto.getTotalShares());
         
-        // Note: We need to extract purchase price from costBasis if it's set
-        // costBasis = quantity × purchasePrice, so purchasePrice = costBasis / quantity
-        if (dto.getCostBasis() != null && dto.getQuantity() != null && dto.getQuantity().compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal purchasePrice = dto.getCostBasis().divide(dto.getQuantity(), 2, java.math.RoundingMode.HALF_UP);
+        // Note: We need to extract purchase price from totalPrice if it's set
+        // totalPrice = quantity × purchasePrice, so purchasePrice = totalPrice / quantity
+        if (dto.getTotalPrice() != null && dto.getTotalShares() != null && dto.getTotalShares().compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal purchasePrice = dto.getTotalPrice().divide(dto.getTotalShares(), 2, java.math.RoundingMode.HALF_UP);
             entity.setPurchasePrice(purchasePrice);
         }
         
