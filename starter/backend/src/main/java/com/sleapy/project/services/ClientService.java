@@ -1,5 +1,6 @@
 package com.sleapy.project.services;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import java.util.NoSuchElementException;
 
 import com.sleapy.project.models.entities.ClientEntity;
 import com.sleapy.project.models.entities.ClientStatus;
@@ -25,7 +26,7 @@ public class ClientService {
 
     public double getCashBalance(Long clientId) {
         
-        ClientEntity client = clientMapper.findById(clientId).orElseThrow(() -> new RuntimeException("Client not found"));  
+        ClientEntity client = clientMapper.findById(clientId).orElseThrow(() -> new NoSuchElementException("Client not found"));  
         return client.getCashBalance(); // Return the actual current balance from the client entity
     }
     
