@@ -1,31 +1,46 @@
 package com.sleapy.project.models.dtos;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
-import com.sleapy.project.models.entities.OrderEntity;
+import com.sleapy.project.models.enums.OrderStatus;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data 
-public class OrderDTO{
-    public OrderDTO(OrderEntity entity){
-        this.instrument = new InstrumentDTO(entity.getInstrument());
-        this.timeOfPurchase = entity.getTimeOfPurchase();
-        this.quantity = entity.getQuantity();
-        this.timeFilled = entity.getTimeFilled();
-    }
+@NoArgsConstructor 
+@AllArgsConstructor 
+public class OrderDTO {
 
-    public OrderDTO(LocalDate timeOfPurchase, Integer quantity, InstrumentDTO instrument) {
-        this.timeOfPurchase = timeOfPurchase;
-        this.quantity = quantity;
-        this.instrument = instrument;
-    }
+    @NotNull(message = "order id is required")
+    @Positive(message = "order id must be positive")
+    private Long id;
 
-    private LocalDate timeOfPurchase;
-    private Integer quantity;
-    private LocalDate timeFilled;
+    @NotNull(message = "time of purchase is required")
+    @PastOrPresent(message = "time of purchase cannot be in the future")
+    private LocalDateTime timeOfPurchase;
 
- 
+    @NotNull(message = "quantity is required")
+    @Positive(message = "quantity must be positive")
+    private int quantity;
 
+    @PastOrPresent(message = "time filled cannot be in the future")
+    private LocalDateTime timeFilled;
+
+    @NotNull(message = "purchase price is required")
+    @PositiveOrZero(message = "price must be non-negative")
+    private double purchasePrice;
+
+    @NotNull(message = "instrument is required")
+    @Valid
     private InstrumentDTO instrument;
+
+    @NotNull(message = "order status is required")
+    private OrderStatus status;
 }

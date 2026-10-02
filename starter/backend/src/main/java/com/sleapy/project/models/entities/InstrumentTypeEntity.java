@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class InstrumentType {
+public class InstrumentTypeEntity {
     private Long instrumentType_id;
     private String name;
 }

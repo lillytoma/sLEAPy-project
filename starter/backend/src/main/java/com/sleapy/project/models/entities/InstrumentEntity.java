@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class InstrumentEntity {
-    public InstrumentEntity(Long id, String symbol, String symbolName, InstrumentType instrumentType) {
+    public InstrumentEntity(Long id, String symbol, String symbolName, InstrumentTypeEntity instrumentType) {
         this.id = id;
         this.symbol = symbol;
         this.symbolName = symbolName;
@@ -21,6 +21,7 @@ public class InstrumentEntity {
     private String symbolName; // instrument type lookup
     private InstrumentType instrumentType;
     private BigDecimal currentPrice; //current market price of the instrument
+    private InstrumentTypeEntity instrumentType;
 
 
 }

@@ -18,6 +18,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -29,10 +30,10 @@ class TestAuthController {
     @Autowired
     private MockMvc mockMvc; // Simulates HTTP requests
  
-    @MockitoBean // Mocks the controller dependency used by the web layer
+    @MockitoBean
     private ClientService clientService;
  
-    @MockitoBean // Mocks the controller dependency used by the web layer
+    @MockitoBean
     private ClientValidator clientValidator;
 
     @MockitoBean
@@ -68,7 +69,7 @@ class TestAuthController {
     }
 
     @Test
-    void loginReturnsUnauthorizedForInvalidCredentials() {
+    void loginReturnsUnauthorizedForInvalidCredentials() throws Exception {
         //Arrange
         LoginRequestDTO request = new LoginRequestDTO(
             "Test@example.com",
@@ -76,37 +77,29 @@ class TestAuthController {
         );
         when(clientService.checkCredentials(anyString(), anyString())).thenReturn(false);
 
-        assertDoesNotThrow(() ->
-            mockMvc.perform(post("/api/auth/login")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"email\":\"" + request.getEmail() + "\", \"password\":\"" + request.getPassword() + "\"}"))
-                    .andExpect(status().isUnauthorized())
-                    .andExpect(content().string("Invalid email or password"))
-        );
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + request.getEmail() + "\", \"password\":\"" + request.getPassword() + "\"}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().string("Invalid email or password"));
     
     }
+    
     @Test
-    void loginReturnsBadRequestForInvalidEmail() {
+    void loginReturnsBadRequestForInvalidEmail() throws Exception {
         //Arrange
         LoginRequestDTO request = new LoginRequestDTO(
             "This isn't even an email",
             "WrongPassword123"
         );
-        when(clientService.checkCredentials(anyString(), anyString())).thenReturn(false);
+        
+        doThrow(new InvalidEmailFormatException("Invalid email format"))
+            .when(clientValidator)
+            .validateEmail(anyString());
 
-        //this assert is just to shut up the compiler
-        assertDoesNotThrow(() ->
-            doThrow(new InvalidEmailFormatException("wassaaaaaaaap"))
-                .when(clientValidator)
-                .validateEmail(anyString())
-        );
-
-        assertDoesNotThrow(() ->
-            mockMvc.perform(post("/api/auth/login")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"email\":\"" + request.getEmail() + "\", \"password\":\"" + request.getPassword() + "\"}"))
-                    .andExpect(status().isBadRequest())
-        );
-    
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + request.getEmail() + "\", \"password\":\"" + request.getPassword() + "\"}"))
+                .andExpect(status().isBadRequest());
     }
 }
