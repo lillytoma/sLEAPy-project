@@ -2,6 +2,7 @@ package com.sleapy.project.models.dtos;
 
 import java.util.ArrayList;
 import java.util.Set;
+import java.math.BigDecimal;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,8 +53,8 @@ public class HoldingDTOTest {
         dto.setId(1L);
         dto.setInstrument(createValidInstrument());
         dto.setClient(createValidClient());
-        dto.setTotalShares(100.0);
-        dto.setTotalPrice(15000.50);
+        dto.setTotalShares(BigDecimal.valueOf(100.0));
+        dto.setTotalPrice(BigDecimal.valueOf(15000.50));
         dto.setClient(createValidClient());
         dto.setInstrument(createValidInstrument());
     }
@@ -107,26 +108,26 @@ public class HoldingDTOTest {
     // Total Shares tests - @PositiveOrZero
     @Test
     void negativeTotalSharesViolation() {
-        this.dto.setTotalShares(-10.5);
+        this.dto.setTotalShares(BigDecimal.valueOf(-10.5));
         assertHasViolations("totalShares");
     }
 
     @Test
     void zeroTotalSharesIsValid() {
-        this.dto.setTotalShares(0.0);
+        this.dto.setTotalShares(BigDecimal.valueOf(0.0));
         assertThat(validator.validate(this.dto)).isEmpty();
     }
 
     // Total Price tests - @PositiveOrZero
     @Test
     void negativeTotalPriceViolation() {
-        this.dto.setTotalPrice(-500.25);
+        this.dto.setTotalPrice(BigDecimal.valueOf(-500.25));
         assertHasViolations("totalPrice");
     }
 
     @Test
     void zeroTotalPriceIsValid() {
-        this.dto.setTotalPrice(0.0);
+        this.dto.setTotalPrice(BigDecimal.valueOf(0.0));
         assertThat(validator.validate(this.dto)).isEmpty();
     }
 }

@@ -1,9 +1,13 @@
 package com.sleapy.project.models.dtos;
 
+import com.sleapy.project.models.entities.InstrumentEntity;
+import com.sleapy.project.models.entities.InstrumentTypeEntity;
+import java.math.BigDecimal;
 import com.sleapy.project.models.enums.InstrumentType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -33,4 +37,8 @@ public class InstrumentDTO {
 
     @NotNull(message = "instrument type is required")
     private InstrumentType instrumentType;
+
+    // @NotNull(message = "current market price is required")
+    // @PositiveOrZero(message = "current market price cannot be negative")
+    private BigDecimal currentMarketPrice;
 }

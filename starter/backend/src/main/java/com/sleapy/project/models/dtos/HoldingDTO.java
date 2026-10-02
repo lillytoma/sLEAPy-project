@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
 
 /**
  * Data transfer object for holding information.
@@ -17,6 +18,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor 
 @AllArgsConstructor 
 public class HoldingDTO {
+    
+    private BigDecimal currentMarketValue;    // Current market value (quantity × current_price)
+    private BigDecimal unrealizedGainLoss;    // Unrealized gain/loss (currentMarketValue - costBasis)
     
     @NotNull(message = "holding id is required")
     @Positive(message = "holding id must be positive")
@@ -31,9 +35,9 @@ public class HoldingDTO {
     private ClientDTO client; // The owner of this holding
 
     @PositiveOrZero(message = "total shares must be zero or positive")
-    private double totalShares; // Total number of shares owned
+    private BigDecimal totalShares; // Total number of shares owned
 
     @PositiveOrZero(message = "total price must be zero or positive")
-    private double totalPrice; // Total cost basis (shares × purchase price)
+    private BigDecimal totalPrice; // Total cost basis (shares × purchase price)
     
 }
