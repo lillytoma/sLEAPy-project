@@ -35,10 +35,10 @@ class TestAuthController {
  
     @MockitoBean
     private ClientValidator clientValidator;
-    
+
     @MockitoBean
     private ClientMapper clientMapper;
-    
+
     @MockitoBean
     private JwtService jwtService;
  
@@ -50,22 +50,22 @@ class TestAuthController {
             "Test@example.com",
             "TestPassword123"
         );
-        
-        ClientEntity mockUser = new ClientEntity();
-        mockUser.setId(1L);
-        mockUser.setEmail("Test@example.com");
+
+        ClientEntity user = new ClientEntity();
+        user.setId(1L);
+        user.setEmail(request.getEmail());
 
         when(clientService.checkCredentials(anyString(), anyString())).thenReturn(true);
-        when(clientMapper.findByEmail(anyString())).thenReturn(Optional.of(mockUser));
-        when(jwtService.generateToken(anyString(), anyLong())).thenReturn("test_jwt_token");
+        when(clientMapper.findByEmail(request.getEmail())).thenReturn(Optional.of(user));
+        when(jwtService.generateToken(request.getEmail(), 1L)).thenReturn("mock-jwt-token");
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"" + request.getEmail() + "\",\"password\":\"" + request.getPassword() + "\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Login successful"))
-                .andExpect(jsonPath("$.userId").value(1))
-                .andExpect(jsonPath("$.token").value("test_jwt_token"));
+            .andExpect(jsonPath("$.email").value("Login successful"))
+            .andExpect(jsonPath("$.userID").value(1))
+            .andExpect(jsonPath("$.token").value("mock-jwt-token"));
     }
 
     @Test
