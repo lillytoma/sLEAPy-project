@@ -58,7 +58,7 @@ public class GlobalExceptionHandlerTest {
             .thenThrow(new NoSuchElementException("Client with ID 999 not found"));
         
         assertDoesNotThrow(() ->
-            mockMvc.perform(get("/api/clients/999/cash-balance"))
+            mockMvc.perform(get("/api/clients/999/balance"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.error").value("Not Found"))
@@ -79,7 +79,7 @@ public class GlobalExceptionHandlerTest {
             .thenThrow(new InsufficientCashException("Client has insufficient cash balance to complete this transaction"));
         
         assertDoesNotThrow(() ->
-            mockMvc.perform(get("/api/clients/1/cash-balance"))
+            mockMvc.perform(get("/api/clients/1/balance"))
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.status").value(422))
                 .andExpect(jsonPath("$.error").value("Insufficient Cash"))
@@ -121,7 +121,7 @@ public class GlobalExceptionHandlerTest {
             .thenThrow(new RuntimeException("Unexpected database connection error"));
         
         assertDoesNotThrow(() ->
-            mockMvc.perform(get("/api/clients/4/cash-balance"))
+            mockMvc.perform(get("/api/clients/4/balance"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.status").value(500))
                 .andExpect(jsonPath("$.error").value("Unexpected Error"))

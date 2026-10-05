@@ -38,7 +38,7 @@ public class ClientControllerTest {
 
         // Act & Assert
         assertDoesNotThrow(() ->
-            mockMvc.perform(get("/api/clients/1/cash-balance"))
+            mockMvc.perform(get("/api/clients/1/balance"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$").value(closeTo(100.0, 0.01)))
         );
@@ -51,7 +51,7 @@ public class ClientControllerTest {
         when(clientService.getCashBalance(999L)).thenThrow(new NoSuchElementException("Client not found"));
 
         // Act & Assert - Verify HTTP 404 response
-        mockMvc.perform(get("/api/clients/999/cash-balance"))
+        mockMvc.perform(get("/api/clients/999/balance"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.error").value("Not Found"))

@@ -11,7 +11,7 @@ import com.sleapy.project.exceptions.InvalidEmailFormatException;
 public class ClientValidator {
 
     private final Pattern emailRegex;
-    ClientValidator(){
+    public ClientValidator(){
         //This is the official standard regex for emails according to RFC 5322
         // https://emailregex.com/
         var regexStr = "(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{"+
@@ -24,7 +24,7 @@ public class ClientValidator {
     }
 
 
-    public void validateEmail(String email) throws InvalidEmailFormatException{
+    public void validateEmail(String email) throws InvalidEmailFormatException {
         if(email == null || email.isBlank()){
             throw new InvalidEmailFormatException("Email must not be empty");
         }

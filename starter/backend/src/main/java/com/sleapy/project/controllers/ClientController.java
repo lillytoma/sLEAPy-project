@@ -18,11 +18,11 @@ import com.sleapy.project.services.ClientService;
 public class ClientController {
     private final ClientService clientService;
 
-    ClientController(ClientService cs){
+    public ClientController(ClientService cs){
         this.clientService = cs;
     }
 
-    @GetMapping("/{clientId}/cash-balance")
+    @GetMapping("/{clientId}/balance")
     public ResponseEntity<Double> getCashBalance(@PathVariable Long clientId) {
 
         double balance = clientService.getCashBalance(clientId);
