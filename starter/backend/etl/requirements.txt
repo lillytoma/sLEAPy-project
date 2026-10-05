@@ -190,4 +190,5 @@ Werkzeug==3.1.8
 wirerope==1.0.0
 wrapt==2.4.1
 WTForms==3.2.1
+yfinance==0.2.41
 zipp==3.23.1
