@@ -4,13 +4,6 @@ import com.sleapy.project.models.entities.InstrumentEntity;
 import com.sleapy.project.models.entities.InstrumentType;
 import java.math.BigDecimal;
 
-/**
- * Data transfer object for instrument information.
- * Used for API requests/responses.
- */
-@Data
-@NoArgsConstructor 
-@AllArgsConstructor 
 public class InstrumentDTO {
 
     private String symbol;
