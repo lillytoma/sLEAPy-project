@@ -5,6 +5,7 @@ import com.sleapy.project.models.dtos.InstrumentDTO;
 import com.sleapy.project.models.dtos.ClientDTO;
 import com.sleapy.project.models.entities.HoldingEntity;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /**
  * DTO Mapper utility class for converting between HoldingEntity and HoldingDTO.
@@ -13,7 +14,7 @@ import java.math.BigDecimal;
  * Note: currentMarketValue and unrealizedGainLoss are calculated in the service layer
  * since they require current instrument price which may not always be needed.
  */
-public class HoldingDTOMapper {
+public class HoldingDTOUtil {
     public static HoldingDTO toDTO(HoldingEntity entity) {
         if (entity == null) {
             return null;
@@ -30,12 +31,12 @@ public class HoldingDTOMapper {
         
         // Convert the instrument entity to DTO
         if (entity.getInstrument() != null) {
-            dto.setInstrument(new InstrumentDTO(entity.getInstrument()));
+            dto.setInstrument(InstrumentDTOUtil.toDTO(entity.getInstrument()));
         }
         
         // Convert the client entity to DTO
         if (entity.getClient() != null) {
-            dto.setClient(ClientDTOMapper.toDTO(entity.getClient()));
+            dto.setClient(ClientDTOUtil.toDTO(entity.getClient()));
         }
         
         return dto;
@@ -54,7 +55,7 @@ public class HoldingDTOMapper {
         // Note: We need to extract purchase price from costBasis if it's set
         // costBasis = quantity × purchasePrice, so purchasePrice = costBasis / quantity
         if (dto.getCostBasis() != null && dto.getQuantity() != null && dto.getQuantity().compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal purchasePrice = dto.getCostBasis().divide(dto.getQuantity(), 2, java.math.RoundingMode.HALF_UP);
+            BigDecimal purchasePrice = dto.getCostBasis().divide(dto.getQuantity(), 2, RoundingMode.HALF_UP);
             entity.setPurchasePrice(purchasePrice);
         }
         

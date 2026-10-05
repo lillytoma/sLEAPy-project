@@ -2,13 +2,15 @@ package com.sleapy.project.models.entities;
 
 import java.math.BigDecimal;
 
+import com.sleapy.project.models.enums.InstrumentType;
+
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
 public class InstrumentEntity {
-    public InstrumentEntity(Long id, String symbol, String symbolName, InstrumentTypeEntity instrumentType) {
+    public InstrumentEntity(Long id, String symbol, String symbolName, InstrumentType instrumentType) {
         this.id = id;
         this.symbol = symbol;
         this.symbolName = symbolName;
