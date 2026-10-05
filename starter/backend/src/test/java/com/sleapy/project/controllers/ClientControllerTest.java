@@ -45,15 +45,17 @@ public class ClientControllerTest {
     }
 
     @Test
-    void getCashBalanceReturnsNotFoundForInvalidID() {
+    void getCashBalanceReturnsNotFoundForInvalidID() throws Exception {
 
-        // Test implementation will go here
+        // Arrange - Mock service to throw exception
         when(clientService.getCashBalance(999L)).thenThrow(new NoSuchElementException("Client not found"));
 
-        // Act & Assert
-        assertThrows(NoSuchElementException.class, () ->
-            mockMvc.perform(get("/api/clients/999/cash-balance"))
-        );
+        // Act & Assert - Verify HTTP 404 response
+        mockMvc.perform(get("/api/clients/999/cash-balance"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Not Found"))
+                .andExpect(jsonPath("$.message").value("Client not found"));
     }
 
 }
