@@ -13,6 +13,7 @@ export class ClientValidator {
         /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
     validateEmail(email: string): void {
+        console.log(email)
         if (!this.emailRegex.test(email)) {
             throw new InvalidEmailFormatException('Invalid email format');
         }
