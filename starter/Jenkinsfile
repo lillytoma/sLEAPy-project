@@ -12,19 +12,31 @@ pipeline {
         stage('Build') {
             steps {
                 dir('starter/backend') {
-                    sh 'mvn -B clean package'
+                    bat 'mvn -B clean package'
                 }
             }
         }
         stage('Test') {
             steps {
                 dir('starter/backend') {
-                    sh 'mvn -B test'
+                    bat 'mvn -B test'
                 }
             }
             post {
                 always {
                     junit testResults: 'starter/backend/target/surefire-reports/*.xml', allowEmptyResults: true
+                }
+            }
+        }
+        stage('SonarQube Analysis') {
+            steps {
+                dir('starter/backend') {
+                    bat '''
+                        mvn sonar:sonar ^
+                          -Dsonar.projectKey=com.sleapy:backend ^
+                          -Dsonar.host.url=http://localhost:9000 ^
+                          -Dsonar.login=%SONAR_TOKEN%
+                    '''
                 }
             }
         }

@@ -28,7 +28,14 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<sonar.projectKey>com.sleapy:project</sonar.projectKey>
+		<sonar.projectName>sleapy-backend</sonar.projectName>
+		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
+		<sonar.organization>https://github.com/lillytoma/sLEAPy-project.git</sonar.organization>
+		<maven.compiler.source>21</maven.compiler.source>
+		<maven.compiler.target>21</maven.compiler.target>
 	</properties>
+
 	<dependencies>
 	<!-- JWT Token Management -->
 		<dependency>
@@ -104,24 +111,47 @@
 					<mainClass>com.sleapy.project.Main</mainClass>
 				</configuration>
 			</plugin>
-			 <plugin>
-     <groupId>org.apache.maven.plugins</groupId>
-     <artifactId>maven-dependency-plugin</artifactId>
-     <executions>
-         <execution>
-             <phase>test-compile</phase>
-             <goals>
-                 <goal>properties</goal>
-             </goals>
-         </execution>
-     </executions>
- </plugin>
- 
- <plugin>
-     <groupId>org.apache.maven.plugins</groupId>
-     <artifactId>maven-surefire-plugin</artifactId>
- </plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>test-compile</phase>
+						<goals>
+							<goal>properties</goal>
+						</goals>
+					</execution>
+				</executions>
+ 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>3.10.0.2594</version>
+			</plugin>
 		</plugins>
+		<plugin>
+			<groupId>org.jacoco</groupId>
+			<artifactId>jacoco-maven-plugin</artifactId>
+			<version>0.8.10</version>
+			<executions>
+				<execution>
+					<goals>
+						<goal>prepare-agent</goal>
+					</goals>
+				</execution>
+				<execution>
+					<id>report</id>
+					<phase>test</phase>
+					<goals>
+						<goal>report</goal>
+					</goals>
+				</execution>
+			</executions>
+		</plugin>
 	</build>
 
 </project>

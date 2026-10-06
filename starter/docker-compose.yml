@@ -4,9 +4,9 @@ services:
     container_name: sleapy-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: sleapy_neueda
-      POSTGRES_DB: sleapy_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "8101:5432"
     volumes:
@@ -17,13 +17,15 @@ services:
       - ./database/analystSchema.sql:/docker-entrypoint-initdb.d/02-analyst-schema.sql
       # Mock data for development/testing
       - ./database/mockdata.sql:/docker-entrypoint-initdb.d/03-mockdata.sql
+      # SonarQube database initialization
+      - ./database/sonar-init.sql:/docker-entrypoint-initdb.d/00-sonar-init.sql
 
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: sleapy-pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@sleapy.local
-      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
     ports:
       - "5050:80"
     depends_on:
@@ -31,6 +33,27 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
 
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: sleapy-sonarqube
+    restart: unless-stopped
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://postgres:5432/sonar
+      SONAR_JDBC_USERNAME: ${SONAR_JDBC_USERNAME}
+      SONAR_JDBC_PASSWORD: ${SONAR_JDBC_PASSWORD}
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLED: "true"
+    ports:
+      - "9000:9000"
+    depends_on:
+      - postgres
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_extensions:/opt/sonarqube/extensions
+
 volumes:
   postgres_data:
   pgadmin_data:
+  sonarqube_data:
+  sonarqube_logs:
+  sonarqube_extensions:
