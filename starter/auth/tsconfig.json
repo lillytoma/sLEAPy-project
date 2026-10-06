@@ -11,7 +11,7 @@
     "experimentalDecorators": true,
     "importHelpers": true,
     "allowSyntheticDefaultImports": true,
-    "target": "ES2023",
+    "target": "ES2025",
     "sourceMap": true,
     "outDir": "./dist",
     "incremental": true,
