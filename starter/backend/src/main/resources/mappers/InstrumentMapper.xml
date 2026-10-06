@@ -8,10 +8,7 @@
         <id column="instrument_id" property="id"/>
         <result column="symbol" property="symbol"/>
         <result column="symbol_name" property="symbolName"/>
-        <association property="instrumentType" javaType="com.sleapy.project.models.entities.InstrumentTypeEntity">
-            <id column="instrumenttype_id" property="instrumentType_id"/>
-            <result column="instrumenttype_name" property="name"/>
-        </association>
+        <result column="instrumenttype_name" property="instrumentType" javaType="com.sleapy.project.models.enums.InstrumentType"/>
     </resultMap>
 
     <!-- Find instrument by ID with type information -->
