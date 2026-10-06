@@ -1,7 +1,0 @@
-{
-  "dependencies": {
-    "@nestjs/authentication": "^0.0.1",
-    "@nestjs/jwt": "^12.0.2",
-    "bcrypt": "^6.0.0"
-  }
-}
