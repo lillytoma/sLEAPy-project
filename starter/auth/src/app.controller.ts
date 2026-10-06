@@ -22,8 +22,8 @@ class JwtPayload{
 }
 
 function generateJwtPayload(user: ClientEntity){
-   const iat = new Date().getSeconds();
-      const exp: number = new Date(Date.now() + 8640000).getSeconds();
+   const iat =  Math.floor(Date.now() / 1000); //seconds since Jan 01, 1970
+      // const exp: number = new Date(Date.now() + 8640000).getSeconds();
       const payload: JwtPayload = {
         sub: user.email,
         userId: user.id,
