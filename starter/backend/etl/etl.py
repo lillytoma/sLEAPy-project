@@ -14,6 +14,9 @@ from extractors import (
 )
 from loaders import load_to_warehouse, save_to_csv
 
+from marketData import fetch_current_stock_prices
+import redis
+
 def main():
     """Execute the complete ETL pipeline.
     
@@ -53,6 +56,13 @@ def main():
         print(f"- Transactions (last 6 years): {len(transactions_6years)} rows")
         print(f"- Transactions (client 1): {len(transactions_client)} rows")
         print(f"- Most expensive trades: {len(expensive_trades)} rows")
+        
+        # # Redis Step: Adding the Redis connection and price caching
+        # print("\nFetching current stock prices")
+        # try:
+        #     #connect to redis
+        #     redis_client = redis.Redis(host="localhost")
+        #     tickers
         
         # Step 4: Organize extracted data into a dictionary for processing
         dataframes = {
