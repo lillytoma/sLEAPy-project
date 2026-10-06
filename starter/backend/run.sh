@@ -16,4 +16,4 @@ echo "Press Ctrl+C to stop the server cleanly"
 echo ""
 
 # Start the application
-mvn spring-boot:run
+java -jar target/project-0.0.1-SNAPSHOT.jar
