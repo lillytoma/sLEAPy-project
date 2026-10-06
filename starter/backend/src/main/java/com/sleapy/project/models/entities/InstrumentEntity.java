@@ -2,6 +2,8 @@ package com.sleapy.project.models.entities;
 
 import java.math.BigDecimal;
 
+import com.sleapy.project.models.enums.InstrumentType;
+
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

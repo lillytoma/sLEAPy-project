@@ -11,7 +11,7 @@ import com.sleapy.project.models.dtos.UpdateHoldingRequestDTO;
 import com.sleapy.project.models.entities.HoldingEntity;
 import com.sleapy.project.models.entities.ClientEntity;
 import com.sleapy.project.models.entities.InstrumentEntity;
-import com.sleapy.project.utils.HoldingDTOMapper;
+import com.sleapy.project.utils.HoldingDTOUtil;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -39,7 +39,7 @@ public class HoldingsService {
     public List<HoldingDTO> getClientHoldings(Long clientId) {
         List<HoldingEntity> holdings = holdingMapper.findByClientId(clientId);
         return holdings.stream()
-                .map(HoldingDTOMapper::toDTO)
+                .map(HoldingDTOUtil::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -119,7 +119,7 @@ public class HoldingsService {
         holdingMapper.save(holding);
         
         // Convert and return as DTO
-        return HoldingDTOMapper.toDTO(holding);
+        return HoldingDTOUtil.toDTO(holding);
     }
 
     /**
@@ -157,7 +157,7 @@ public class HoldingsService {
         holdingMapper.update(holding);
         
         // Convert and return as DTO
-        return HoldingDTOMapper.toDTO(holding);
+        return HoldingDTOUtil.toDTO(holding);
     }
 
     /**

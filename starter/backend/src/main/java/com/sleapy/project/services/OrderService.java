@@ -29,7 +29,7 @@ public class OrderService {
             throw new NoSuchElementException("Could not find transactions for client id " + clientId);
         }
 
-        return entities.stream().map(OrderDTO::new).toList();
+        return entities.stream().map(OrderEntity -> new OrderDTO()).toList();
     }
 
     public OrderEntity createOrderEntity(OrderEntity order) throws InvalidOrderException{

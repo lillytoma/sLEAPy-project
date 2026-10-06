@@ -34,7 +34,12 @@ public class MyBatisConfig {
         
         // Load mapper XML files from classpath
         ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        factoryBean.setMapperLocations(resolver.getResources("classpath:mappers/*.xml"));
+        try {
+            factoryBean.setMapperLocations(resolver.getResources("classpath:mappers/*.xml"));
+        } catch (Exception e) {
+            // If mappers directory doesn't exist, log a warning but continue
+            System.out.println("Warning: No mapper files found at classpath:mappers/*.xml. Continuing without mappers.");
+        }
         
         // Enable auto-mapping of database columns to Java properties
         org.apache.ibatis.session.Configuration config = new org.apache.ibatis.session.Configuration();

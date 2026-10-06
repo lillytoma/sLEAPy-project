@@ -26,15 +26,8 @@ public class OrderController {
     // test with: curl -iX GET localhost:8081/api/orders/?clientId=1
     @GetMapping("/")
     public ResponseEntity<?> getTransactions(@RequestParam Long clientId) {
-        try{
-            List<OrderDTO> transactionList = orderService.getTransactionsPerClient(clientId);
-            return  ResponseEntity.ok(transactionList);
-        } catch (NoSuchElementException e) {
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", e.getMessage()));
-        }
-
+        List<OrderDTO> transactionList = orderService.getTransactionsPerClient(clientId);
+        return ResponseEntity.ok(transactionList);
     }
 
 }
