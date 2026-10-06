@@ -1,5 +1,6 @@
 package com.sleapy.project.events;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,10 +33,14 @@ public class ClientActivityEvent implements Serializable {
     private String activityType;  // e.g., LOGIN, LOGOUT, TRADE, ORDER_PLACED
     
     @JsonProperty("timestamp")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS")
     private LocalDateTime timestamp;
     
     @JsonProperty("details")
     private String details;  // JSON string with additional details
+    
+    @JsonProperty("ip_address")
+    private String ipAddress;  // Client IP address
     
     @JsonProperty("source_system")
     private String sourceSystem;  // e.g., "trading-app"

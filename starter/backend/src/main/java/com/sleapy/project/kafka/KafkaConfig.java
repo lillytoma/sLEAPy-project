@@ -1,5 +1,8 @@
 package com.sleapy.project.kafka;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -35,6 +38,19 @@ public class KafkaConfig {
     
     @Value("${spring.kafka.bootstrap-servers:localhost:9092}")
     private String bootstrapServers;
+    
+    /**
+     * Create ObjectMapper with JavaTimeModule for LocalDateTime serialization
+     */
+    @Bean
+    public ObjectMapper kafkaObjectMapper() {
+        ObjectMapper mapper = JsonMapper.builder()
+            .addModule(new JavaTimeModule())
+            .build();
+        // Disable the write dates as timestamps to ensure ISO format
+        mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        return mapper;
+    }
     
     /**
      * Create Kafka Admin client for administrative operations (topic creation, etc.)
@@ -74,7 +90,7 @@ public class KafkaConfig {
      * Configure producer factory with JSON serialization for values
      */
     @Bean
-    public ProducerFactory<String, Object> producerFactory() {
+    public ProducerFactory<String, Object> producerFactory(ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -82,15 +98,22 @@ public class KafkaConfig {
         configProps.put(ProducerConfig.ACKS_CONFIG, "all");
         configProps.put(ProducerConfig.RETRIES_CONFIG, 3);
         configProps.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
-        return new DefaultKafkaProducerFactory<>(configProps);
+        
+        DefaultKafkaProducerFactory<String, Object> factory = new DefaultKafkaProducerFactory<>(configProps);
+        
+        // Configure JsonSerializer with custom ObjectMapper that supports JavaTimeModule
+        JsonSerializer<Object> valueSerializer = new JsonSerializer<>(kafkaObjectMapper);
+        factory.setValueSerializer(valueSerializer);
+        
+        return factory;
     }
     
     /**
      * Create KafkaTemplate for sending messages
      */
     @Bean
-    public KafkaTemplate<String, Object> kafkaTemplate() {
-        return new KafkaTemplate<>(producerFactory());
+    public KafkaTemplate<String, Object> kafkaTemplate(ObjectMapper kafkaObjectMapper) {
+        return new KafkaTemplate<>(producerFactory(kafkaObjectMapper));
     }
 }
 
