@@ -100,7 +100,7 @@ public class GlobalExceptionHandlerTest {
             .thenThrow(new InsufficientSharesException("Client does not have enough shares to complete this sale"));
         
         assertDoesNotThrow(() ->
-            mockMvc.perform(get("/api/orders/?clientId=2"))
+            mockMvc.perform(get("/api/orders/").param("clientId", "2"))
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.status").value(422))
                 .andExpect(jsonPath("$.error").value("Insufficient Shares"))

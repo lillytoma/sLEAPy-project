@@ -26,7 +26,7 @@ import com.sleapy.project.services.HoldingsService;
 public class HoldingsController {
     private final HoldingsService holdingsService;
 
-    HoldingsController(HoldingsService holdingsService) {
+    public HoldingsController(HoldingsService holdingsService) {
         this.holdingsService = holdingsService;
     }
 

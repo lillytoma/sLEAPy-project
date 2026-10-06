@@ -1,6 +1,6 @@
 package com.sleapy.project.mappers;
 
-import com.sleapy.project.models.entities.InstrumentType;
+import com.sleapy.project.models.entities.InstrumentTypeEntity;
 import org.apache.ibatis.annotations.Mapper;
 import java.util.Optional;
 import java.util.List;
@@ -16,25 +16,25 @@ public interface InstrumentTypeMapper {
      * @param id the instrument type ID
      * @return Optional containing the InstrumentType if found
      */
-    Optional<InstrumentType> findById(Long id);
+    Optional<InstrumentTypeEntity> findById(Long id);
 
     /**
      * Get all instrument types.
      * @return List of all InstrumentType objects
      */
-    List<InstrumentType> findAll();
+    List<InstrumentTypeEntity> findAll();
 
     /**
      * Save (insert) a new instrument type.
      * @param instrumentType the InstrumentType to save
      */
-    void save(InstrumentType instrumentType);
+    void save(InstrumentTypeEntity instrumentType);
 
     /**
      * Update an existing instrument type.
      * @param instrumentType the InstrumentType to update
      */
-    void update(InstrumentType instrumentType);
+    void update(InstrumentTypeEntity instrumentType);
 
     /**
      * Delete an instrument type by ID.
