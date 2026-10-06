@@ -15,5 +15,6 @@ echo "Starting sLEAPy backend on port 8081..."
 echo "Press Ctrl+C to stop the server cleanly"
 echo ""
 
-# Start the application
+# Start the application using the JAR file
+echo "Starting application..."
 java -jar target/project-0.0.1-SNAPSHOT.jar
