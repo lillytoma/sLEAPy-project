@@ -145,30 +145,34 @@ export class SignupComponent {
       return;
     }
     this.submitted.set(true);
-    setTimeout(() => this.router.navigate(['/login']), 2000);
-    // Prepare data matching backend DTO field names
+    
+    // combine address fields into single address string
+    const street = this.form.get('street')?.value || '';
+    const city = this.form.get('city')?.value || '';
+    const state = this.form.get('state')?.value || '';
+    const zip = this.form.get('zip')?.value || '';
+    const fullAddress = `${street}, ${city}, ${state} ${zip}`.trim();
+    
+    // prepare data matching backend DTO field names
     const signupData = {
-      firstname: this.form.get('firstName')?.value,
-      lastname: this.form.get('lastName')?.value,
       username: this.form.get('username')?.value,
       email: this.form.get('email')?.value,
       password: this.form.get('passwords')?.get('password')?.value,
       phoneNumber: this.form.get('phone')?.value,
       ssn: this.form.get('ssn')?.value,
-      state: this.form.get('state')?.value,
-      zip: this.form.get('zip')?.value,
-      street: this.form.get('street')?.value,
-      city: this.form.get('city')?.value,
-      region: this.form.get('region')?.value
+      address: fullAddress
     };
     
-    // Log data without password for security
-    //const { password, ...safeData } = signupData;
-    //console.log('Sending signup data to backend:', safeData);
-    // Send data to backend
+    // log data without password for security
+    const { password, ...safeData } = signupData;
+    console.log('Sending signup data to backend:', safeData);
+    
+    // send data to backend
     this.signupService.signup(signupData).subscribe(
      {next: (response) => {
         console.log('Signup successful:', response);
+        // set submitted flag to show success message
+        this.submitted.set(true);
         setTimeout(() => this.router.navigate(['/login']), 2000);
       },
       error:(error) => {
