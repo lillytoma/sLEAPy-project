@@ -25,14 +25,26 @@ export class LoginComponent {
   doLogin(): void {
     this.authService.login(this.email, this.password).subscribe({
       next: (response) => {
+        // extract username from email (everything before @)
+        const userName = response.email.split('@')[0];
+        // extract initials from username (first letters of words)
+        const userInitials = userName.split(/[\s._-]+/)
+          .map((word: string) => word[0])
+          .join('')
+          .toUpperCase()
+          .substring(0, 2);
+
         this.authService.isLoggedIn.set(true);
-        this.authService.userName.set(response.userName);
-        this.authService.userInitials.set(response.userInitials);
-      // This will direct users to the dashboard when we implement the dashbpoard
-       //this.router.navigate(['//dashboard']);
+        this.authService.userName.set(userName);
+        this.authService.userInitials.set(userInitials);
+        
+        // navigate to dashboard on successful login
+        this.router.navigate(['/dashboard']);
       },
       error: (err) =>{
         console.error('Login failed', err);
+        // set login error flag to show error message to user
+        this.loginError.set(true);
       }
     
     });
