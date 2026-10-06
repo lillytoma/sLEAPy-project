@@ -1,49 +1,34 @@
-import { Body, Controller, HttpStatus, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Post, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
-import { ClientService } from './services/ClientService.js';
+import { ClientService,  } from './services/client.service.js';
+import SignUpRequestDTO from './models/signuprequest.dto.js'
 import {
   ClientValidator,
   InvalidEmailFormatException,
-} from './services/ClientValidator.js';
+} from './services/client.validator.js';
 import { JwtService } from '@nestjs/jwt';
 import { UUID } from 'crypto';
-import { User } from './models/user.js';
-
-class LoginRequestDTO {
-  email!: string;
-  password!: string;
-}
-
-class SignUpRequestDTO {
-  email!: string;
-  password!: string;
-  [key: string]: unknown;
-}
-
-class SignUpResponseDTO {
-  constructor(
-    public readonly message: string,
-    public readonly clientId: number,
-    public readonly jwtToken: string,
-  ) {}
-}
-
+import  ClientEntity  from './models/client.entity.js';
+import  LoginRequestDTO  from './models/loginrequest.dto.js';
+import  SignUpResponseDTO  from './models/signupresponse.dto.js';
+import { AuthGuard } from '@nestjs/passport';
+import crypto from 'node:crypto';
 class JwtPayload{
   sub: string; 
   userId: number;
-  iat: Date;
-  exp: Date;
+  iat: number; //in seconds
+  // exp: number; //in seconds
   jti: UUID;
 }
 
-function generateJwtPayload(user: User){
-   const iat = new Date();
-      const exp: Date = new Date(Date.now() + Number(process.env.JWT_EXPIRATION!)* 1000)
+function generateJwtPayload(user: ClientEntity){
+   const iat = new Date().getSeconds();
+      const exp: number = new Date(Date.now() + 8640000).getSeconds();
       const payload: JwtPayload = {
         sub: user.email,
         userId: user.id,
         iat: iat,
-        exp: exp,
+        // exp: exp,
         jti: crypto.randomUUID()
       }
     return payload;
@@ -59,10 +44,7 @@ export class AppController {
     private readonly jwtService: JwtService,
   ) {}
 
-  private async findByEmail(_email: string): Promise<User | null> {
-    // TODO: Replace stub with database mapper lookup.
-    return null;
-  }
+
 
  
 
@@ -70,8 +52,15 @@ export class AppController {
   // LoginRequestDTO object containing the user's email and password, checks the
   // credentials using the ClientService, and returns a response indicating whether
   // the login was successful or not.
+
+  /**
+   curl -iX POST http://localhost:8084/auth/login --header "Content-Type: application/json" -d "{
+    \"email\" : \"test@example.com\",
+    \"password\" : \"TestPassword123\"}"
+  */ 
   @Post('/login')
   async login(@Body() request: LoginRequestDTO, @Res() res: Response): Promise<Response> {
+    console.log(request);
     try {
       // Step 1: Validate email format
       this.clientValidator.validateEmail(request.email);
@@ -88,7 +77,7 @@ export class AppController {
       }
 
       //4. if credentials are valid then reach out to the mapper to reach the db
-      const user: User | null = await this.findByEmail(request.email);
+      const user: ClientEntity | null = await this.clientService.findByEmail(request.email);
       if (!user) {
         throw new Error('User not found');
       }
@@ -165,4 +154,15 @@ export class AppController {
         .json(`Signup failed: ${errorMsg}`);
     }
   }
+
+  // "gimme a valid refresh token, get a new access token"
+  @Post('/refresh')
+  async refresh(){}
+
+  // the backend should reach out to this endpoint to make sure the tokens
+  // provided are valid for the protected endpoints
+  @Get('/validate')
+  @UseGuards(AuthGuard('jwt'))
+  async validate(){}
+
 }

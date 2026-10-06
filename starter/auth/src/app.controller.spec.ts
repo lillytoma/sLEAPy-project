@@ -2,8 +2,8 @@ import { HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import type { Response } from 'express';
 import { AppController } from './app.controller.js';
-import { ClientService } from './services/ClientService.js';
-import { ClientValidator } from './services/ClientValidator.js';
+import { ClientService } from './services/client.service.js';
+import { ClientValidator } from './services/client.validator.js';
 
 interface MockResponse {
   status: ReturnType<typeof vi.fn>;
