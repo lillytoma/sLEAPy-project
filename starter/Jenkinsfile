@@ -34,7 +34,7 @@ pipeline {
                     bat '''
                         mvn sonar:sonar ^
                           -Dsonar.projectKey=com.sleapy:backend ^
-                          -Dsonar.host.url=http://localhost:9000 ^
+                          -Dsonar.host.url=%SONARQUBE_HOST% ^
                           -Dsonar.login=%SONAR_TOKEN%
                     '''
                 }
