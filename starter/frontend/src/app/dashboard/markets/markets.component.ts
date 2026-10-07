@@ -2,6 +2,7 @@ import { Component, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MARKET_STOCKS, PRESET_FILTERS, ADD_FILTER_OPTIONS, MarketStock } from '../../data/mock-data';
 import { PortfolioService } from '../../services/portfolio.service';
+import { PricingService } from '../../services/pricing.service';
 import { BuyModalComponent } from '../shared/buy-modal.component';
 import { SellModalComponent } from '../shared/sell-modal.component';
 
@@ -35,10 +36,25 @@ export class MarketsComponent {
     { key: 'profitability', label: 'Profitability' },
   ];
 
-  constructor(public portfolioService: PortfolioService) {}
+  constructor(
+    public portfolioService: PortfolioService,
+    public pricingService: PricingService
+  ) {}
+
+  // Update stock prices with live data from backend
+  stocksWithLivePrices = computed(() => {
+    const livePrice = this.pricingService.livePrice();
+    return MARKET_STOCKS.map(stock => {
+      // For tracked symbols (AAPL, MSFT, GOOGL, AMZN, NVDA, TSLA), use live prices from Redis
+      if (livePrice[stock.symbol]) {
+        return { ...stock, price: livePrice[stock.symbol] };
+      }
+      return stock;
+    });
+  });
 
   filteredStocks = computed(() => {
-    let stocks = [...MARKET_STOCKS];
+    let stocks = [...this.stocksWithLivePrices()];
     const q = this.searchQuery.toLowerCase();
     if (q) {
       stocks = stocks.filter(
