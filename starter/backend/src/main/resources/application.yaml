@@ -4,7 +4,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:8101/${POSTGRES_DB:sleapy_db}
     username: ${POSTGRES_USER:postgres}
-    password: ${POSTGRES_PASSWORD:postgres}
+    password: ${POSTGRES_PASSWORD:sleapy_neueda}
     driver-class-name: org.postgresql.Driver
 # spring:
 #   datasource:

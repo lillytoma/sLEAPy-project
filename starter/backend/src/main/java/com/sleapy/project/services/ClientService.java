@@ -67,7 +67,7 @@ public class ClientService {
         
         // Create new client entity
         ClientEntity newClient = new ClientEntity();
-        newClient.setUsername(request.getUsername());
+        newClient.setUsername(request.getEmail()); // Use email as username for now
         newClient.setEmail(request.getEmail());
         newClient.setPasswordHash(hashedPassword);
         newClient.setFirstName(request.getFirstName());
@@ -80,7 +80,7 @@ public class ClientService {
         newClient.setRegion(request.getRegion());
         newClient.setPhoneNumber(request.getPhoneNumber());
         newClient.setSsn(request.getSsn());
-        newClient.setCashBalance(0.0);  // Default balance for new users
+        newClient.setCashBalance(10000.0);  // Default balance for new users
         
         // Set active status (assuming 1 = ACTIVE in your database)
         ClientStatus activeStatus = new ClientStatus();
