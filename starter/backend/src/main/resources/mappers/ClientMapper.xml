@@ -13,9 +13,16 @@
     <result column="email" property="email" />
     <result column="cash_balance" property="cashBalance" />
     <result column="password_hash" property="passwordHash" />
-    <result column="address" property="address" />
+    <result column="first_name" property="firstName" />
+    <result column="last_name" property="lastName" />
+    <result column="dob" property="dob" />
     <result column="phone_number" property="phoneNumber" />
     <result column="ssn" property="ssn" />
+    <result column="street_address" property="streetAddress" />
+    <result column="city" property="city" />
+    <result column="state_name" property="stateName" />
+    <result column="zip_code" property="zipCode" />
+    <result column="region" property="region" />
     
     <!-- Foreign key relationship: client_status -->
     <association property="clientStatus" javaType="com.sleapy.project.models.entities.ClientStatus">
@@ -26,8 +33,10 @@
 
   <!-- Find client by ID with status lookup -->
   <select id="findById" parameterType="Long" resultMap="ClientResultMap">
-    SELECT c.client_id, c.username, c.email, c.cash_balance, c.password_hash, c.address, 
-           c.phone_number, c.ssn, c.clientstatus_id, cs.clientstatus_name
+    SELECT c.client_id, c.username, c.email, c.cash_balance, c.password_hash, 
+           c.first_name, c.last_name, c.dob, c.phone_number, c.ssn, 
+           c.street_address, c.city, c.state_name, c.zip_code, c.region,
+           c.clientstatus_id, cs.clientstatus_name
     FROM clients c
     LEFT JOIN client_status cs ON c.clientstatus_id = cs.clientstatus_id
     WHERE c.client_id = #{id}
@@ -35,8 +44,10 @@
 
   <!-- Find client by email with status lookup -->
   <select id="findByEmail" parameterType="String" resultMap="ClientResultMap">
-    SELECT c.client_id, c.username, c.email, c.cash_balance, c.password_hash, c.address, 
-           c.phone_number, c.ssn, c.clientstatus_id, cs.clientstatus_name
+    SELECT c.client_id, c.username, c.email, c.cash_balance, c.password_hash, 
+           c.first_name, c.last_name, c.dob, c.phone_number, c.ssn, 
+           c.street_address, c.city, c.state_name, c.zip_code, c.region,
+           c.clientstatus_id, cs.clientstatus_name
     FROM clients c
     LEFT JOIN client_status cs ON c.clientstatus_id = cs.clientstatus_id
     WHERE c.email = #{email}
@@ -44,16 +55,22 @@
 
   <!-- Retrieve all clients with status lookup -->
   <select id="findAll" resultMap="ClientResultMap">
-    SELECT c.client_id, c.username, c.email, c.cash_balance, c.password_hash, c.address, 
-           c.phone_number, c.ssn, c.clientstatus_id, cs.clientstatus_name
+    SELECT c.client_id, c.username, c.email, c.cash_balance, c.password_hash, 
+           c.first_name, c.last_name, c.dob, c.phone_number, c.ssn, 
+           c.street_address, c.city, c.state_name, c.zip_code, c.region,
+           c.clientstatus_id, cs.clientstatus_name
     FROM clients c
     LEFT JOIN client_status cs ON c.clientstatus_id = cs.clientstatus_id
   </select>
 
   <!-- Insert new client (auto-generated ID) -->
   <insert id="save" parameterType="com.sleapy.project.models.entities.ClientEntity" useGeneratedKeys="true" keyProperty="id">
-    INSERT INTO clients (username, email, cash_balance, password_hash, address, phone_number, ssn, clientstatus_id)
-    VALUES (#{username}, #{email}, #{cashBalance}, #{passwordHash}, #{address}, #{phoneNumber}, #{ssn}, #{clientStatus.id})
+    INSERT INTO clients (username, email, cash_balance, password_hash, 
+                         first_name, last_name, dob, phone_number, ssn, 
+                         street_address, city, state_name, zip_code, region, clientstatus_id)
+    VALUES (#{username}, #{email}, #{cashBalance}, #{passwordHash}, 
+            #{firstName}, #{lastName}, #{dob}, #{phoneNumber}, #{ssn}, 
+            #{streetAddress}, #{city}, #{stateName}, #{zipCode}, #{region}, #{clientStatus.id})
   </insert>
 
   <!-- Update existing client -->
@@ -63,9 +80,16 @@
         email = #{email}, 
         cash_balance = #{cashBalance}, 
         password_hash = #{passwordHash},
-        address = #{address}, 
+        first_name = #{firstName},
+        last_name = #{lastName},
+        dob = #{dob},
         phone_number = #{phoneNumber}, 
         ssn = #{ssn}, 
+        street_address = #{streetAddress},
+        city = #{city},
+        state_name = #{stateName},
+        zip_code = #{zipCode},
+        region = #{region},
         clientstatus_id = #{clientStatus.id}
     WHERE client_id = #{id}
   </update>
