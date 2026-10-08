@@ -4,6 +4,7 @@ import { ClientService } from './services/client.service.js';
 import { ClientValidator } from './services/client.validator.js';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
+import { JwtStrategy } from './services/jwt.strategy.js';
 // import { TypeOrmModule } from '@nestjs/typeorm'
 // import ClientEntity from './models/client.entity.js';
 
@@ -26,6 +27,6 @@ import { JwtModule } from '@nestjs/jwt';
     })
   ],
   controllers: [AppController],
-  providers: [ClientService, ClientValidator],
+  providers: [ClientService, ClientValidator, JwtStrategy],
 })
 export class AppModule {}

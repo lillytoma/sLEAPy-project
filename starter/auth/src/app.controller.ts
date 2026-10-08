@@ -13,26 +13,8 @@ import  LoginRequestDTO  from './models/loginrequest.dto.js';
 import  SignUpResponseDTO  from './models/signupresponse.dto.js';
 import { AuthGuard } from '@nestjs/passport';
 import crypto from 'node:crypto';
-class JwtPayload{
-  sub: string; 
-  userId: number;
-  iat: number; //in seconds
-  // exp: number; //in seconds
-  jti: UUID;
-}
+import { generateJwtPayload } from './models/jwtpayload.dto.js';
 
-function generateJwtPayload(user: ClientEntity){
-   const iat =  Math.floor(Date.now() / 1000); //seconds since Jan 01, 1970
-      // const exp: number = new Date(Date.now() + 8640000).getSeconds();
-      const payload: JwtPayload = {
-        sub: user.email,
-        userId: user.id,
-        iat: iat,
-        // exp: exp,
-        jti: crypto.randomUUID()
-      }
-    return payload;
-}
 
 @Controller('auth')
 export class AppController {
@@ -44,14 +26,6 @@ export class AppController {
     private readonly jwtService: JwtService,
   ) {}
 
-
-
- 
-
-  // The login method handles POST requests to the /login endpoint. It takes a
-  // LoginRequestDTO object containing the user's email and password, checks the
-  // credentials using the ClientService, and returns a response indicating whether
-  // the login was successful or not.
 
   /**
    curl -iX POST http://localhost:8084/auth/login --header "Content-Type: application/json" -d "{
@@ -116,7 +90,7 @@ export class AppController {
       this.clientValidator.validateEmail(request.email);
 
       // Step 2: Check if email already exists
-      if (await this.clientService.isUniqueEmail(request.email)) {
+      if (await !this.clientService.isUniqueEmail(request.email)) {
         return res.status(HttpStatus.CONFLICT).json('Email already registered');
       }
 
