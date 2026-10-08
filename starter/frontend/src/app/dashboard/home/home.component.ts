@@ -7,7 +7,7 @@ import { SellModalComponent } from '../shared/sell-modal.component';
 @Component({
   selector: 'app-home',
   standalone: true,
-  templateUrl: './home.componet.html',
+  templateUrl: './home.component.html',
   imports: [RouterLink, SellModalComponent]
 })
 
