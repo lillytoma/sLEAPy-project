@@ -5,16 +5,16 @@
 
     <!-- Result map for HoldingEntity with nested objects -->
     <resultMap id="HoldingResultMap" type="com.sleapy.project.models.entities.HoldingEntity">
-        <id column="holdings_id" property="id"/>
-        <result column="quantity_shares" property="quantityShares"/>
-        <result column="purchase_price" property="purchasePrice"/>
+        <id column="Holdings_ID" property="id"/>
+        <result column="Quantity_Shares" property="quantityShares"/>
+        <result column="Purchase_Price" property="purchasePrice"/>
         <association property="client" javaType="com.sleapy.project.models.entities.ClientEntity">
-            <id column="client_id" property="id"/>
+            <id column="Client_ID" property="id"/>
             <result column="client_email" property="email"/>
             <result column="client_username" property="username"/>
         </association>
         <association property="instrument" javaType="com.sleapy.project.models.entities.InstrumentEntity">
-            <id column="instrument_id" property="id"/>
+            <id column="Instrument_ID" property="id"/>
             <result column="instrument_symbol" property="symbol"/>
             <result column="instrument_symbol_name" property="symbolName"/>
             <result column="instrument_current_price" property="currentPrice"/>
@@ -24,97 +24,93 @@
     <!-- Find holding by ID -->
     <select id="findById" parameterType="Long" resultMap="HoldingResultMap">
         SELECT 
-            h.holdings_id,
-            h.client_id,
-            h.instrument_id,
-            h.quantity_shares,
-            h.purchase_price,
+            h.Holdings_ID,
+            h.Client_ID,
+            h.Instrument_ID,
+            h.Quantity_Shares,
+            h.Purchase_Price,
             c.email as client_email,
             c.username as client_username,
-            i.symbol as instrument_symbol,
-            i.symbol_name as instrument_symbol_name,
-            i.current_price as instrument_current_price
-        FROM holdings h
-        LEFT JOIN clients c ON h.client_id = c.client_id
-        LEFT JOIN instruments i ON h.instrument_id = i.instrument_id
-        WHERE h.holdings_id = #{id}
+            i.Symbol as instrument_symbol,
+            i.Symbol_Name as instrument_symbol_name
+        FROM Holdings h
+        LEFT JOIN Clients c ON h.Client_ID = c.Client_ID
+        LEFT JOIN Instruments i ON h.Instrument_ID = i.Instrument_ID
+        WHERE h.Holdings_ID = #{id}
     </select>
 
     <!-- Find all holdings for a client -->
     <select id="findByClientId" parameterType="Long" resultMap="HoldingResultMap">
         SELECT 
-            h.holdings_id,
-            h.client_id,
-            h.instrument_id,
-            h.quantity_shares,
-            h.purchase_price,
+            h.Holdings_ID,
+            h.Client_ID,
+            h.Instrument_ID,
+            h.Quantity_Shares,
+            h.Purchase_Price,
             c.email as client_email,
             c.username as client_username,
-            i.symbol as instrument_symbol,
-            i.symbol_name as instrument_symbol_name,
-            i.current_price as instrument_current_price
-        FROM holdings h
-        LEFT JOIN clients c ON h.client_id = c.client_id
-        LEFT JOIN instruments i ON h.instrument_id = i.instrument_id
-        WHERE h.client_id = #{clientId}
-        ORDER BY i.symbol ASC
+            i.Symbol as instrument_symbol,
+            i.Symbol_Name as instrument_symbol_name
+        FROM Holdings h
+        LEFT JOIN Clients c ON h.Client_ID = c.Client_ID
+        LEFT JOIN Instruments i ON h.Instrument_ID = i.Instrument_ID
+        WHERE h.Client_ID = #{clientId}
+        ORDER BY i.Symbol ASC
     </select>
 
     <!-- Find holding by client and instrument -->
     <select id="findByClientIdAndInstrumentId" parameterType="map" resultMap="HoldingResultMap">
         SELECT 
-            h.holdings_id,
-            h.client_id,
-            h.instrument_id,
-            h.quantity_shares,
-            h.purchase_price,
+            h.Holdings_ID,
+            h.Client_ID,
+            h.Instrument_ID,
+            h.Quantity_Shares,
+            h.Purchase_Price,
             c.email as client_email,
             c.username as client_username,
-            i.symbol as instrument_symbol,
-            i.symbol_name as instrument_symbol_name,
-            i.current_price as instrument_current_price
-        FROM holdings h
-        LEFT JOIN clients c ON h.client_id = c.client_id
-        LEFT JOIN instruments i ON h.instrument_id = i.instrument_id
-        WHERE h.client_id = #{clientId} AND h.instrument_id = #{instrumentId}
+            i.Symbol as instrument_symbol,
+            i.Symbol_Name as instrument_symbol_name
+        FROM Holdings h
+        LEFT JOIN Clients c ON h.Client_ID = c.Client_ID
+        LEFT JOIN Instruments i ON h.Instrument_ID = i.Instrument_ID
+        WHERE h.Client_ID = #{clientId} AND h.Instrument_ID = #{instrumentId}
     </select>
 
     <!-- Get all holdings -->
     <select id="findAll" resultMap="HoldingResultMap">
         SELECT 
-            h.holdings_id,
-            h.client_id,
-            h.instrument_id,
-            h.quantity_shares,
-            h.purchase_price,
+            h.Holdings_ID,
+            h.Client_ID,
+            h.Instrument_ID,
+            h.Quantity_Shares,
+            h.Purchase_Price,
             c.email as client_email,
             c.username as client_username,
-            i.symbol as instrument_symbol,
-            i.symbol_name as instrument_symbol_name,
-            i.current_price as instrument_current_price
-        FROM holdings h
-        LEFT JOIN clients c ON h.client_id = c.client_id
-        LEFT JOIN instruments i ON h.instrument_id = i.instrument_id
-        ORDER BY c.username ASC, i.symbol ASC
+            i.Symbol as instrument_symbol,
+            i.Symbol_Name as instrument_symbol_name
+        FROM Holdings h
+        LEFT JOIN Clients c ON h.Client_ID = c.Client_ID
+        LEFT JOIN Instruments i ON h.Instrument_ID = i.Instrument_ID
+        ORDER BY c.username ASC, i.Symbol ASC
     </select>
 
     <!-- Insert new holding -->
     <insert id="save" parameterType="com.sleapy.project.models.entities.HoldingEntity" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO holdings (client_id, instrument_id, quantity_shares, purchase_price)
+        INSERT INTO Holdings (Client_ID, Instrument_ID, Quantity_Shares, Purchase_Price)
         VALUES (#{client.id}, #{instrument.id}, #{quantityShares}, #{purchasePrice})
     </insert>
 
     <!-- Update holding -->
     <update id="update" parameterType="com.sleapy.project.models.entities.HoldingEntity">
-        UPDATE holdings
-        SET quantity_shares = #{quantityShares},
-            purchase_price = #{purchasePrice}
-        WHERE holdings_id = #{id}
+        UPDATE Holdings
+        SET Quantity_Shares = #{quantityShares},
+            Purchase_Price = #{purchasePrice}
+        WHERE Holdings_ID = #{id}
     </update>
 
     <!-- Delete holding by ID -->
     <delete id="deleteById" parameterType="Long">
-        DELETE FROM holdings WHERE holdings_id = #{id}
+        DELETE FROM Holdings WHERE Holdings_ID = #{id}
     </delete>
 
     <!-- Count total holdings -->
