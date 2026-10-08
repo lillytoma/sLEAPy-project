@@ -17,6 +17,7 @@
             <id column="instrument_id" property="id"/>
             <result column="instrument_symbol" property="symbol"/>
             <result column="instrument_symbol_name" property="symbolName"/>
+            <result column="instrument_current_price" property="currentPrice"/>
         </association>
     </resultMap>
 
@@ -31,7 +32,8 @@
             c.email as client_email,
             c.username as client_username,
             i.symbol as instrument_symbol,
-            i.symbol_name as instrument_symbol_name
+            i.symbol_name as instrument_symbol_name,
+            i.current_price as instrument_current_price
         FROM holdings h
         LEFT JOIN clients c ON h.client_id = c.client_id
         LEFT JOIN instruments i ON h.instrument_id = i.instrument_id
@@ -49,7 +51,8 @@
             c.email as client_email,
             c.username as client_username,
             i.symbol as instrument_symbol,
-            i.symbol_name as instrument_symbol_name
+            i.symbol_name as instrument_symbol_name,
+            i.current_price as instrument_current_price
         FROM holdings h
         LEFT JOIN clients c ON h.client_id = c.client_id
         LEFT JOIN instruments i ON h.instrument_id = i.instrument_id
@@ -68,7 +71,8 @@
             c.email as client_email,
             c.username as client_username,
             i.symbol as instrument_symbol,
-            i.symbol_name as instrument_symbol_name
+            i.symbol_name as instrument_symbol_name,
+            i.current_price as instrument_current_price
         FROM holdings h
         LEFT JOIN clients c ON h.client_id = c.client_id
         LEFT JOIN instruments i ON h.instrument_id = i.instrument_id
@@ -86,7 +90,8 @@
             c.email as client_email,
             c.username as client_username,
             i.symbol as instrument_symbol,
-            i.symbol_name as instrument_symbol_name
+            i.symbol_name as instrument_symbol_name,
+            i.current_price as instrument_current_price
         FROM holdings h
         LEFT JOIN clients c ON h.client_id = c.client_id
         LEFT JOIN instruments i ON h.instrument_id = i.instrument_id
