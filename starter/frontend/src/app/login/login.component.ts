@@ -7,12 +7,14 @@ import { ThemeService } from '../services/theme.service';
 @Component({
   selector: 'app-login',
   standalone: true,
-  templateUrl: 'login.component.html',
+  templateUrl: './login.component.html',
   imports: [RouterLink, FormsModule]
 })
 export class LoginComponent {
   loginError = signal(false);
+  loginErrorMessage = signal('');
   showPassword = signal(false);
+  isLoading = signal(false);
   email = '';
   password = '';
 
@@ -23,18 +25,42 @@ export class LoginComponent {
   ) {}
 
   doLogin(): void {
+    if (!this.email || !this.password) {
+      this.loginError.set(true);
+      this.loginErrorMessage.set('Email and password are required');
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.loginError.set(false);
+    this.loginErrorMessage.set('');
+
     this.authService.login(this.email, this.password).subscribe({
       next: (response) => {
+        // Store JWT token and user info
+        localStorage.setItem('auth_token', response.token);
+        localStorage.setItem('user_id', response.userID || response.clientId);
+        localStorage.setItem('user_email', this.email);
+        
         this.authService.isLoggedIn.set(true);
         this.authService.userName.set(response.userName);
         this.authService.userInitials.set(response.userInitials);
       // This will direct users to the dashboard when we implement the dashbpoard
-       //this.router.navigate(['//dashboard']);
+       this.router.navigate(['//dashboard']);
       },
-      error: (err) =>{
+      error: (err) => {
+        this.isLoading.set(false);
+        this.loginError.set(true);
+        
+        if (err.error && typeof err.error === 'string') {
+          this.loginErrorMessage.set(err.error);
+        } else if (err.error && err.error.message) {
+          this.loginErrorMessage.set(err.error.message);
+        } else {
+          this.loginErrorMessage.set('Login failed. Please check your credentials.');
+        }
         console.error('Login failed', err);
       }
-    
     });
   }
 }

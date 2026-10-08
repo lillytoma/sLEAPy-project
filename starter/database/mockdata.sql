@@ -79,41 +79,41 @@ VALUES
 
 -- =====================================================
 
-INSERT INTO Instruments (Symbol, Symbol_Name, InstrumentType_ID)
+INSERT INTO Instruments (Symbol, Symbol_Name, InstrumentType_ID, current_price)
 
 VALUES
 
- ('AAPL', 'Apple Inc.', 1),
+ ('AAPL', 'Apple Inc.', 1, 228.50),
 
- ('MSFT', 'Microsoft Corporation', 1),
+ ('MSFT', 'Microsoft Corporation', 1, 445.25),
 
- ('NVDA', 'NVIDIA Corporation', 1),
+ ('NVDA', 'NVIDIA Corporation', 1, 1285.75),
 
- ('AMZN', 'Amazon.com. Spend less. Smile more.  Inc.', 1),
+ ('AMZN', 'Amazon.com. Spend less. Smile more.  Inc.', 1, 181.40),
 
- ('GOOGL', 'Alphabet Inc.', 1),
+ ('GOOGL', 'Alphabet Inc.', 1, 192.35),
 
- ('META', 'Meta Platforms Inc.', 1),
+ ('META', 'Meta Platforms Inc.', 1, 325.60),
 
- ('TSLA', 'Tesla Inc.', 1),
+ ('TSLA', 'Tesla Inc.', 1, 310.00),
 
- ('JPM', 'JPMorgan Chase & Co.', 1),
+ ('JPM', 'JPMorgan Chase & Co.', 1, 278.15),
 
- ('XOM', 'Exxon Mobil Corporation', 1),
+ ('XOM', 'Exxon Mobil Corporation', 1, 112.80),
 
- ('V', 'Visa Inc.', 1),
+ ('V', 'Visa Inc.', 1, 276.25),
 
- ('SPY', 'SPDR S&P 500 ETF', 2),
+ ('SPY', 'SPDR S&P 500 ETF', 2, 602.15),
 
- ('QQQ', 'Invesco QQQ Trust', 2),
+ ('QQQ', 'Invesco QQQ Trust', 2, 435.75),
 
- ('IWM', 'iShares Russell 2000 ETF', 2),
+ ('IWM', 'iShares Russell 2000 ETF', 2, 225.15),
 
- ('BTC', 'Bitcoin', 3),
+ ('BTC', 'Bitcoin', 3, 98500.00),
 
- ('ETH', 'Ethereum', 3),
+ ('ETH', 'Ethereum', 3, 3655.60),
 
- ('US10Y', 'US Treasury 10 Year Bond', 4);
+ ('US10Y', 'US Treasury 10 Year Bond', 4, 105.50);
 
 -- =====================================================
 
@@ -133,35 +133,49 @@ INSERT INTO Clients (
 
  phone_number,
 
- address,
-
  ssn,
 
- cash_balance
+ cash_balance,
+
+ first_name,
+
+ last_name,
+
+ dob,
+
+ street_address,
+
+ city,
+
+ state_name,
+
+ zip_code,
+
+ region
 
 )
 
 VALUES
 
- (1, 'jdoe', 'jdoe@email.com', 'hash001', '555-1001', '123 Main St Dallas TX', '111-11-1001', 15842.33),
+ (1, 'jdoe', 'jdoe@email.com', 'hash001', '555-1001', '111-11-1001', 15842.33, 'John', 'Doe', '1985-03-15', '123 Main St', 'Dallas', 'TX', '75001', 'North Texas'),
 
- (1, 'asmith', 'asmith@email.com', 'hash002', '555-1002', '456 Oak St Houston TX', '111-11-1002', 42112.88),
+ (1, 'asmith', 'asmith@email.com', 'hash002', '555-1002', '111-11-1002', 42112.88, 'Alice', 'Smith', '1990-07-22', '456 Oak St', 'Houston', 'TX', '77001', 'Houston Metro'),
 
- (1, 'rjohnson', 'rjohnson@email.com', 'hash003', '555-1003', '789 Pine St Austin TX', '111-11-1003', 9575.00),
+ (1, 'rjohnson', 'rjohnson@email.com', 'hash003', '555-1003', '111-11-1003', 9575.00, 'Robert', 'Johnson', '1988-11-08', '789 Pine St', 'Austin', 'TX', '78701', 'Central Texas'),
 
- (1, 'mwilliams', 'mwilliams@email.com', 'hash004', '555-1004', '845 Lake Rd Fort Worth TX', '111-11-1004', 22831.45),
+ (1, 'mwilliams', 'mwilliams@email.com', 'hash004', '555-1004', '111-11-1004', 22831.45, 'Michael', 'Williams', '1992-05-30', '845 Lake Rd', 'Fort Worth', 'TX', '76102', 'North Texas'),
 
- (1, 'ldavis', 'ldavis@email.com', 'hash005', '555-1005', '900 Cedar Ln Plano TX', '111-11-1005', 33450.76),
+ (1, 'ldavis', 'ldavis@email.com', 'hash005', '555-1005', '111-11-1005', 33450.76, 'Lisa', 'Davis', '1987-09-12', '900 Cedar Ln', 'Plano', 'TX', '75074', 'North Texas'),
 
- (2, 'ewilson', 'ewilson@email.com', 'hash006', '555-1006', '44 Bluebird St Irving TX', '111-11-1006', 645.50),
+ (2, 'ewilson', 'ewilson@email.com', 'hash006', '555-1006', '111-11-1006', 645.50, 'Emily', 'Wilson', '1995-01-25', '44 Bluebird St', 'Irving', 'TX', '75060', 'North Texas'),
 
- (1, 'bmoore', 'bmoore@email.com', 'hash007', '555-1007', '78 Magnolia Ave Waco TX', '111-11-1007', 18732.22),
+ (1, 'bmoore', 'bmoore@email.com', 'hash007', '555-1007', '111-11-1007', 18732.22, 'Brian', 'Moore', '1989-04-18', '78 Magnolia Ave', 'Waco', 'TX', '76701', 'Central Texas'),
 
- (1, 'ttaylor', 'ttaylor@email.com', 'hash008', '555-1008', '501 Park Blvd Frisco TX', '111-11-1008', 55123.11),
+ (1, 'ttaylor', 'ttaylor@email.com', 'hash008', '555-1008', '111-11-1008', 55123.11, 'Thomas', 'Taylor', '1986-08-03', '501 Park Blvd', 'Frisco', 'TX', '75034', 'North Texas'),
 
- (3, 'kanderson', 'kanderson@email.com', 'hash009', '555-1009', '100 River Dr Lubbock TX', '111-11-1009', 0.00),
+ (3, 'kanderson', 'kanderson@email.com', 'hash009', '555-1009', '111-11-1009', 0.00, 'Karen', 'Anderson', '1993-12-27', '100 River Dr', 'Lubbock', 'TX', '79401', 'West Texas'),
 
- (1, 'gmartin', 'gmartin@email.com', 'hash010', '555-1010', '212 Elm St Denton TX', '111-11-1010', 12880.44);
+ (1, 'gmartin', 'gmartin@email.com', 'hash010', '555-1010', '111-11-1010', 12880.44, 'George', 'Martin', '1991-06-14', '212 Elm St', 'Denton', 'TX', '76201', 'North Texas');
 
 -- =====================================================
 

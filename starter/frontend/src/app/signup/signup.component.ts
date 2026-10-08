@@ -2,6 +2,7 @@ import { Component, signal, computed } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ThemeService } from '../services/theme.service';
+
 import { HttpClientModule } from '@angular/common/http';
 import {SignupService} from '../services/signup.service';
 // Component for handling user signup, including personal information, email, and password input with validation.
@@ -80,7 +81,7 @@ export class SignupComponent {
     const actualAge = m < 0 || (m === 0 && today.getDate() < dob.getDate()) ? age - 1 : age;
     return actualAge < 18 ? { underage: true } : null;
   }
-// 
+
   pwStrengthColor = computed(() => {
     const s = this.pwStrength();
     if (s <= 1) return 'var(--error)';
@@ -144,29 +145,22 @@ export class SignupComponent {
       return;
     }
     this.submitted.set(true);
-    // Combine address fields into a single string
-    const street = this.form.get('street')?.value || '';
-    const region = this.form.get('region')?.value || '';
-    //const state = this.form.get('state')?.value || '';
-   // const zip = this.form.get('zip')?.value || '';
-   // const address = `${street}, ${region}, ${state} ${zip}`.trim();
-
+    setTimeout(() => this.router.navigate(['/login']), 2000);
     // Prepare data matching backend DTO field names
     const signupData = {
-      firstname: this.form.get('firstname')?.value,
-      lastname: this.form.get('lastname')?.value,
+      firstName: this.form.get('firstName')?.value,
+      lastName: this.form.get('lastName')?.value,
       username: this.form.get('username')?.value,
       email: this.form.get('email')?.value,
       password: this.form.get('passwords')?.get('password')?.value,
-      //address: address,
       phoneNumber: this.form.get('phone')?.value,
       ssn: this.form.get('ssn')?.value,
-      state: this.form.get('state')?.value,
-      zip: this.form.get('zip')?.value,
-      street: this.form.get('street')?.value,
+      stateName: this.form.get('state')?.value,
+      zipCode: this.form.get('zip')?.value,
+      streetAddress: this.form.get('street')?.value,
       city: this.form.get('city')?.value,
-      region: this.form.get('region')?.value
-      
+      region: this.form.get('region')?.value,
+      dob: this.form.get('dob')?.value
     };
     
     // Log data without password for security

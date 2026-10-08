@@ -16,4 +16,4 @@ echo "Press Ctrl+C to stop the server cleanly"
 echo ""
 
 # Start the application
-mvn spring-boot:run
+SERVER_PORT=8081 mvn spring-boot:run
