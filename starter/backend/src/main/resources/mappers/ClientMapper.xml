@@ -13,7 +13,14 @@
     <result column="email" property="email" />
     <result column="cash_balance" property="cashBalance" />
     <result column="password_hash" property="passwordHash" />
-    <result column="address" property="address" />
+    <result column="first_name" property="firstName" />
+    <result column="last_name" property="lastName" />
+    <result column="dob" property="dob" />
+    <result column="street_address" property="streetAddress" />
+    <result column="city" property="city" />
+    <result column="state_name" property="stateName" />
+    <result column="zip_code" property="zipCode" />
+    <result column="region" property="region" />
     <result column="phone_number" property="phoneNumber" />
     <result column="ssn" property="ssn" />
     
@@ -26,7 +33,8 @@
 
   <!-- Find client by ID with status lookup -->
   <select id="findById" parameterType="Long" resultMap="ClientResultMap">
-    SELECT c.client_id, c.username, c.email, c.cash_balance, c.password_hash, c.address, 
+    SELECT c.client_id, c.username, c.email, c.cash_balance, c.password_hash, 
+           c.first_name, c.last_name, c.dob, c.street_address, c.city, c.state_name, c.zip_code, c.region,
            c.phone_number, c.ssn, c.clientstatus_id, cs.clientstatus_name
     FROM clients c
     LEFT JOIN client_status cs ON c.clientstatus_id = cs.clientstatus_id
@@ -35,7 +43,8 @@
 
   <!-- Find client by email with status lookup -->
   <select id="findByEmail" parameterType="String" resultMap="ClientResultMap">
-    SELECT c.client_id, c.username, c.email, c.cash_balance, c.password_hash, c.address, 
+    SELECT c.client_id, c.username, c.email, c.cash_balance, c.password_hash, 
+           c.first_name, c.last_name, c.dob, c.street_address, c.city, c.state_name, c.zip_code, c.region,
            c.phone_number, c.ssn, c.clientstatus_id, cs.clientstatus_name
     FROM clients c
     LEFT JOIN client_status cs ON c.clientstatus_id = cs.clientstatus_id
@@ -44,7 +53,8 @@
 
   <!-- Retrieve all clients with status lookup -->
   <select id="findAll" resultMap="ClientResultMap">
-    SELECT c.client_id, c.username, c.email, c.cash_balance, c.password_hash, c.address, 
+    SELECT c.client_id, c.username, c.email, c.cash_balance, c.password_hash, 
+           c.first_name, c.last_name, c.dob, c.street_address, c.city, c.state_name, c.zip_code, c.region,
            c.phone_number, c.ssn, c.clientstatus_id, cs.clientstatus_name
     FROM clients c
     LEFT JOIN client_status cs ON c.clientstatus_id = cs.clientstatus_id
@@ -52,8 +62,8 @@
 
   <!-- Insert new client (auto-generated ID) -->
   <insert id="save" parameterType="com.sleapy.project.models.entities.ClientEntity" useGeneratedKeys="true" keyProperty="id">
-    INSERT INTO clients (username, email, cash_balance, password_hash, address, phone_number, ssn, clientstatus_id)
-    VALUES (#{username}, #{email}, #{cashBalance}, #{passwordHash}, #{address}, #{phoneNumber}, #{ssn}, #{clientStatus.id})
+    INSERT INTO clients (username, email, cash_balance, password_hash, first_name, last_name, dob, street_address, city, state_name, zip_code, region, phone_number, ssn, clientstatus_id)
+    VALUES (#{username}, #{email}, #{cashBalance}, #{passwordHash}, #{firstName}, #{lastName}, #{dob}, #{streetAddress}, #{city}, #{stateName}, #{zipCode}, #{region}, #{phoneNumber}, #{ssn}, #{clientStatus.id})
   </insert>
 
   <!-- Update existing client -->
@@ -63,7 +73,14 @@
         email = #{email}, 
         cash_balance = #{cashBalance}, 
         password_hash = #{passwordHash},
-        address = #{address}, 
+        first_name = #{firstName},
+        last_name = #{lastName},
+        dob = #{dob},
+        street_address = #{streetAddress},
+        city = #{city},
+        state_name = #{stateName},
+        zip_code = #{zipCode},
+        region = #{region},
         phone_number = #{phoneNumber}, 
         ssn = #{ssn}, 
         clientstatus_id = #{clientStatus.id}
