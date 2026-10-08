@@ -37,7 +37,8 @@ CREATE TABLE Instruments (
     Instrument_ID SERIAL PRIMARY KEY,
     Symbol VARCHAR(20) NOT NULL,
     Symbol_Name VARCHAR(255) NOT NULL,
-    InstrumentType_ID INTEGER NOT NULL REFERENCES Instrument_Type(InstrumentType_ID)
+    InstrumentType_ID INTEGER NOT NULL REFERENCES Instrument_Type(InstrumentType_ID),
+    current_price NUMERIC(15,2)
 );
 -- Holdings
 CREATE TABLE Holdings (

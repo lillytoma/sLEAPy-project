@@ -8,6 +8,7 @@
         <id column="instrument_id" property="id"/>
         <result column="symbol" property="symbol"/>
         <result column="symbol_name" property="symbolName"/>
+        <result column="current_price" property="currentPrice"/>
         <association property="instrumentType" javaType="com.sleapy.project.models.entities.InstrumentType">
             <id column="instrumenttype_id" property="instrumentType_id"/>
             <result column="instrumenttype_name" property="name"/>
@@ -20,6 +21,7 @@
             i.instrument_id,
             i.symbol,
             i.symbol_name,
+            i.current_price,
             i.instrumenttype_id,
             it.instrumenttype as instrumenttype_name
         FROM instruments i
@@ -33,6 +35,7 @@
             i.instrument_id,
             i.symbol,
             i.symbol_name,
+            i.current_price,
             i.instrumenttype_id,
             it.instrumenttype as instrumenttype_name
         FROM instruments i
@@ -46,6 +49,7 @@
             i.instrument_id,
             i.symbol,
             i.symbol_name,
+            i.current_price,
             i.instrumenttype_id,
             it.instrumenttype as instrumenttype_name
         FROM instruments i
@@ -55,8 +59,8 @@
 
     <!-- Insert new instrument -->
     <insert id="save" parameterType="com.sleapy.project.models.entities.InstrumentEntity" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO instruments (symbol, symbol_name, instrumenttype_id)
-        VALUES (#{symbol}, #{symbolName}, #{instrumentType.instrumentType_id})
+        INSERT INTO instruments (symbol, symbol_name, current_price, instrumenttype_id)
+        VALUES (#{symbol}, #{symbolName}, #{currentPrice}, #{instrumentType.instrumentType_id})
     </insert>
 
     <!-- Update instrument -->
@@ -64,6 +68,7 @@
         UPDATE instruments
         SET symbol = #{symbol},
             symbol_name = #{symbolName},
+            current_price = #{currentPrice},
             instrumenttype_id = #{instrumentType.instrumentType_id}
         WHERE instrument_id = #{id}
     </update>

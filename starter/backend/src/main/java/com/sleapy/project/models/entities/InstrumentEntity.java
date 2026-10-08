@@ -18,6 +18,7 @@ public class InstrumentEntity {
     private String symbol; // Apple Inc.
     private String symbolName; // instrument type lookup
     private InstrumentType instrumentType;
+    private Double currentPrice; // Current market price
 
 
 }
