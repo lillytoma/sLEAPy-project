@@ -7,7 +7,7 @@ import { ThemeService } from '../services/theme.service';
 @Component({
   selector: 'app-login',
   standalone: true,
-  templateUrl: 'login.component.html',
+  templateUrl: './login.component.html',
   imports: [RouterLink, FormsModule]
 })
 export class LoginComponent {
