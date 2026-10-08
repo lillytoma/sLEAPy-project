@@ -1,5 +1,7 @@
 package com.sleapy.project.models.entities;
 
+import java.math.BigDecimal;
+
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -18,7 +20,7 @@ public class InstrumentEntity {
     private String symbol; // Apple Inc.
     private String symbolName; // instrument type lookup
     private InstrumentType instrumentType;
-    private Double currentPrice; // Current market price
+    private BigDecimal currentPrice; //current market price of the instrument
 
 
 }

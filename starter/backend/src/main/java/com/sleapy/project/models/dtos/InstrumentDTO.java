@@ -2,12 +2,20 @@ package com.sleapy.project.models.dtos;
 
 import com.sleapy.project.models.entities.InstrumentEntity;
 import com.sleapy.project.models.entities.InstrumentType;
+import java.math.BigDecimal;
 
 public class InstrumentDTO {
-    InstrumentDTO(InstrumentEntity entity){
+
+    private String symbol;
+    private String symbolName;
+    private InstrumentType instrumentType;
+    private BigDecimal currentPrice;
+
+    public InstrumentDTO(InstrumentEntity entity){
         this.symbol = entity.getSymbol();
         this.instrumentType = entity.getInstrumentType();
         this.symbolName = entity.getSymbolName();
+        this.currentPrice = entity.getCurrentPrice();
     }
 
     public String getSymbol() {
@@ -34,7 +42,12 @@ public class InstrumentDTO {
         this.instrumentType = instrumentType;
     }
 
-    private String symbol;
-    private String symbolName;
-    private InstrumentType instrumentType;
+    public void setCurrentPrice(BigDecimal currentPrice){
+        this.currentPrice = currentPrice;
+    }
+
+    public BigDecimal getCurrentPrice(){
+        return currentPrice;
+    }
+
 }
