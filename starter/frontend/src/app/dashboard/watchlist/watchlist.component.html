@@ -79,17 +79,12 @@
       }
     </div>
 
-    <!-- Buy Modal -->
-    @if (buyModalStock()) {
-      <app-buy-modal [stock]="buyModalStock()!" (close)="buyModalStock.set(null)"></app-buy-modal>
-    }
-
-    <!-- Sell Modal -->
-    @if (sellModal()) {
-      <app-sell-modal
-        [symbol]="sellModal()!.symbol"
-        [sharesOwned]="sellModal()!.shares"
-        [currentPrice]="sellModal()!.price"
-        (close)="sellModal.set(null)">
-      </app-sell-modal>
+    <!-- Order Modal -->
+    @if (orderModal()) {
+      <app-order-modal 
+        [stock]="orderModal()!.stock"
+        [availableCash]="portfolioService.availableCash()" 
+        [sharesOwned]="portfolioService.getHolding(orderModal()!.stock.symbol)?.shares ?? 0"
+        (close)="orderModal.set(null)">
+      </app-order-modal>
     }

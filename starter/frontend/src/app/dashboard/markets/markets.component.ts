@@ -1,9 +1,8 @@
 import { Component, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MARKET_STOCKS, PRESET_FILTERS, ADD_FILTER_OPTIONS, MarketStock } from '../../data/mock-data';
+import { MARKET_STOCKS, PRESET_FILTERS, MarketStock } from '../../data/mock-data';
 import { PortfolioService } from '../../services/portfolio.service';
-import { BuyModalComponent } from '../shared/buy-modal.component';
-import { SellModalComponent } from '../shared/sell-modal.component';
+import { OrderModalComponent } from '../shared/order-modal.component';
 
 type TableTab = 'overview' | 'performance' | 'technicals' | 'valuation' | 'dividends' | 'profitability';
 
@@ -11,20 +10,15 @@ type TableTab = 'overview' | 'performance' | 'technicals' | 'valuation' | 'divid
   selector: 'app-markets',
   standalone: true,
   templateUrl: './market.component.html',
-  imports: [FormsModule, BuyModalComponent, SellModalComponent],
+  imports: [FormsModule, OrderModalComponent],
 })
 export class MarketsComponent {
   presetFilters = PRESET_FILTERS;
-  addFilterOptions = ADD_FILTER_OPTIONS;
 
   searchQuery = '';
   activePreset = signal('All stocks');
   activeTab = signal<TableTab>('overview');
-  showFilterMenu = signal(false);
-  openFilterSub = signal<string | null>(null);
-  activeFilters = signal<Array<{ key: string; label: string; value: string }>>([]);
-  buyModalStock = signal<MarketStock | null>(null);
-  sellModal = signal<{ symbol: string; shares: number; price: number } | null>(null);
+  orderModal = signal<{ stock: MarketStock; mode: 'buy' | 'sell' } | null>(null);
 
   tableTabs: Array<{ key: TableTab; label: string }> = [
     { key: 'overview', label: 'Overview' },
@@ -40,22 +34,21 @@ export class MarketsComponent {
   filteredStocks = computed(() => {
     let stocks = [...MARKET_STOCKS];
     const q = this.searchQuery.toLowerCase();
+    
+    // TODO: Integrate y-finance search here for real stock data
     if (q) {
       stocks = stocks.filter(
         (s) => s.symbol.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
       );
     }
+    
     const preset = this.activePreset();
     if (preset === 'Top gainers') stocks = stocks.filter((s) => s.chg > 0).sort((a, b) => b.chg - a.chg);
     else if (preset === 'Biggest losers') stocks = stocks.filter((s) => s.chg < 0).sort((a, b) => a.chg - b.chg);
     else if (preset === 'Most active') stocks = [...stocks].sort((a, b) => parseFloat(b.vol) - parseFloat(a.vol));
     else if (preset === 'High-dividend') stocks = stocks.filter((s) => parseFloat(s.divYield) > 0);
     else if (preset === 'Penny stocks') stocks = stocks.filter((s) => s.price < 10);
-    // Apply active filter tags
-    for (const f of this.activeFilters()) {
-      if (f.key === 'sector') stocks = stocks.filter((s) => s.sector.toLowerCase().includes(f.value.toLowerCase()));
-      if (f.key === 'analyst') stocks = stocks.filter((s) => s.rating.toLowerCase() === f.value.toLowerCase());
-    }
+    
     return stocks;
   });
 
@@ -72,28 +65,11 @@ export class MarketsComponent {
   }
 
   openBuy(stock: MarketStock): void {
-    this.buyModalStock.set(stock);
-    this.showFilterMenu.set(false);
+    this.orderModal.set({ stock, mode: 'buy' });
   }
 
   openSell(stock: MarketStock): void {
     const h = this.portfolioService.getHolding(stock.symbol);
-    if (h) this.sellModal.set({ symbol: stock.symbol, shares: h.shares, price: stock.price });
-  }
-
-  toggleFilterSub(key: string): void {
-    this.openFilterSub.set(this.openFilterSub() === key ? null : key);
-  }
-
-  addFilter(key: string, label: string, value: string): void {
-    const current = this.activeFilters();
-    const without = current.filter((f) => f.key !== key);
-    this.activeFilters.set([...without, { key, label, value }]);
-    this.showFilterMenu.set(false);
-    this.openFilterSub.set(null);
-  }
-
-  removeFilter(key: string): void {
-    this.activeFilters.update((prev) => prev.filter((f) => f.key !== key));
+    if (h) this.orderModal.set({ stock, mode: 'sell' });
   }
 }

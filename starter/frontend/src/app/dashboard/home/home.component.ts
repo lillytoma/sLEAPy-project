@@ -1,20 +1,20 @@
 import { Component, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { PortfolioService } from '../../services/portfolio.service';
-import { portfolioHistory, transactions, extendedWatchlist, MARKET_STOCKS } from '../../data/mock-data';
-import { SellModalComponent } from '../shared/sell-modal.component';
+import { portfolioHistory, transactions, extendedWatchlist, MARKET_STOCKS, MarketStock } from '../../data/mock-data';
+import { OrderModalComponent } from '../shared/order-modal.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
   templateUrl: './home.componet.html',
-  imports: [RouterLink, SellModalComponent]
+  imports: [RouterLink, OrderModalComponent]
 })
 
 export class HomeComponent {
   portfolioHistory = portfolioHistory;
   transactions = transactions;
-  sellModal = signal<{ symbol: string; shares: number; price: number } | null>(null);
+  orderModal = signal<{ stock: MarketStock; mode: 'buy' | 'sell' } | null>(null);
 
   constructor(public portfolioService: PortfolioService) {}
 
@@ -89,6 +89,9 @@ export class HomeComponent {
   });
 
   openSell(symbol: string, shares: number, price: number): void {
-    this.sellModal.set({ symbol, shares, price });
+    const stock = MARKET_STOCKS.find(s => s.symbol === symbol);
+    if (stock) {
+      this.orderModal.set({ stock, mode: 'sell' });
+    }
   }
 }

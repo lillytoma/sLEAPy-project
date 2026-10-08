@@ -1,18 +1,16 @@
 import { Component, computed, signal } from '@angular/core';
 import { PortfolioService } from '../../services/portfolio.service';
 import { extendedWatchlist, MARKET_STOCKS, MarketStock, WatchlistStock } from '../../data/mock-data';
-import { BuyModalComponent } from '../shared/buy-modal.component';
-import { SellModalComponent } from '../shared/sell-modal.component';
+import { OrderModalComponent } from '../shared/order-modal.component';
 
 @Component({
   selector: 'app-watchlist',
   standalone: true,
-  imports: [BuyModalComponent, SellModalComponent],
+  imports: [OrderModalComponent],
   templateUrl: './watchlist.component.html'
 })
 export class WatchlistComponent {
-  buyModalStock = signal<MarketStock | null>(null);
-  sellModal = signal<{ symbol: string; shares: number; price: number } | null>(null);
+  orderModal = signal<{ stock: MarketStock; mode: 'buy' | 'sell' } | null>(null);
 
   constructor(public portfolioService: PortfolioService) {}
 
@@ -30,30 +28,34 @@ export class WatchlistComponent {
   openBuy(item: WatchlistStock): void {
     const marketStock = MARKET_STOCKS.find((s) => s.symbol === item.symbol);
     if (marketStock) {
-      this.buyModalStock.set(marketStock);
+      this.orderModal.set({ stock: marketStock, mode: 'buy' });
     } else {
-      this.buyModalStock.set({
-        symbol: item.symbol,
-        name: item.name,
-        chg: item.change,
-        price: item.price,
-        vol: '—',
-        relVol: '—',
-        mktCap: item.mktCap,
-        pe: '—',
-        eps: 0,
-        epsGrowth: 0,
-        divYield: '0.00%',
-        sector: '—',
-        rating: '—',
+      this.orderModal.set({
+        stock: {
+          symbol: item.symbol,
+          name: item.name,
+          chg: item.change,
+          price: item.price,
+          vol: '—',
+          relVol: '—',
+          mktCap: item.mktCap,
+          pe: '—',
+          eps: 0,
+          epsGrowth: 0,
+          divYield: '0.00%',
+          sector: '—',
+          rating: '—',
+        },
+        mode: 'buy'
       });
     }
   }
 
   openSell(item: WatchlistStock): void {
     const h = this.portfolioService.getHolding(item.symbol);
-    if (h) {
-      this.sellModal.set({ symbol: item.symbol, shares: h.shares, price: item.price });
+    const marketStock = MARKET_STOCKS.find((s) => s.symbol === item.symbol);
+    if (h && marketStock) {
+      this.orderModal.set({ stock: marketStock, mode: 'sell' });
     }
   }
 }

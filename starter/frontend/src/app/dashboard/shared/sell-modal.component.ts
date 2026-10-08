@@ -1,52 +1,90 @@
-import { Component, Input, Output, EventEmitter, signal, computed, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
 import { PortfolioService } from '../../services/portfolio.service';
 
 @Component({
   selector: 'app-sell-modal',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, HttpClientModule],
   templateUrl:'./sell-modal.component.html'
 })
-export class SellModalComponent implements OnInit {
+export class SellModalComponent {
   @Input() symbol: string = '';
   @Input() sharesOwned: number = 0;
   @Input() currentPrice: number = 0;
   @Output() close = new EventEmitter<void>();
+  @Output() switchToBuy = new EventEmitter<void>();
 
-  orderType = signal<'market' | 'limit'>('market');
-  sharesToSell: number = 0;
-  limitPrice: number = 0;
+  modalMode = signal<'buy' | 'sell'>('sell');
+  inputMode = signal<'shares' | 'money'>('shares');
+  sharesToSell = signal(0);
+  moneyAmount = signal(0);
   success = signal(false);
+  loading = signal(false);
+  orderMessage = signal('');
+  orderStatus = signal<'PLACED' | 'REJECTED' | 'PENDING' | null>(null);
   confirmedShares = signal(0);
   confirmedProceeds = signal(0);
+  error = signal<string | null>(null);
 
   quickSellPcts = [25, 50, 75, 100];
 
   constructor(private portfolioService: PortfolioService) {}
 
-  ngOnInit(): void {
-    this.limitPrice = this.currentPrice;
-  }
+  effectivePrice = computed(() => this.currentPrice);
 
-  effectivePrice = computed(() => {
-    if (this.orderType() === 'limit' && this.limitPrice > 0) return this.limitPrice;
-    return this.currentPrice;
+  calculatedShares = computed(() => {
+    if (this.inputMode() === 'shares') {
+      return Math.min(this.sharesToSell() || 0, this.sharesOwned);
+    } else {
+      const shares = Math.floor((this.moneyAmount() || 0) / this.effectivePrice());
+      return Math.min(shares, this.sharesOwned);
+    }
   });
 
-  estimatedProceeds = computed(() => (this.sharesToSell || 0) * this.effectivePrice());
+  estimatedProceeds = computed(() => this.calculatedShares() * this.effectivePrice());
+
+  moneyEarned = computed(() => this.estimatedProceeds());
 
   setSharesByPct(pct: number): void {
-    this.sharesToSell = Math.floor(this.sharesOwned * pct / 100);
+    this.sharesToSell.set(Math.floor(this.sharesOwned * pct / 100));
+    this.inputMode.set('shares');
   }
 
   executeSell(): void {
-    if (!this.sharesToSell || this.sharesToSell < 1 || this.sharesToSell > this.sharesOwned) return;
-    const proceeds = this.sharesToSell * this.effectivePrice();
-    this.confirmedShares.set(this.sharesToSell);
-    this.confirmedProceeds.set(proceeds);
-    this.portfolioService.sellShares(this.symbol, this.sharesToSell);
-    this.success.set(true);
+    if (this.calculatedShares() < 1 || this.calculatedShares() > this.sharesOwned) return;
+
+    this.loading.set(true);
+    this.error.set(null);
+    this.sharesToSell.set(0);
+    this.moneyAmount.set(0);
+
+    this.portfolioService.sellOrder(
+      this.symbol,
+      this.calculatedShares(),
+      this.effectivePrice(),
+      'market'
+    ).subscribe({
+      next: (response) => {
+        this.loading.set(false);
+        this.orderMessage.set(response.message);
+        this.orderStatus.set(response.status);
+
+        if (response.success && response.status === 'PLACED') {
+          this.confirmedShares.set(this.calculatedShares());
+          this.confirmedProceeds.set(this.estimatedProceeds());
+          this.success.set(true);
+        } else if (response.status === 'REJECTED') {
+          this.error.set(response.error || response.message);
+        }
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.error.set(err.error?.message || 'Failed to place order. Please try again.');
+        this.orderStatus.set('REJECTED');
+      }
+    });
   }
 
   onBackdropClick(event: Event): void {

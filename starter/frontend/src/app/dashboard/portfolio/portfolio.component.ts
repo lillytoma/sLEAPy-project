@@ -1,17 +1,17 @@
 import { Component, computed, signal } from '@angular/core';
 import { PortfolioService } from '../../services/portfolio.service';
-import { portfolioHistory, sparklines } from '../../data/mock-data';
-import { SellModalComponent } from '../shared/sell-modal.component';
+import { portfolioHistory, sparklines, MARKET_STOCKS, MarketStock } from '../../data/mock-data';
+import { OrderModalComponent } from '../shared/order-modal.component';
 
 @Component({
   selector: 'app-portfolio',
   standalone: true,
-  imports: [SellModalComponent],
+  imports: [OrderModalComponent],
   templateUrl: './portfolio.component.html'
 })
 export class PortfolioComponent {
   sparklines = sparklines;
-  sellModal = signal<{ symbol: string; shares: number; price: number } | null>(null);
+  orderModal = signal<{ stock: MarketStock; mode: 'buy' | 'sell' } | null>(null);
 
   constructor(public portfolioService: PortfolioService) {}
 
@@ -86,6 +86,9 @@ export class PortfolioComponent {
   }
 
   openSell(symbol: string, shares: number, price: number): void {
-    this.sellModal.set({ symbol, shares, price });
+    const stock = MARKET_STOCKS.find(s => s.symbol === symbol);
+    if (stock) {
+      this.orderModal.set({ stock, mode: 'sell' });
+    }
   }
 }

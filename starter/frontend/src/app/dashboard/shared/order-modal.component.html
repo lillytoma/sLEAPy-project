@@ -1,0 +1,235 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4"
+  style="background-color:rgba(0,0,0,0.6)"
+  (click)="onBackdropClick($event)">
+  <div class="w-full max-w-md rounded-xl border shadow-2xl fade-in transition-all duration-300"
+    style="background-color:var(--card);border-color:var(--border)"
+    (click)="$event.stopPropagation()">
+
+    @if (!success()) {
+      <!-- Header -->
+      <div class="flex items-center justify-between px-6 py-4 border-b" style="border-color:var(--border)">
+        <div>
+          <h2 class="text-lg font-semibold" style="color:var(--foreground)">{{ mode() === 'buy' ? 'Buy' : 'Sell' }} {{ stock.symbol }}</h2>
+          <p class="text-sm" style="color:var(--muted-foreground)">
+            {{ mode() === 'buy' ? stock.name : 'You own ' + sharesOwned + ' shares' }}
+          </p>
+        </div>
+        <button (click)="close.emit()" style="color:var(--muted-foreground)" class="p-1 hover:opacity-70">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Buy/Sell Toggle -->
+      <div class="flex gap-2 px-6 py-3 border-b" style="border-color:var(--border)">
+        <button (click)="switchMode('buy')" 
+          [disabled]="mode() === 'buy'"
+          class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all" 
+          [style.background-color]="mode() === 'buy' ? 'var(--primary)' : 'rgba(96,165,250,0.2)'"
+          [style.color]="mode() === 'buy' ? '#fff' : '#60a5fa'">
+          Buy
+        </button>
+        <button (click)="switchMode('sell')" 
+          [disabled]="sharesOwned === 0 || mode() === 'sell'"
+          class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all" 
+          [style.opacity]="sharesOwned > 0 ? '1' : '0.5'"
+          [style.background-color]="mode() === 'sell' ? 'var(--error)' : 'rgba(239,68,68,0.2)'"
+          [style.color]="mode() === 'sell' ? '#fff' : 'var(--error)'">
+          Sell
+        </button>
+      </div>
+
+      <div class="px-6 py-5 space-y-5">
+        <!-- Current price -->
+        <div class="flex items-center justify-between p-3 rounded-lg" style="background-color:var(--muted)">
+          <span class="text-sm" style="color:var(--muted-foreground)">Current Price</span>
+          <span class="font-mono font-semibold" style="color:var(--foreground)">{{ '$' }}{{ stock.price.toFixed(2) }}</span>
+        </div>
+
+        <!-- Quick sell buttons (only for sell mode) -->
+        @if (mode() === 'sell') {
+          <div>
+            <label class="block text-sm font-medium mb-2" style="color:var(--foreground)">Quick Sell</label>
+            <div class="grid grid-cols-4 gap-2">
+              @for (pct of quickSellPcts; track pct) {
+                <button (click)="setSharesByPct(pct)"
+                  class="py-2 text-xs font-medium rounded-md border transition-colors"
+                  style="border-color:var(--border);color:var(--foreground);background-color:var(--background)">
+                  {{ pct === 100 ? 'All' : pct + '%' }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Input mode toggle: Shares vs Money -->
+        <div>
+          <label class="block text-sm font-medium mb-2" style="color:var(--foreground)">Input By</label>
+          <div class="flex rounded-md overflow-hidden border" style="border-color:var(--border)">
+            <button (click)="inputMode.set('shares')"
+              class="flex-1 py-2 text-sm font-medium transition-colors"
+              [style.background-color]="inputMode() === 'shares' ? (mode() === 'buy' ? 'var(--primary)' : 'var(--error)') : 'var(--background)'"
+              [style.color]="inputMode() === 'shares' ? '#fff' : 'var(--muted-foreground)'">
+              Shares
+            </button>
+            <button (click)="inputMode.set('money')"
+              class="flex-1 py-2 text-sm font-medium transition-colors"
+              [style.background-color]="inputMode() === 'money' ? (mode() === 'buy' ? 'var(--primary)' : 'var(--error)') : 'var(--background)'"
+              [style.color]="inputMode() === 'money' ? '#fff' : 'var(--muted-foreground)'">
+              Money
+            </button>
+          </div>
+        </div>
+
+        <!-- Buy mode inputs -->
+        @if (mode() === 'buy') {
+          @if (inputMode() === 'shares') {
+            <div>
+              <label class="block text-sm font-medium mb-1.5" style="color:var(--foreground)">Number of Shares</label>
+              <input type="number" [ngModel]="shares()" (ngModelChange)="shares.set($event)" min="1" placeholder="0"
+                class="w-full px-4 py-2.5 rounded-md text-sm border outline-none font-mono"
+                style="background-color:var(--background);color:var(--foreground);border-color:var(--border)" />
+            </div>
+          } @else {
+            <div>
+              <label class="block text-sm font-medium mb-1.5" style="color:var(--foreground)">Amount ($)</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style="color:var(--muted-foreground)">$</span>
+                <input type="number" [ngModel]="moneyAmount()" (ngModelChange)="moneyAmount.set($event)" min="0" placeholder="0.00"
+                  class="w-full pl-7 pr-4 py-2.5 rounded-md text-sm border outline-none font-mono"
+                  style="background-color:var(--background);color:var(--foreground);border-color:var(--border)" />
+              </div>
+              <p class="text-xs mt-1" style="color:var(--muted-foreground)">
+                Will buy {{ calculatedBuyShares() }} shares
+              </p>
+            </div>
+          }
+
+          <!-- Estimated total (buy) -->
+          <div class="p-4 rounded-lg border" style="border-color:var(--border);background-color:var(--background)">
+            <div class="flex items-center justify-between">
+              <span class="text-sm" style="color:var(--muted-foreground)">Estimated Total</span>
+              <span class="font-mono font-bold text-lg" style="color:var(--foreground)">{{ '$' }}{{ estimatedBuyTotal().toFixed(2) }}</span>
+            </div>
+            <p class="text-xs mt-1" style="color:var(--muted-foreground)">
+              {{ calculatedBuyShares() }} shares × {{ '$' }}{{ effectivePrice().toFixed(2) }}
+            </p>
+          </div>
+
+          <!-- Remaining cash (buy) -->
+          <div class="p-4 rounded-lg border" style="border-color:var(--border);background-color:var(--background)">
+            <div class="flex items-center justify-between">
+              <span class="text-sm" style="color:var(--muted-foreground)">Cash Remaining</span>
+              <span class="font-mono font-bold text-lg" 
+                [style.color]="remainingCash() < 0 ? 'var(--error)' : 'var(--foreground)'">
+                {{ '$' }}{{ remainingCash().toFixed(2) }}
+              </span>
+            </div>
+          </div>
+        }
+
+        <!-- Sell mode inputs -->
+        @if (mode() === 'sell') {
+          @if (inputMode() === 'shares') {
+            <div>
+              <label class="block text-sm font-medium mb-1.5" style="color:var(--foreground)">Shares to Sell</label>
+              <input type="number" [ngModel]="sharesToSell()" (ngModelChange)="sharesToSell.set($event)" [min]="1" [max]="sharesOwned"
+                class="w-full px-4 py-2.5 rounded-md text-sm border outline-none font-mono"
+                style="background-color:var(--background);color:var(--foreground);border-color:var(--border)" />
+            </div>
+          } @else {
+            <div>
+              <label class="block text-sm font-medium mb-1.5" style="color:var(--foreground)">Amount ($)</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style="color:var(--muted-foreground)">$</span>
+                <input type="number" [ngModel]="moneyAmountToReceive()" (ngModelChange)="moneyAmountToReceive.set($event)" min="0" placeholder="0.00"
+                  class="w-full pl-7 pr-4 py-2.5 rounded-md text-sm border outline-none font-mono"
+                  style="background-color:var(--background);color:var(--foreground);border-color:var(--border)" />
+              </div>
+              <p class="text-xs mt-1" style="color:var(--muted-foreground)">
+                Will sell {{ calculatedSellShares() }} shares
+              </p>
+            </div>
+          }
+
+          <!-- Estimated proceeds (sell) -->
+          <div class="p-4 rounded-lg border" style="border-color:var(--border);background-color:var(--background)">
+            <div class="flex items-center justify-between">
+              <span class="text-sm" style="color:var(--muted-foreground)">Estimated Proceeds</span>
+              <span class="font-mono font-bold text-lg" style="color:var(--error)">{{ '$' }}{{ estimatedSellProceeds().toFixed(2) }}</span>
+            </div>
+            <p class="text-xs mt-1" style="color:var(--muted-foreground)">
+              {{ calculatedSellShares() }} shares × {{ '$' }}{{ effectivePrice().toFixed(2) }}
+            </p>
+          </div>
+
+          <!-- Warning strip -->
+          <div class="flex items-start gap-2 p-3 rounded-md" style="background-color:rgba(125,18,30,0.1)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="flex-shrink-0 mt-0.5" style="color:var(--error)">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            </svg>
+            <p class="text-xs" style="color:var(--error)">
+              Sell orders are executed at market price. Capital gains taxes may apply.
+            </p>
+          </div>
+        }
+
+        <!-- Error message -->
+        @if (error()) {
+          <div class="p-3 rounded-lg border" style="background-color:rgba(239,68,68,0.1);border-color:var(--error);color:var(--error)">
+            <p class="text-sm">{{ error() }}</p>
+          </div>
+        }
+
+        <!-- Submit button -->
+        <button (click)="mode() === 'buy' ? executeBuy() : executeSell()"
+          [disabled]="(mode() === 'buy' ? (calculatedBuyShares() < 1 || estimatedBuyTotal() > availableCash) : (calculatedSellShares() < 1 || calculatedSellShares() > sharesOwned)) || loading()"
+          class="w-full py-3 rounded-md font-semibold text-sm transition-opacity flex items-center justify-center gap-2"
+          [style.background-color]="mode() === 'buy' ? 'var(--primary)' : 'var(--error)'"
+          style="color:#fff"
+          [style.opacity]="(mode() === 'buy' ? (calculatedBuyShares() < 1 || estimatedBuyTotal() > availableCash) : (calculatedSellShares() < 1 || calculatedSellShares() > sharesOwned)) || loading() ? '0.5' : '1'">
+          @if (loading()) {
+            <svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" opacity="0.25"></circle>
+              <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Placing Order...
+          } @else {
+            {{ mode() === 'buy' ? 'Place Buy Order' : 'Place Sell Order' }}
+          }
+        </button>
+      </div>
+    } @else {
+      <!-- Success state -->
+      <div class="px-6 py-10 text-center">
+        <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+          [style.background-color]="orderStatus() === 'REJECTED' ? 'var(--error)' : (mode() === 'buy' ? 'var(--primary)' : 'var(--success)')"
+          style="color:#fff">
+          @if (orderStatus() === 'REJECTED') {
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          }
+        </div>
+        <h3 class="text-xl font-semibold mb-2" style="color:var(--foreground)">
+          {{ orderStatus() === 'REJECTED' ? 'Order Rejected' : 'Order Placed!' }}
+        </h3>
+        <p class="text-sm mb-1" style="color:var(--muted-foreground)">
+          {{ orderMessage() }}
+        </p>
+        <p class="text-sm mb-6" style="color:var(--muted-foreground)">
+          {{ confirmedShares() }} shares {{ mode() === 'buy' ? 'bought' : 'sold' }} for {{ '$' }}{{ confirmedTotal().toFixed(2) }}
+        </p>
+        <button (click)="close.emit()" class="w-full py-2 px-4 rounded-md font-semibold text-sm transition-opacity"
+          style="background-color:var(--muted);color:var(--foreground)">
+          Close
+        </button>
+      </div>
+    }
+  </div>
+</div>

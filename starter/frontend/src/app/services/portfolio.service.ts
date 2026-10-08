@@ -1,10 +1,50 @@
 import { Injectable, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { holdings, Holding } from '../data/mock-data';
+
+export interface OrderResponse {
+  success: boolean;
+  orderId?: string;
+  message: string;
+  status: 'PLACED' | 'REJECTED' | 'PENDING';
+  error?: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class PortfolioService {
   watchlistedSymbols = signal<string[]>(['META', 'GOOG', 'BRK.B', 'V', 'NFLX']);
   holdings = signal<Holding[]>([...holdings]);
+  availableCash = signal(10000);  // Default $10,000 cash available
+  private baseUrl = 'http://localhost:8080/api/orders';
+
+  constructor(private http: HttpClient) {}
+
+  /**
+   * Place a buy order with the backend
+   */
+  placeOrder(symbol: string, quantity: number, price: number, orderType: 'market' | 'limit'): Observable<OrderResponse> {
+    return this.http.post<OrderResponse>(`${this.baseUrl}/place`, {
+      symbol,
+      quantity,
+      price,
+      orderType,
+      side: 'buy'
+    });
+  }
+
+  /**
+   * Place a sell order with the backend
+   */
+  sellOrder(symbol: string, quantity: number, price: number, orderType: 'market' | 'limit'): Observable<OrderResponse> {
+    return this.http.post<OrderResponse>(`${this.baseUrl}/place`, {
+      symbol,
+      quantity,
+      price,
+      orderType,
+      side: 'sell'
+    });
+  }
 
   toggleWatchlist(symbol: string): void {
     this.watchlistedSymbols.update((prev) =>
