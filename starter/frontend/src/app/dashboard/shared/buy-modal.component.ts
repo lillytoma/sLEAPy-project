@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
-import { PortfolioService } from '../../services/portfolio.service';
+import { PortfolioService, OrderRequest } from '../../services/portfolio.service';
 import { MarketStock } from '../../data/mock-data';
 
 @Component({
@@ -23,7 +23,7 @@ export class BuyModalComponent {
   success = signal(false);
   loading = signal(false);
   orderMessage = signal('');
-  orderStatus = signal<'PLACED' | 'REJECTED' | 'PENDING' | null>(null);
+  orderStatus = signal<'PENDING' | 'ACCEPTED' | 'FILLED' | 'REJECTED' | null>(null);
   confirmedShares = signal(0);
   confirmedTotal = signal(0);
   error = signal<string | null>(null);
@@ -52,18 +52,20 @@ export class BuyModalComponent {
     this.shares.set(0);
     this.moneyAmount.set(0);
 
-    this.portfolioService.placeOrder(
-      this.stock.symbol,
-      this.calculatedShares(),
-      this.effectivePrice(),
-      'market'
-    ).subscribe({
+    const orderRequest: OrderRequest = {
+      symbol: this.stock.symbol,
+      quantity: this.calculatedShares(),
+      price: this.effectivePrice(),
+      side: 'buy'
+    };
+
+    this.portfolioService.placeOrder(orderRequest).subscribe({
       next: (response) => {
         this.loading.set(false);
         this.orderMessage.set(response.message);
         this.orderStatus.set(response.status);
         
-        if (response.success && response.status === 'PLACED') {
+        if (response.success && response.status === 'PENDING') {
           this.confirmedShares.set(this.calculatedShares());
           this.confirmedTotal.set(this.estimatedTotal());
           this.success.set(true);

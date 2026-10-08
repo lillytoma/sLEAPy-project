@@ -3,11 +3,18 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { holdings, Holding } from '../data/mock-data';
 
+export interface OrderRequest {
+  symbol: string;
+  quantity: number;
+  price: number;
+  side: 'buy' | 'sell';
+}
+
 export interface OrderResponse {
   success: boolean;
   orderId?: string;
   message: string;
-  status: 'PLACED' | 'REJECTED' | 'PENDING';
+  status: 'PENDING' | 'ACCEPTED' | 'FILLED' | 'REJECTED';
   error?: string;
 }
 
@@ -23,27 +30,15 @@ export class PortfolioService {
   /**
    * Place a buy order with the backend
    */
-  placeOrder(symbol: string, quantity: number, price: number, orderType: 'market' | 'limit'): Observable<OrderResponse> {
-    return this.http.post<OrderResponse>(`${this.baseUrl}/place`, {
-      symbol,
-      quantity,
-      price,
-      orderType,
-      side: 'buy'
-    });
+  placeOrder(order: OrderRequest): Observable<OrderResponse> {
+    return this.http.post<OrderResponse>(`${this.baseUrl}/place`, order);
   }
 
   /**
    * Place a sell order with the backend
    */
-  sellOrder(symbol: string, quantity: number, price: number, orderType: 'market' | 'limit'): Observable<OrderResponse> {
-    return this.http.post<OrderResponse>(`${this.baseUrl}/place`, {
-      symbol,
-      quantity,
-      price,
-      orderType,
-      side: 'sell'
-    });
+  sellOrder(order: OrderRequest): Observable<OrderResponse> {
+    return this.http.post<OrderResponse>(`${this.baseUrl}/place`, order);
   }
 
   toggleWatchlist(symbol: string): void {
