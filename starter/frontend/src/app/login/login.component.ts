@@ -25,9 +25,20 @@ export class LoginComponent {
   doLogin(): void {
     this.authService.login(this.email, this.password).subscribe({
       next: (response) => {
+        const userId = response?.userID ?? response?.userId;
+        const token = response?.token;
+
+        if (userId !== undefined && userId !== null) {
+          localStorage.setItem('userId', String(userId));
+        }
+
+        if (token) {
+          localStorage.setItem('jwt', token);
+        }
+
         this.authService.isLoggedIn.set(true);
-        this.authService.userName.set(response.userName);
-        this.authService.userInitials.set(response.userInitials);
+        this.authService.userName.set(response.userName ?? response.email ?? '');
+        this.authService.userInitials.set(response.userInitials ?? '');
       // This will direct users to the dashboard when we implement the dashbpoard
        //this.router.navigate(['//dashboard']);
       },

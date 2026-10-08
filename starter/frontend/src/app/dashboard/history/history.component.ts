@@ -32,8 +32,12 @@ export class HistoryComponent implements OnInit {
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
-    const clientId = localStorage.getItem("userId") as unknown as number;
-    this.loadTransactions(clientId);
+    const storedUserId = localStorage.getItem('userId');
+    const clientId = storedUserId ? Number(storedUserId) : NaN;
+
+    if (Number.isFinite(clientId)) {
+      this.loadTransactions(clientId);
+    }
   }
 
   private loadTransactions(clientId: number): void {
