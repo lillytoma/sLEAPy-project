@@ -6,7 +6,7 @@
   <!-- ResultMap maps database columns to ClientEntity fields -->
   <resultMap id="ClientResultMap" type="com.sleapy.project.models.entities.ClientEntity">
     <!-- Primary key -->
-    <id column="client_id" property="id" />
+    <id column="Client_ID" property="id" />
     
     <!-- Client fields -->
     <result column="username" property="username" />
@@ -24,51 +24,51 @@
     <result column="phone_number" property="phoneNumber" />
     <result column="ssn" property="ssn" />
     
-    <!-- Foreign key relationship: client_status -->
+    <!-- Foreign key relationship: Client_Status -->
     <association property="clientStatus" javaType="com.sleapy.project.models.entities.ClientStatus">
-      <id column="clientstatus_id" property="id" />
-      <result column="clientstatus_name" property="name" />
+      <id column="ClientStatus_ID" property="id" />
+      <result column="ClientStatus_Name" property="name" />
     </association>
   </resultMap>
 
   <!-- Find client by ID with status lookup -->
   <select id="findById" parameterType="Long" resultMap="ClientResultMap">
-    SELECT c.client_id, c.username, c.email, c.cash_balance, c.password_hash, 
+    SELECT c.Client_ID, c.username, c.email, c.cash_balance, c.password_hash, 
            c.first_name, c.last_name, c.dob, c.street_address, c.city, c.state_name, c.zip_code, c.region,
-           c.phone_number, c.ssn, c.clientstatus_id, cs.clientstatus_name
-    FROM clients c
-    LEFT JOIN client_status cs ON c.clientstatus_id = cs.clientstatus_id
-    WHERE c.client_id = #{id}
+           c.phone_number, c.ssn, c.ClientStatus_ID, cs.ClientStatus_Name
+    FROM Clients c
+    LEFT JOIN Client_Status cs ON c.ClientStatus_ID = cs.ClientStatus_ID
+    WHERE c.Client_ID = #{id}
   </select>
 
   <!-- Find client by email with status lookup -->
   <select id="findByEmail" parameterType="String" resultMap="ClientResultMap">
-    SELECT c.client_id, c.username, c.email, c.cash_balance, c.password_hash, 
+    SELECT c.Client_ID, c.username, c.email, c.cash_balance, c.password_hash, 
            c.first_name, c.last_name, c.dob, c.street_address, c.city, c.state_name, c.zip_code, c.region,
-           c.phone_number, c.ssn, c.clientstatus_id, cs.clientstatus_name
-    FROM clients c
-    LEFT JOIN client_status cs ON c.clientstatus_id = cs.clientstatus_id
+           c.phone_number, c.ssn, c.ClientStatus_ID, cs.ClientStatus_Name
+    FROM Clients c
+    LEFT JOIN Client_Status cs ON c.ClientStatus_ID = cs.ClientStatus_ID
     WHERE c.email = #{email}
   </select>
 
   <!-- Retrieve all clients with status lookup -->
   <select id="findAll" resultMap="ClientResultMap">
-    SELECT c.client_id, c.username, c.email, c.cash_balance, c.password_hash, 
+    SELECT c.Client_ID, c.username, c.email, c.cash_balance, c.password_hash, 
            c.first_name, c.last_name, c.dob, c.street_address, c.city, c.state_name, c.zip_code, c.region,
-           c.phone_number, c.ssn, c.clientstatus_id, cs.clientstatus_name
-    FROM clients c
-    LEFT JOIN client_status cs ON c.clientstatus_id = cs.clientstatus_id
+           c.phone_number, c.ssn, c.ClientStatus_ID, cs.ClientStatus_Name
+    FROM Clients c
+    LEFT JOIN Client_Status cs ON c.ClientStatus_ID = cs.ClientStatus_ID
   </select>
 
   <!-- Insert new client (auto-generated ID) -->
   <insert id="save" parameterType="com.sleapy.project.models.entities.ClientEntity" useGeneratedKeys="true" keyProperty="id">
-    INSERT INTO clients (username, email, cash_balance, password_hash, first_name, last_name, dob, street_address, city, state_name, zip_code, region, phone_number, ssn, clientstatus_id)
+    INSERT INTO Clients (username, email, cash_balance, password_hash, first_name, last_name, dob, street_address, city, state_name, zip_code, region, phone_number, ssn, ClientStatus_ID)
     VALUES (#{username}, #{email}, #{cashBalance}, #{passwordHash}, #{firstName}, #{lastName}, #{dob}, #{streetAddress}, #{city}, #{stateName}, #{zipCode}, #{region}, #{phoneNumber}, #{ssn}, #{clientStatus.id})
   </insert>
 
   <!-- Update existing client -->
   <update id="update" parameterType="com.sleapy.project.models.entities.ClientEntity">
-    UPDATE clients
+    UPDATE Clients
     SET username = #{username},
         email = #{email}, 
         cash_balance = #{cashBalance}, 
@@ -83,13 +83,13 @@
         region = #{region},
         phone_number = #{phoneNumber}, 
         ssn = #{ssn}, 
-        clientstatus_id = #{clientStatus.id}
-    WHERE client_id = #{id}
+        ClientStatus_ID = #{clientStatus.id}
+    WHERE Client_ID = #{id}
   </update>
 
   <!-- Delete client by ID -->
   <delete id="deleteById" parameterType="Long">
-    DELETE FROM clients WHERE client_id = #{id}
+    DELETE FROM Clients WHERE Client_ID = #{id}
   </delete>
 
   <!-- Count total clients -->

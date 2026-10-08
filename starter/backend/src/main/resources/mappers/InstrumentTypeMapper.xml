@@ -5,40 +5,40 @@
 
     <!-- Result map for InstrumentType -->
     <resultMap id="InstrumentTypeResultMap" type="com.sleapy.project.models.entities.InstrumentType">
-        <id column="instrumenttype_id" property="instrumentType_id"/>
-        <result column="instrumenttype" property="name"/>
+        <id column="InstrumentType_ID" property="instrumentType_id"/>
+        <result column="InstrumentType" property="name"/>
     </resultMap>
 
     <!-- Find instrument type by ID -->
     <select id="findById" parameterType="Long" resultMap="InstrumentTypeResultMap">
-        SELECT instrumenttype_id, instrumenttype
-        FROM instrument_type
-        WHERE instrumenttype_id = #{id}
+        SELECT InstrumentType_ID, InstrumentType
+        FROM Instrument_Type
+        WHERE InstrumentType_ID = #{id}
     </select>
 
     <!-- Get all instrument types -->
     <select id="findAll" resultMap="InstrumentTypeResultMap">
-        SELECT instrumenttype_id, instrumenttype
-        FROM instrument_type
-        ORDER BY instrumenttype_id ASC
+        SELECT InstrumentType_ID, InstrumentType
+        FROM Instrument_Type
+        ORDER BY InstrumentType_ID ASC
     </select>
 
     <!-- Insert new instrument type -->
     <insert id="save" parameterType="com.sleapy.project.models.entities.InstrumentType" useGeneratedKeys="true" keyProperty="instrumentType_id">
-        INSERT INTO instrument_type (instrumenttype)
+        INSERT INTO Instrument_Type (InstrumentType)
         VALUES (#{name})
     </insert>
 
     <!-- Update instrument type -->
     <update id="update" parameterType="com.sleapy.project.models.entities.InstrumentType">
-        UPDATE instrument_type
-        SET instrumenttype = #{name}
-        WHERE instrumenttype_id = #{instrumentType_id}
+        UPDATE Instrument_Type
+        SET InstrumentType = #{name}
+        WHERE InstrumentType_ID = #{instrumentType_id}
     </update>
 
     <!-- Delete instrument type by ID -->
     <delete id="deleteById" parameterType="Long">
-        DELETE FROM instrument_type WHERE instrumenttype_id = #{id}
+        DELETE FROM Instrument_Type WHERE InstrumentType_ID = #{id}
     </delete>
 
 </mapper>
