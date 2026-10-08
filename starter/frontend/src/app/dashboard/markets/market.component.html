@@ -99,7 +99,7 @@
                     [style.color]="stock.chg >= 0 ? 'var(--success)' : 'var(--error)'">
                     {{ stock.chg >= 0 ? '+' : '' }}{{ stock.chg.toFixed(2) }}%
                   </td>
-                  <td class="px-4 py-3 text-right font-mono" style="color:var(--foreground)">\${{ stock.price.toFixed(2) }}</td>
+                  <td class="px-4 py-3 text-right font-mono" style="color:var(--foreground)">${{ stock.price.toFixed(2) }}</td>
                   <td class="px-4 py-3 text-right font-mono hidden lg:table-cell" style="color:var(--muted-foreground)">{{ stock.vol }}</td>
                   <td class="px-4 py-3 text-right font-mono hidden lg:table-cell" style="color:var(--muted-foreground)">{{ stock.relVol }}</td>
                   <td class="px-4 py-3 text-right font-mono hidden md:table-cell" style="color:var(--muted-foreground)">{{ stock.mktCap }}</td>
@@ -113,13 +113,13 @@
                   <td class="px-4 py-3">
                     <div class="flex items-center gap-2 justify-end">
                       <button (click)="openBuy(stock)"
-                        class="px-3 py-1 text-xs font-medium rounded-md whitespace-nowrap"
+                        class="px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap"
                         style="background-color:rgba(87,136,108,0.15);color:var(--success)">
                         Buy
                       </button>
                       @if (portfolioService.getHolding(stock.symbol)) {
                         <button (click)="openSell(stock)"
-                          class="px-3 py-1 text-xs font-medium rounded-md whitespace-nowrap"
+                          class="px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap"
                           style="background-color:rgba(125,18,30,0.1);color:var(--error)">
                           Sell
                         </button>
