@@ -18,6 +18,7 @@ import com.sleapy.project.models.entities.OrderStatus;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.math.BigDecimal;
@@ -52,6 +53,7 @@ public class TradeService {
      * @throws InsufficientCashException if client doesn't have enough cash
      * @throws IllegalArgumentException if quantity is invalid
      */
+    @Transactional
     public TradeResponseDTO buyStock(BuyOrderRequestDTO request) {
         // Validate request
         if (request.getQuantity() == null || request.getQuantity().compareTo(BigDecimal.ZERO) <= 0) {
@@ -70,11 +72,7 @@ public class TradeService {
         InstrumentEntity instrument = instrumentMapper.findById(request.getInstrumentId())
                 .orElseThrow(() -> new NoSuchElementException("Instrument not found with ID: " + request.getInstrumentId()));
 
-        // TODO: Replace with actual y-finance price fetch
-        BigDecimal currentPrice = priceService.getCurrentPrice(instrument.getSymbol());
-        if (currentPrice == null || currentPrice.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Invalid price for instrument: " + instrument.getSymbol());
-        }
+        BigDecimal currentPrice = resolveCurrentPrice(instrument);
 
         // Calculate total cost of purchase
         BigDecimal totalCost = currentPrice.multiply(request.getQuantity());
@@ -119,13 +117,13 @@ public class TradeService {
         OrderEntity order = new OrderEntity();
         order.setClient(client);
         order.setInstrument(instrument);
-        order.setQuantity(request.getQuantity().intValue());
+        order.setQuantity(request.getQuantity());
         order.setTimeOfPurchase(LocalDate.now());
         order.setPurchasePrice(currentPrice);
         
-        // Set order status to "Filled" (ID = 2 based on mockdata.sql)
-        OrderStatus filledStatus = new OrderStatus();
-        filledStatus.setId(2L);
+        // Set order status to "Filled" (ID = 2 based on seeded lookup data)
+        OrderStatus filledStatus = orderStatusMapper.findById(2L)
+            .orElseThrow(() -> new IllegalStateException("Order status ID 2 (Filled) not found"));
         order.setStatus(filledStatus);
         
         orderMapper.save(order);
@@ -161,6 +159,7 @@ public class TradeService {
      * @throws InsufficientSharesException if client doesn't own enough shares
      * @throws IllegalArgumentException if quantity is invalid
      */
+    @Transactional
     public TradeResponseDTO sellStock(SellOrderRequestDTO request) {
         // Validate request
         if (request.getQuantity() == null || request.getQuantity().compareTo(BigDecimal.ZERO) <= 0) {
@@ -195,11 +194,7 @@ public class TradeService {
             );
         }
 
-        // TODO: Replace with actual y-finance price fetch
-        BigDecimal currentPrice = priceService.getCurrentPrice(instrument.getSymbol());
-        if (currentPrice == null || currentPrice.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Invalid price for instrument: " + instrument.getSymbol());
-        }
+        BigDecimal currentPrice = resolveCurrentPrice(instrument);
 
         // Calculate proceeds from sale
         BigDecimal totalProceeds = currentPrice.multiply(request.getQuantity());
@@ -225,13 +220,13 @@ public class TradeService {
         OrderEntity order = new OrderEntity();
         order.setClient(client);
         order.setInstrument(instrument);
-        order.setQuantity(request.getQuantity().intValue());
+        order.setQuantity(request.getQuantity());
         order.setTimeOfPurchase(LocalDate.now());
         order.setPurchasePrice(currentPrice);
         
-        // Set order status to "Filled" (ID = 2 based on mockdata.sql)
-        OrderStatus filledStatus = new OrderStatus();
-        filledStatus.setId(2L);
+        // Set order status to "Filled" (ID = 2 based on seeded lookup data)
+        OrderStatus filledStatus = orderStatusMapper.findById(2L)
+            .orElseThrow(() -> new IllegalStateException("Order status ID 2 (Filled) not found"));
         order.setStatus(filledStatus);
         
         orderMapper.save(order);
@@ -249,5 +244,26 @@ public class TradeService {
                 "Successfully sold " + request.getQuantity() + " shares of " + instrument.getSymbol() +
                         " at $" + currentPrice + " per share"
         );
+    }
+
+    private BigDecimal resolveCurrentPrice(InstrumentEntity instrument) {
+        BigDecimal currentPrice;
+        try {
+            currentPrice = priceService.getCurrentPrice(instrument.getSymbol());
+        } catch (UnsupportedOperationException ex) {
+            currentPrice = null;
+        }
+
+        if ((currentPrice == null || currentPrice.compareTo(BigDecimal.ZERO) <= 0)
+                && instrument.getCurrentPrice() != null
+                && instrument.getCurrentPrice().compareTo(BigDecimal.ZERO) > 0) {
+            return instrument.getCurrentPrice();
+        }
+
+        if (currentPrice == null || currentPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Invalid price for instrument: " + instrument.getSymbol());
+        }
+
+        return currentPrice;
     }
 }

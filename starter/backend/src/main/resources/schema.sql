@@ -22,16 +22,24 @@ CREATE TABLE Clients (
     email VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     phone_number VARCHAR(50),
-    address VARCHAR(255) NOT NULL,
     ssn VARCHAR(20) NOT NULL,
-    cash_balance NUMERIC(15,2) NOT NULL
+    cash_balance NUMERIC(15,2) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    dob DATE NOT NULL,
+    street_address VARCHAR(255),
+    city VARCHAR(100),
+    state_name VARCHAR(100),
+    zip_code VARCHAR(20),
+    region VARCHAR(100)
 );
 -- Instruments
 CREATE TABLE Instruments (
     Instrument_ID SERIAL PRIMARY KEY,
     Symbol VARCHAR(20) NOT NULL,
     Symbol_Name VARCHAR(255) NOT NULL,
-    InstrumentType_ID INTEGER NOT NULL REFERENCES Instrument_Type(InstrumentType_ID)
+    InstrumentType_ID INTEGER NOT NULL REFERENCES Instrument_Type(InstrumentType_ID),
+    current_price NUMERIC(15,2)
 );
 -- Holdings
 CREATE TABLE Holdings (
@@ -51,4 +59,15 @@ CREATE TABLE Orders (
     Time_filled TIMESTAMP,
     Purchase_Price NUMERIC(15,2),
     Status INTEGER NOT NULL REFERENCES Order_Status(OrderStatus_ID)
+);
+
+-- Audit_Log (used by Kafka client activity ETL and dashboard)
+CREATE TABLE Audit_Log (
+    Audit_ID SERIAL PRIMARY KEY,
+    Client_ID INTEGER REFERENCES Clients(Client_ID),
+    Activity_Type VARCHAR(100) NOT NULL,
+    Timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    IP_Address VARCHAR(50),
+    Details TEXT,
+    Source_System VARCHAR(100)
 );
