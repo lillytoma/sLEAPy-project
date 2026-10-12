@@ -1,7 +1,8 @@
 package com.sleapy.project.models.dtos;
 
-import lombok.*;
 import java.time.LocalDate;
+
+import lombok.*;
 
 @Getter
 @Setter
@@ -20,4 +21,6 @@ public class SignUpRequestDTO {
     private String stateName;    // state name
     private String zipCode;      // zip code
     private String region;       // region
+    private String phoneNumber;  // client phone number
+    private String ssn;          // social security number
 }

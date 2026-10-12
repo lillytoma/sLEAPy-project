@@ -4,13 +4,12 @@ import java.time.LocalDate;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
 public class ClientEntity {
     
-    private Long id; // Primary key (client_id)
+    private Long id; // Primary key
     private String username; // Unique username for login
     private String firstName;
     private String lastName;

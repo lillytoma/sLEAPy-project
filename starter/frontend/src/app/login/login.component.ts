@@ -43,10 +43,12 @@ export class LoginComponent {
         localStorage.setItem('user_email', this.email);
         
         this.authService.isLoggedIn.set(true);
-        this.authService.userName.set(response.userName);
-        this.authService.userInitials.set(response.userInitials);
-      // This will direct users to the dashboard when we implement the dashbpoard
-       this.router.navigate(['//dashboard']);
+        this.isLoading.set(false);
+        this.authService.userName.set(response.userName || this.email);
+        const initials = response.userInitials || this.email.slice(0, 2).toUpperCase();
+        this.authService.userInitials.set(initials);
+
+        this.router.navigate(['/dashboard']);
       },
       error: (err) => {
         this.isLoading.set(false);

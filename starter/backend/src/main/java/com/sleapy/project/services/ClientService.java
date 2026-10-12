@@ -67,12 +67,12 @@ public class ClientService {
         
         // Create new client entity
         ClientEntity newClient = new ClientEntity();
-        newClient.setUsername(request.getEmail()); // Use email as username for now
+        newClient.setUsername(request.getUsername());
         newClient.setEmail(request.getEmail());
         newClient.setPasswordHash(hashedPassword);
         newClient.setFirstName(request.getFirstName());
         newClient.setLastName(request.getLastName());
-        newClient.setDob(java.time.LocalDate.parse(request.getDob()));
+        newClient.setDob(request.getDob());
         newClient.setStreetAddress(request.getStreetAddress());
         newClient.setCity(request.getCity());
         newClient.setStateName(request.getStateName());
