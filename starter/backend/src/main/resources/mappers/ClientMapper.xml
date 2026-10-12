@@ -23,6 +23,11 @@
     <result column="region" property="region" />
     <result column="phone_number" property="phoneNumber" />
     <result column="ssn" property="ssn" />
+    <result column="street_address" property="streetAddress" />
+    <result column="city" property="city" />
+    <result column="state_name" property="stateName" />
+    <result column="zip_code" property="zipCode" />
+    <result column="region" property="region" />
     
     <!-- Foreign key relationship: Client_Status -->
     <association property="clientStatus" javaType="com.sleapy.project.models.entities.ClientStatus">

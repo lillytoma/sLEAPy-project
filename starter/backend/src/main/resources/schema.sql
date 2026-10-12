@@ -52,3 +52,12 @@ CREATE TABLE Orders (
     Purchase_Price NUMERIC(15,2),
     Status INTEGER NOT NULL REFERENCES Order_Status(OrderStatus_ID)
 );
+
+-- Market Prices (Real-time cache)
+CREATE TABLE Market_Prices (
+    Symbol VARCHAR(20) PRIMARY KEY,
+    Current_Price NUMERIC(15,2) NOT NULL,
+    High_Price NUMERIC(15,2),
+    Low_Price NUMERIC(15,2),
+    Last_Updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
