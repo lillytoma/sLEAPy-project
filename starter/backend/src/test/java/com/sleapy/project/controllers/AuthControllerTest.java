@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
  
 @WebMvcTest(AuthController.class) // Test only the web layer (controller)
-class TestAuthController {
+class AuthControllerTest {
  
     @Autowired
     private MockMvc mockMvc; // Simulates HTTP requests
@@ -62,9 +62,9 @@ class TestAuthController {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"" + request.getEmail() + "\",\"password\":\"" + request.getPassword() + "\"}"))
                 .andExpect(status().isOk())
-            .andExpect(jsonPath("$.email").value("Login successful"))
-            .andExpect(jsonPath("$.userID").value(1))
-            .andExpect(jsonPath("$.token").value("mock-jwt-token"));
+            .andExpect(jsonPath("$.message").value("Login successful"))
+            .andExpect(jsonPath("$.id").value(1))
+            .andExpect(jsonPath("$.jwtToken").value("mock-jwt-token"));
     }
 
     @Test
