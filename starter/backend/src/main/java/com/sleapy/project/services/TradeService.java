@@ -64,7 +64,9 @@ public class TradeService {
         ClientEntity client = clientMapper.findById(request.getClientId())
                 .orElseThrow(() -> new NoSuchElementException("Client not found with ID: " + request.getClientId()));
 
-        if (client.getClientStatus() == null || !client.getClientStatus().getName().equals("Active")) {
+        if (client.getClientStatus() == null
+            || client.getClientStatus().getName() == null
+            || !"active".equalsIgnoreCase(client.getClientStatus().getName())) {
             throw new IllegalArgumentException("Client is not active and cannot trade");
         }
 
@@ -79,6 +81,12 @@ public class TradeService {
 
         // Validate client has sufficient cash
         BigDecimal cashBalance = BigDecimal.valueOf(client.getCashBalance());
+        if (cashBalance.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new InsufficientCashException(
+                "Insufficient cash balance. Required: $" + totalCost +
+                ", Available: $" + cashBalance
+            );
+        }
         if (cashBalance.compareTo(totalCost) < 0) {
             throw new InsufficientCashException(
                     "Insufficient cash balance. Required: $" + totalCost +
@@ -170,7 +178,9 @@ public class TradeService {
         ClientEntity client = clientMapper.findById(request.getClientId())
                 .orElseThrow(() -> new NoSuchElementException("Client not found with ID: " + request.getClientId()));
 
-        if (client.getClientStatus() == null || !client.getClientStatus().getName().equals("Active")) {
+        if (client.getClientStatus() == null
+            || client.getClientStatus().getName() == null
+            || !"active".equalsIgnoreCase(client.getClientStatus().getName())) {
             throw new IllegalArgumentException("Client is not active and cannot trade");
         }
 
@@ -187,6 +197,11 @@ public class TradeService {
         ));
 
         // Validate client has sufficient shares
+        if (holding.getQuantityShares() == null || holding.getQuantityShares().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new InsufficientSharesException(
+                "Insufficient shares. Owned: 0, Attempting to sell: " + request.getQuantity()
+            );
+        }
         if (holding.getQuantityShares().compareTo(request.getQuantity()) < 0) {
             throw new InsufficientSharesException(
                     "Insufficient shares. Owned: " + holding.getQuantityShares() +
