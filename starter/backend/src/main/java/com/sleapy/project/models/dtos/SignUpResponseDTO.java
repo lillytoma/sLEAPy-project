@@ -8,8 +8,8 @@ import lombok.*;
 @AllArgsConstructor
 public class SignUpResponseDTO{
     
-    private String email; //user email
-    private long userID; //user unqiue id
-    private String token; //JWT token 
+    private String message;    // Success/status message
+    private Long id;           // User unique ID
+    private String jwtToken;   // JWT token
 
 }
