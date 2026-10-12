@@ -17,6 +17,8 @@ import com.sleapy.project.models.entities.OrderEntity;
 import com.sleapy.project.models.entities.OrderStatus;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -36,6 +38,7 @@ public class TradeService {
     private final HoldingMapper holdingMapper;
     private final OrderMapper orderMapper;
     private final OrderStatusMapper orderStatusMapper;
+    @Autowired 
     private final PriceService priceService;
 
     /**
