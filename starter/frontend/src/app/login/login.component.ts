@@ -7,7 +7,7 @@ import { ThemeService } from '../services/theme.service';
 @Component({
   selector: 'app-login',
   standalone: true,
-  templateUrl: 'login.component.html',
+  templateUrl: './login.component.html',
   imports: [RouterLink, FormsModule]
 })
 export class LoginComponent {
@@ -29,7 +29,7 @@ export class LoginComponent {
         this.authService.userName.set(response.userName);
         this.authService.userInitials.set(response.userInitials);
       // This will direct users to the dashboard when we implement the dashbpoard
-       //this.router.navigate(['//dashboard']);
+       this.router.navigate(['//dashboard']);
       },
       error: (err) =>{
         console.error('Login failed', err);
