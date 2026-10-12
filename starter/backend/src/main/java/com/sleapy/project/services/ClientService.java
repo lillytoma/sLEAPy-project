@@ -57,7 +57,7 @@ public class ClientService {
 
     /**
      * Register a new client (signup flow)
-     * @param request SignUpRequestDTO containing email, password, address, phone, ssn
+     * @param request SignUpRequestDTO containing email, password, name, address, phone, ssn
      * @return the newly created ClientEntity with auto-generated ID
      */
     public ClientEntity signup(SignUpRequestDTO request) {
@@ -70,7 +70,14 @@ public class ClientService {
         newClient.setUsername(request.getUsername());
         newClient.setEmail(request.getEmail());
         newClient.setPasswordHash(hashedPassword);
-        newClient.setAddress(request.getAddress());
+        newClient.setFirstName(request.getFirstName());
+        newClient.setLastName(request.getLastName());
+        newClient.setDob(java.time.LocalDate.parse(request.getDob()));
+        newClient.setStreetAddress(request.getStreetAddress());
+        newClient.setCity(request.getCity());
+        newClient.setStateName(request.getStateName());
+        newClient.setZipCode(request.getZipCode());
+        newClient.setRegion(request.getRegion());
         newClient.setPhoneNumber(request.getPhoneNumber());
         newClient.setSsn(request.getSsn());
         newClient.setCashBalance(0.0);  // Default balance for new users
