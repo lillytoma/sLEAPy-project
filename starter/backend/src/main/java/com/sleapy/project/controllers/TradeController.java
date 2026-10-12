@@ -1,5 +1,7 @@
 package com.sleapy.project.controllers;
 
+import com.sleapy.project.exceptions.InsufficientCashException;
+import com.sleapy.project.exceptions.InsufficientSharesException;
 import com.sleapy.project.models.dtos.BuyOrderRequestDTO;
 import com.sleapy.project.models.dtos.SellOrderRequestDTO;
 import com.sleapy.project.models.dtos.TradeResponseDTO;
@@ -73,8 +75,11 @@ public class TradeController {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", e.getMessage()));
+        } catch (InsufficientCashException e) {
+            return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            // InsufficientCashException, runtime exceptions, etc.
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", e.getMessage()));
@@ -130,8 +135,11 @@ public class TradeController {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", e.getMessage()));
+        } catch (InsufficientSharesException e) {
+            return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            // InsufficientSharesException, runtime exceptions, etc.
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", e.getMessage()));

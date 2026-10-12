@@ -9,6 +9,7 @@ import java.math.BigDecimal;
  * This allows decoupling of price fetching from trading logic,
  * making it easy to swap price providers later.
  */
+
 public interface PriceService {
     
     /**
