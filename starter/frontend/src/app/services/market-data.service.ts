@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 /**
  * Service for market data operations including:
@@ -13,8 +14,8 @@ import { BehaviorSubject, Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class MarketDataService {
-  private apiBaseUrl = '/api/instruments';
-  private wsUrl = 'ws://localhost:8080/ws/prices';
+  private apiBaseUrl = `${environment.apiUrl}/api/instruments`;
+  private wsUrl = 'ws://localhost:8081/ws/prices';
   
   // WebSocket-related subjects for price updates
   private priceUpdatesSubject = new BehaviorSubject<Map<string, any>>(new Map());

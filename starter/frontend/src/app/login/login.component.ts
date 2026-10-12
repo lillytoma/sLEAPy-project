@@ -38,8 +38,8 @@ export class LoginComponent {
     this.authService.login(this.email, this.password).subscribe({
       next: (response) => {
         // Store JWT token and user info
-        localStorage.setItem('auth_token', response.token);
-        localStorage.setItem('user_id', response.userID || response.clientId);
+        localStorage.setItem('auth_token', response.jwtToken);
+        localStorage.setItem('user_id', String(response.id));
         localStorage.setItem('user_email', this.email);
         
         this.authService.isLoggedIn.set(true);

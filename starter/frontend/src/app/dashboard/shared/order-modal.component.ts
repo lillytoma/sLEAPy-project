@@ -106,7 +106,7 @@ export class OrderModalComponent {
         this.orderMessage.set(response.message);
         this.orderStatus.set(response.status);
 
-        if (response.success && response.status === 'PENDING') {
+        if (response.success && response.status === 'FILLED') {
           this.confirmedShares.set(this.calculatedBuyShares());
           this.confirmedTotal.set(this.estimatedBuyTotal());
           this.success.set(true);
@@ -143,7 +143,7 @@ export class OrderModalComponent {
         this.orderMessage.set(response.message);
         this.orderStatus.set(response.status);
 
-        if (response.success && response.status === 'PENDING') {
+        if (response.success && response.status === 'FILLED') {
           this.confirmedShares.set(this.calculatedSellShares());
           this.confirmedTotal.set(this.estimatedSellProceeds());
           this.success.set(true);

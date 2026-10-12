@@ -65,7 +65,7 @@ export class BuyModalComponent {
         this.orderMessage.set(response.message);
         this.orderStatus.set(response.status);
         
-        if (response.success && response.status === 'PENDING') {
+        if (response.success && response.status === 'FILLED') {
           this.confirmedShares.set(this.calculatedShares());
           this.confirmedTotal.set(this.estimatedTotal());
           this.success.set(true);

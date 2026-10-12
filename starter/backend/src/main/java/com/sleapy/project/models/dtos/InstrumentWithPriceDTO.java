@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class InstrumentWithPriceDTO {
+    private Long instrumentId;
     private String symbol;
     private String symbolName;
     private InstrumentType instrumentType;
@@ -29,6 +30,7 @@ public class InstrumentWithPriceDTO {
      * Create DTO from InstrumentEntity and MarketPriceEntity.
      */
     public InstrumentWithPriceDTO(InstrumentEntity instrument, MarketPriceEntity marketPrice) {
+        this.instrumentId = instrument.getId();
         this.symbol = instrument.getSymbol();
         this.symbolName = instrument.getSymbolName();
         this.instrumentType = instrument.getInstrumentType();

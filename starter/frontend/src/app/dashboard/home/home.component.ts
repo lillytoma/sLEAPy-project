@@ -7,7 +7,7 @@ import { OrderModalComponent } from '../shared/order-modal.component';
 @Component({
   selector: 'app-home',
   standalone: true,
-  templateUrl: './home.componet.html',
+  templateUrl: './home.component.html',
   imports: [RouterLink, OrderModalComponent]
 })
 
