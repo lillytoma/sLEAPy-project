@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 public class InstrumentService {
     private final InstrumentMapper instrumentMapper;
     private final MarketPriceMapper marketPriceMapper;
+    private final PriceService priceService;
 
     /**
      * Get all instruments with their current market prices.
@@ -75,32 +76,33 @@ public class InstrumentService {
     }
 
     /**
-     * Refresh market prices from external data source (Python ETL).
-     * This method fetches latest prices and updates the market_prices cache table.
+     * Refresh market prices from the live price service (yfinance-backed).
+     * Fetches the latest quote for every known instrument, upserts it into the
+     * market_prices cache table, and returns the data for WebSocket broadcast.
      * Called periodically by @Scheduled task every 5 seconds.
      *
      * @return Map of symbol -> PriceUpdateDTO for broadcasting via WebSocket
      */
     public Map<String, PriceUpdateDTO> refreshPrices() {
-        // TODO: Call Python ETL service to fetch latest prices
-        // Example implementation:
-        // Map<String, Map<String, BigDecimal>> prices = pythonEtlClient.fetchPrices();
-        
-        // For now, retrieve existing prices from database
-        List<MarketPriceEntity> currentPrices = marketPriceMapper.findAll();
-        
-        // Convert to PriceUpdateDTO for WebSocket broadcast
-        return currentPrices.stream()
-                .collect(Collectors.toMap(
-                        MarketPriceEntity::getSymbol,
-                        price -> new PriceUpdateDTO(
-                                price.getSymbol(),
-                                price.getCurrentPrice(),
-                                price.getHighPrice(),
-                                price.getLowPrice(),
-                                price.getLastUpdated()
-                        )
-                ));
+        List<String> symbols = instrumentMapper.findAll().stream()
+                .map(InstrumentEntity::getSymbol)
+                .collect(Collectors.toList());
+
+        if (symbols.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<String, PriceUpdateDTO> quotes = priceService.getQuotes(symbols);
+
+        quotes.values().forEach(quote -> updateMarketPrice(quote.getSymbol(), new MarketPriceEntity(
+                quote.getSymbol(),
+                quote.getCurrentPrice(),
+                quote.getHighPrice(),
+                quote.getLowPrice(),
+                quote.getLastUpdated()
+        )));
+
+        return quotes;
     }
 
     /**

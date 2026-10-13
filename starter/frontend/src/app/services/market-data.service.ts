@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { Client, IFrame, IMessage } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
 import { environment } from '../../environments/environment';
 
 /**
@@ -15,23 +17,23 @@ import { environment } from '../../environments/environment';
 })
 export class MarketDataService {
   private apiBaseUrl = `${environment.apiUrl}/api/instruments`;
-  private wsUrl = 'ws://localhost:8081/ws/prices';
-  
+  private wsEndpoint = `${environment.apiUrl}/ws/prices`;
+
   // WebSocket-related subjects for price updates
   private priceUpdatesSubject = new BehaviorSubject<Map<string, any>>(new Map());
   public priceUpdates$ = this.priceUpdatesSubject.asObservable();
-  
+
   private webSocketConnectedSubject = new BehaviorSubject<boolean>(false);
   public webSocketConnected$ = this.webSocketConnectedSubject.asObservable();
 
-  private webSocket: WebSocket | null = null;
+  private stompClient: Client | null = null;
 
   constructor(private http: HttpClient) {}
 
   /**
    * Get all instruments with their current market prices.
    * REST call: GET /api/instruments
-   * 
+   *
    * @return Observable of InstrumentWithPriceDTO list
    */
   getInstruments(): Observable<any[]> {
@@ -41,7 +43,7 @@ export class MarketDataService {
   /**
    * Get a single instrument by symbol with current price.
    * REST call: GET /api/instruments/{symbol}
-   * 
+   *
    * @param symbol - Instrument symbol (e.g., AAPL)
    * @return Observable of single InstrumentWithPriceDTO
    */
@@ -53,7 +55,7 @@ export class MarketDataService {
    * Search instruments by symbol or name.
    * REST call: GET /api/instruments/search?q=query
    * Case-insensitive, partial match on symbol or company name.
-   * 
+   *
    * @param query - Search term (e.g., "apple" or "AAPL")
    * @return Observable of matching InstrumentWithPriceDTO list
    */
@@ -64,10 +66,10 @@ export class MarketDataService {
   }
 
   /**
-   * Connect to WebSocket for real-time price updates.
-   * Connection endpoint: ws://localhost:8080/ws/prices
-   * Subscription: /topic/prices (receives all price updates)
-   * 
+   * Connect to the STOMP/WebSocket broker for real-time price updates.
+   * Connection endpoint: {apiUrl}/ws/prices (SockJS, matches WebSocketConfig's withSockJS())
+   * Subscription: /topic/prices (receives all price updates every 5s)
+   *
    * Usage in component:
    * ```
    * this.marketDataService.connectWebSocket();
@@ -77,52 +79,43 @@ export class MarketDataService {
    * ```
    */
   connectWebSocket(): void {
-    if (this.webSocket && this.webSocket.readyState === WebSocket.OPEN) {
+    if (this.stompClient?.active) {
       console.log('WebSocket already connected');
       return;
     }
 
-    try {
-      this.webSocket = new WebSocket(this.wsUrl);
-
-      this.webSocket.onopen = () => {
+    this.stompClient = new Client({
+      webSocketFactory: () => new SockJS(this.wsEndpoint),
+      reconnectDelay: 5000,
+      onConnect: () => {
         console.log('WebSocket connected');
         this.webSocketConnectedSubject.next(true);
-        
-        // Subscribe to /topic/prices for price updates
-        // STOMP frame format: SUBSCRIBE + id + destination
-        const subscribeMessage = `SUBSCRIBE
-id:prices-subscription
-destination:/topic/prices
 
-`;
-        this.webSocket!.send(subscribeMessage);
-      };
-
-      this.webSocket.onmessage = (event) => {
-        try {
-          // Parse STOMP message and extract price data
-          const message = JSON.parse(event.data);
-          const priceUpdates = new Map(Object.entries(message));
-          this.priceUpdatesSubject.next(priceUpdates);
-        } catch (e) {
-          console.error('Error parsing WebSocket message:', e);
-        }
-      };
-
-      this.webSocket.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        this.webSocketConnectedSubject.next(false);
-      };
-
-      this.webSocket.onclose = () => {
+        this.stompClient!.subscribe('/topic/prices', (message: IMessage) => {
+          try {
+            const updates = JSON.parse(message.body) as Record<string, unknown>;
+            const merged = new Map(this.priceUpdatesSubject.value);
+            Object.entries(updates).forEach(([symbol, update]) => merged.set(symbol, update));
+            this.priceUpdatesSubject.next(merged);
+          } catch (e) {
+            console.error('Error parsing price update:', e);
+          }
+        });
+      },
+      onDisconnect: () => {
         console.log('WebSocket disconnected');
         this.webSocketConnectedSubject.next(false);
-      };
-    } catch (error) {
-      console.error('Failed to connect WebSocket:', error);
-      this.webSocketConnectedSubject.next(false);
-    }
+      },
+      onStompError: (frame: IFrame) => {
+        console.error('STOMP protocol error:', frame.headers['message'], frame.body);
+      },
+      onWebSocketError: (event) => {
+        console.error('WebSocket error:', event);
+        this.webSocketConnectedSubject.next(false);
+      },
+    });
+
+    this.stompClient.activate();
   }
 
   /**
@@ -130,17 +123,15 @@ destination:/topic/prices
    * Call this when component is destroyed or no longer needs updates.
    */
   disconnectWebSocket(): void {
-    if (this.webSocket) {
-      this.webSocket.close();
-      this.webSocket = null;
-      this.webSocketConnectedSubject.next(false);
-    }
+    this.stompClient?.deactivate();
+    this.stompClient = null;
+    this.webSocketConnectedSubject.next(false);
   }
 
   /**
    * Get latest price update for a specific symbol from the current stream.
    * Returns null if no update has been received yet.
-   * 
+   *
    * @param symbol - Instrument symbol
    * @return Price update object or null
    */

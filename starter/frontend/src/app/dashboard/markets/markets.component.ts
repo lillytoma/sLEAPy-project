@@ -1,7 +1,9 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { MARKET_STOCKS, MarketStock } from '../../data/mock-data';
 import { PortfolioService } from '../../services/portfolio.service';
+import { MarketDataService } from '../../services/market-data.service';
 import { OrderModalComponent } from '../shared/order-modal.component';
 
 @Component({
@@ -10,28 +12,51 @@ import { OrderModalComponent } from '../shared/order-modal.component';
   templateUrl: './market.component.html',
   imports: [FormsModule, OrderModalComponent],
 })
-export class MarketsComponent {
+export class MarketsComponent implements OnInit, OnDestroy {
   searchQuery = signal('');
   showSuggestions = signal(false);
   showFavoritesOnly = signal(false);
   pendingRemoval = signal<Set<string>>(new Set());
   orderModal = signal<{ stock: MarketStock; mode: 'buy' | 'sell' } | null>(null);
 
-  constructor(public portfolioService: PortfolioService) {}
+  // Live quotes from the backend's WebSocket broadcast (/topic/prices), keyed by symbol.
+  // Only overlays the `price`/`chg` fields on top of the mock table below — the other
+  // columns (volume, market cap, P/E, rating, ...) have no live data source yet.
+  private livePrices = signal<Map<string, any>>(new Map());
+  private priceSubscription?: Subscription;
+
+  constructor(public portfolioService: PortfolioService, private marketDataService: MarketDataService) {}
+
+  ngOnInit(): void {
+    this.marketDataService.connectWebSocket();
+    this.priceSubscription = this.marketDataService.priceUpdates$.subscribe((updates) => {
+      this.livePrices.set(new Map(updates));
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.priceSubscription?.unsubscribe();
+  }
+
+  private withLivePrice(stock: MarketStock): MarketStock {
+    const live = this.livePrices().get(stock.symbol);
+    if (!live || live.currentPrice == null) return stock;
+    const chg = ((live.currentPrice - stock.price) / stock.price) * 100;
+    return { ...stock, price: live.currentPrice, chg };
+  }
 
   suggestions = computed(() => {
     const q = this.searchQuery().toLowerCase();
     if (!q || q.length < 1) return [];
     return MARKET_STOCKS.filter(
       (s) => s.symbol.toLowerCase().startsWith(q) || s.name.toLowerCase().startsWith(q)
-    ).slice(0, 8);
+    ).slice(0, 8).map((s) => this.withLivePrice(s));
   });
 
   filteredStocks = computed(() => {
-    let stocks = [...MARKET_STOCKS];
+    let stocks = MARKET_STOCKS.map((s) => this.withLivePrice(s));
     const q = this.searchQuery().toLowerCase();
-    
-    // TODO: Integrate y-finance search here for real stock data
+
     if (q) {
       stocks = stocks.filter(
         (s) => s.symbol.toLowerCase().startsWith(q) || s.name.toLowerCase().startsWith(q)
@@ -42,7 +67,7 @@ export class MarketsComponent {
     if (this.showFavoritesOnly()) {
       stocks = stocks.filter((s) => this.portfolioService.isWatchlisted(s.symbol));
     }
-    
+
     return stocks;
   });
 

@@ -1,26 +1,81 @@
 package com.sleapy.project.services;
 
+import com.sleapy.project.models.dtos.PriceUpdateDTO;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
- * Placeholder price provider bean.
- *
- * TradeService already falls back to instrument.current_price when this service
- * cannot provide a live quote, so this keeps the app bootable until external
- * market pricing is implemented.
+ * Price provider backed by a small Python service (starter/backend/etl/price_service.py)
+ * that wraps yfinance. Keeps live market data fetching out of the JVM so we can reuse the
+ * yfinance library directly instead of a Java port of it.
  */
 @Service
+@Slf4j
 public class YahooFinancePriceService implements PriceService {
+
+    private final RestClient restClient;
+
+    public YahooFinancePriceService(RestClient.Builder restClientBuilder,
+                                     @Value("${price-service.base-url:http://localhost:8000}") String baseUrl) {
+        this.restClient = restClientBuilder.baseUrl(baseUrl).build();
+    }
 
     @Override
     public BigDecimal getCurrentPrice(String symbol) {
-        throw new UnsupportedOperationException("Live market pricing is not implemented yet");
+        PriceUpdateDTO quote = fetchQuote(symbol);
+        return quote != null ? quote.getCurrentPrice() : null;
     }
 
     @Override
     public BigDecimal[] getPricesForSymbols(String... symbols) {
-        throw new UnsupportedOperationException("Live market pricing is not implemented yet");
+        Map<String, PriceUpdateDTO> quotes = getQuotes(List.of(symbols));
+        return Stream.of(symbols)
+                .map(symbol -> {
+                    PriceUpdateDTO quote = quotes.get(symbol.toUpperCase());
+                    return quote != null ? quote.getCurrentPrice() : null;
+                })
+                .toArray(BigDecimal[]::new);
+    }
+
+    @Override
+    public Map<String, PriceUpdateDTO> getQuotes(List<String> symbols) {
+        if (symbols.isEmpty()) {
+            return Map.of();
+        }
+
+        String joined = symbols.stream().map(String::toUpperCase).collect(Collectors.joining(","));
+        try {
+            Map<String, PriceUpdateDTO> quotes = restClient.get()
+                    .uri("/quotes?symbols={symbols}", joined)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Map<String, PriceUpdateDTO>>() {
+                    });
+            return quotes != null ? quotes : Map.of();
+        } catch (RestClientException e) {
+            log.error("Failed to fetch quotes from price service for [{}]: {}", joined, e.getMessage());
+            return Map.of();
+        }
+    }
+
+    private PriceUpdateDTO fetchQuote(String symbol) {
+        try {
+            return restClient.get()
+                    .uri("/quote/{symbol}", symbol.toUpperCase())
+                    .retrieve()
+                    .body(PriceUpdateDTO.class);
+        } catch (RestClientException e) {
+            log.error("Failed to fetch quote for {}: {}", symbol, e.getMessage());
+            return null;
+        }
     }
 }
