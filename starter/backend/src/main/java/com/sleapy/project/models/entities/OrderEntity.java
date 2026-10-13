@@ -8,7 +8,7 @@ import java.time.LocalDate;
 @Data
 public class OrderEntity {
     public OrderEntity(Long id,
-                       Integer quantity,
+                       BigDecimal quantity,
                        LocalDate timeOfPurchase,
                        BigDecimal purchasePrice,
                        OrderStatus status,
@@ -27,7 +27,7 @@ public class OrderEntity {
     }
 
     private Long id;
-    private Integer quantity;
+    private BigDecimal quantity;
     private LocalDate timeOfPurchase;
     private LocalDate timeFilled;
     private BigDecimal purchasePrice;
