@@ -19,6 +19,21 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def _latest_value(data, column):
+    """Return the latest scalar value for a downloaded yfinance column."""
+    if data.empty or column not in data:
+        raise ValueError(f"No {column} data returned")
+
+    values = data[column].dropna()
+    if values.empty:
+        raise ValueError(f"No {column} data returned")
+
+    latest = values.iloc[-1]
+    if hasattr(latest, "iloc"):
+        latest = latest.iloc[0]
+    return float(latest)
+
+
 def fetch_current_stock_prices(tickers):
     """
     Fetch current market prices for a list of stock tickers from Yahoo Finance.
@@ -51,6 +66,9 @@ def fetch_current_stock_prices(tickers):
     
     # Loop through each stock ticker
     for ticker in tickers:
+        ticker = str(ticker).strip().upper()
+        if not ticker:
+            continue
         try:
             logger.info(f"Fetching price for {ticker}...")
             
@@ -59,9 +77,9 @@ def fetch_current_stock_prices(tickers):
             data = yf.download(ticker, period="1d", progress=False)
             
             # Extract the specific prices we need
-            current_price = float(data['Close'].iloc[-1])  # Last closing price
-            high_price = float(data['High'].iloc[-1])      # Today's high
-            low_price = float(data['Low'].iloc[-1])        # Today's low
+            current_price = _latest_value(data, 'Close')
+            high_price = _latest_value(data, 'High')
+            low_price = _latest_value(data, 'Low')
             
             # Create a dictionary for this stock
             prices_data.append({
@@ -131,8 +149,11 @@ def get_single_stock_price(ticker):
         >>> print(f"AAPL is ${price}")
     """
     try:
+        ticker = str(ticker).strip().upper()
+        if not ticker:
+            return None
         data = yf.download(ticker, period="1d", progress=False)
-        return float(data['Close'].iloc[-1])
+        return _latest_value(data, 'Close')
     except Exception as e:
         logger.error(f"Error fetching price for {ticker}: {e}")
         return None

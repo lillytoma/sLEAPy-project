@@ -1,19 +1,25 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, OnInit, signal } from '@angular/core';
 import { PortfolioService } from '../../services/portfolio.service';
-import { portfolioHistory, sparklines, MARKET_STOCKS, MarketStock } from '../../data/mock-data';
+import { MarketStock } from '../../data/mock-data';
+import { MarketDataService } from '../../services/market-data.service';
 import { OrderModalComponent } from '../shared/order-modal.component';
+import { AddCashModalComponent } from '../shared/add-cash-modal.component';
 
 @Component({
   selector: 'app-portfolio',
   standalone: true,
-  imports: [OrderModalComponent],
+  imports: [OrderModalComponent, AddCashModalComponent],
   templateUrl: './portfolio.component.html'
 })
-export class PortfolioComponent {
-  sparklines = sparklines;
+export class PortfolioComponent implements OnInit {
   orderModal = signal<{ stock: MarketStock; mode: 'buy' | 'sell' } | null>(null);
+  showAddCash = signal(false);
 
-  constructor(public portfolioService: PortfolioService) {}
+  constructor(public portfolioService: PortfolioService, private marketDataService: MarketDataService) {}
+
+  ngOnInit(): void {
+    this.marketDataService.connectWebSocket();
+  }
 
   statCards = computed(() => {
     const h = this.portfolioService.holdings();
@@ -55,7 +61,7 @@ export class PortfolioComponent {
 
   barData = computed(() => {
     const h = this.portfolioService.holdings();
-    const maxPct = Math.max(...h.map((x) => Math.abs(((x.current - x.avgCost) / x.avgCost) * 100)));
+    const maxPct = Math.max(...h.map((x) => Math.abs(((x.current - x.avgCost) / x.avgCost) * 100)), 1);
     const maxH = 80;
     return h.map((x) => {
       const pct = ((x.current - x.avgCost) / x.avgCost) * 100;
@@ -63,32 +69,27 @@ export class PortfolioComponent {
     });
   });
 
-  sparklineData(symbol: string): number[] | undefined {
-    return sparklines[symbol];
-  }
-
-  sparklinePoints(symbol: string): string {
-    const data = sparklines[symbol];
-    if (!data) return '';
-    const min = Math.min(...data);
-    const max = Math.max(...data);
-    return data.map((v, i) => {
-      const x = (i / (data.length - 1)) * 58 + 1;
-      const y = max === min ? 14 : 26 - ((v - min) / (max - min)) * 22 + 1;
-      return `${x},${y}`;
-    }).join(' ');
-  }
-
-  sparklineTrend(symbol: string): boolean {
-    const data = sparklines[symbol];
-    if (!data || data.length < 2) return true;
-    return data[data.length - 1] >= data[0];
-  }
-
   openSell(symbol: string, shares: number, price: number): void {
-    const stock = MARKET_STOCKS.find(s => s.symbol === symbol);
-    if (stock) {
-      this.orderModal.set({ stock: { ...stock, price }, mode: 'sell' });
-    }
+    const holding = this.portfolioService.getHolding(symbol);
+    const instrument = this.marketDataService.instruments().find((item) => item.symbol === symbol);
+    if (!holding || !instrument) return;
+    this.orderModal.set({
+      stock: {
+        symbol,
+        name: instrument.symbolName,
+        chg: 0,
+        price,
+        vol: 'N/A',
+        relVol: 'N/A',
+        mktCap: 'N/A',
+        pe: 'N/A',
+        eps: 0,
+        epsGrowth: 0,
+        divYield: 'N/A',
+        sector: instrument.instrumentType?.name || 'Other',
+        rating: 'N/A'
+      },
+      mode: 'sell'
+    });
   }
 }

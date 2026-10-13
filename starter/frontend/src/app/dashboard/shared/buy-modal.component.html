@@ -155,7 +155,7 @@
                 Bought {{ confirmedShares() }} shares of <strong>{{ stock.symbol }}</strong>
               </p>
               <p class="font-mono font-bold text-lg mb-6" style="color:var(--success)">
-                \${{ confirmedTotal().toFixed(2) }}
+                ${{ confirmedTotal().toFixed(2) }}
               </p>
             }
             <button (click)="close.emit()"

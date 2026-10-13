@@ -1,8 +1,9 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, switchMap, tap } from 'rxjs';
-import { holdings, Holding } from '../data/mock-data';
+import { Observable, map, of, switchMap, tap } from 'rxjs';
+import { Holding } from '../data/mock-data';
 import { environment } from '../../environments/environment';
+import { MarketDataService } from './market-data.service';
 
 export interface OrderRequest {
   symbol: string;
@@ -56,12 +57,19 @@ interface HoldingResponse {
 
 @Injectable({ providedIn: 'root' })
 export class PortfolioService {
-  watchlistedSymbols = signal<string[]>(['META', 'GOOG', 'BRK.B', 'V', 'NFLX']);
-  holdings = signal<Holding[]>([...holdings]);
+  watchlistedSymbols = signal<string[]>([]);
+  holdings = signal<Holding[]>([]);
   availableCash = signal(0);
   private apiBaseUrl = `${environment.apiUrl}/api`;
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private marketDataService: MarketDataService) {
+    this.marketDataService.priceUpdates$.subscribe((updates) => {
+      if (updates.size === 0) return;
+      this.holdings.update((currentHoldings) => currentHoldings.map((holding) => {
+        const live = updates.get(holding.symbol);
+        return live?.currentPrice == null ? holding : { ...holding, current: Number(live.currentPrice) };
+      }));
+    });
     this.refreshCashBalance();
     this.refreshHoldings();
   }
@@ -85,6 +93,12 @@ export class PortfolioService {
     return this.http.post<number>(`${this.apiBaseUrl}/clients/${clientId}/deposit`, { amount }).pipe(
       tap((balance) => this.availableCash.set(Number(balance) || 0))
     );
+  }
+
+  getTransactions(): Observable<TransactionResponse[]> {
+    const clientId = this.resolveClientId(false);
+    if (clientId === null) return of([]);
+    return this.http.get<TransactionResponse[]>(`${this.apiBaseUrl}/orders/?clientId=${clientId}`);
   }
 
   refreshHoldings(): void {
@@ -207,4 +221,16 @@ export class PortfolioService {
       return [...prev, { symbol, name, shares, avgCost: price, current: price, sector }];
     });
   }
+}
+
+export interface TransactionResponse {
+  timeOfPurchase: string;
+  timeFilled?: string;
+  quantity: number;
+  purchasePrice: number;
+  status?: string;
+  instrument: {
+    symbol: string;
+    symbolName: string;
+  };
 }

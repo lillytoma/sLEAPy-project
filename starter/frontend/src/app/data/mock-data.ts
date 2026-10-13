@@ -18,10 +18,10 @@ export interface WatchlistStock {
   symbol: string;
   name: string;
   price: number;
-  change: number;
-  high52: number;
-  low52: number;
-  mktCap: string;
+  change: number | null;
+  high52?: number;
+  low52?: number;
+  mktCap?: string;
 }
 
 export interface Holding {

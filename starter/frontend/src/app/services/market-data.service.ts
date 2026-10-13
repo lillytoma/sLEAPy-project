@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Client, IFrame, IMessage } from '@stomp/stompjs';
@@ -22,6 +22,7 @@ export class MarketDataService {
   // WebSocket-related subjects for price updates
   private priceUpdatesSubject = new BehaviorSubject<Map<string, any>>(new Map());
   public priceUpdates$ = this.priceUpdatesSubject.asObservable();
+  public instruments = signal<any[]>([]);
 
   private webSocketConnectedSubject = new BehaviorSubject<boolean>(false);
   public webSocketConnected$ = this.webSocketConnectedSubject.asObservable();
@@ -123,6 +124,7 @@ export class MarketDataService {
   private loadInitialPrices(): void {
     this.getInstruments().subscribe({
       next: (instruments) => {
+        this.instruments.set(instruments);
         const merged = new Map(this.priceUpdatesSubject.value);
         instruments.forEach((instrument) => {
           if (instrument.symbol && instrument.currentPrice != null) {

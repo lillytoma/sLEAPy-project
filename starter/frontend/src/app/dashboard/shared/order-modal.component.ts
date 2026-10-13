@@ -15,6 +15,7 @@ export class OrderModalComponent {
   @Input() availableCash = 0;
   @Input() sharesOwned = 0;
   @Output() close = new EventEmitter<void>();
+  @Output() orderCompleted = new EventEmitter<void>();
 
   mode = signal<'buy' | 'sell'>('buy');
   inputMode = signal<'shares' | 'money'>('shares');
@@ -117,6 +118,7 @@ export class OrderModalComponent {
           this.confirmedShares.set(quantity);
           this.confirmedTotal.set(total);
           this.success.set(true);
+          this.orderCompleted.emit();
         } else if (response.status === 'REJECTED') {
           this.error.set(response.error || response.message);
         }
@@ -157,6 +159,7 @@ export class OrderModalComponent {
           this.confirmedShares.set(quantity);
           this.confirmedTotal.set(total);
           this.success.set(true);
+          this.orderCompleted.emit();
         } else if (response.status === 'REJECTED') {
           this.error.set(response.error || response.message);
         }

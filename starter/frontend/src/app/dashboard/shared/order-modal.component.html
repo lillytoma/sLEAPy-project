@@ -100,9 +100,6 @@
                   class="w-full pl-7 pr-4 py-2.5 rounded-md text-sm border outline-none font-mono"
                   style="background-color:var(--background);color:var(--foreground);border-color:var(--border)" />
               </div>
-              <p class="text-xs mt-1" style="color:var(--muted-foreground)">
-                Will buy {{ calculatedBuyShares() }} shares
-              </p>
             </div>
           }
 
@@ -147,9 +144,6 @@
                   class="w-full pl-7 pr-4 py-2.5 rounded-md text-sm border outline-none font-mono"
                   style="background-color:var(--background);color:var(--foreground);border-color:var(--border)" />
               </div>
-              <p class="text-xs mt-1" style="color:var(--muted-foreground)">
-                Will sell {{ calculatedSellShares() }} shares
-              </p>
             </div>
           }
 
@@ -164,15 +158,6 @@
             </p>
           </div>
 
-          <!-- Warning strip -->
-          <div class="flex items-start gap-2 p-3 rounded-md" style="background-color:rgba(125,18,30,0.1)">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="flex-shrink-0 mt-0.5" style="color:var(--error)">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-            </svg>
-            <p class="text-xs" style="color:var(--error)">
-              Sell orders are executed at market price. Capital gains taxes may apply.
-            </p>
-          </div>
         }
 
         <!-- Error message -->
@@ -194,9 +179,9 @@
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" opacity="0.25"></circle>
               <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            Placing Order...
+            Submitting...
           } @else {
-            {{ mode() === 'buy' ? 'Place Buy Order' : 'Place Sell Order' }}
+            {{ mode() === 'buy' ? 'Buy' : 'Sell' }} {{ stock.symbol }}
           }
         </button>
       </div>

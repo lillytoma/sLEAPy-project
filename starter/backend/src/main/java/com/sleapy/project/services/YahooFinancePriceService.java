@@ -41,7 +41,7 @@ public class YahooFinancePriceService implements PriceService {
         Map<String, PriceUpdateDTO> quotes = getQuotes(List.of(symbols));
         return Stream.of(symbols)
                 .map(symbol -> {
-                    PriceUpdateDTO quote = quotes.get(symbol.toUpperCase());
+                    PriceUpdateDTO quote = quotes.get(symbol.trim().toUpperCase());
                     return quote != null ? quote.getCurrentPrice() : null;
                 })
                 .toArray(BigDecimal[]::new);
@@ -53,7 +53,15 @@ public class YahooFinancePriceService implements PriceService {
             return Map.of();
         }
 
-        String joined = symbols.stream().map(String::toUpperCase).collect(Collectors.joining(","));
+        String joined = symbols.stream()
+            .map(String::trim)
+            .filter(symbol -> !symbol.isEmpty())
+            .map(String::toUpperCase)
+            .distinct()
+            .collect(Collectors.joining(","));
+        if (joined.isEmpty()) {
+            return Map.of();
+        }
         try {
             Map<String, PriceUpdateDTO> quotes = restClient.get()
                     .uri("/quotes?symbols={symbols}", joined)
@@ -70,7 +78,7 @@ public class YahooFinancePriceService implements PriceService {
     private PriceUpdateDTO fetchQuote(String symbol) {
         try {
             return restClient.get()
-                    .uri("/quote/{symbol}", symbol.toUpperCase())
+                    .uri("/quote/{symbol}", symbol.trim().toUpperCase())
                     .retrieve()
                     .body(PriceUpdateDTO.class);
         } catch (RestClientException e) {
