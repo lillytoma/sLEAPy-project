@@ -55,7 +55,7 @@ export class WatchlistComponent {
     const h = this.portfolioService.getHolding(item.symbol);
     const marketStock = MARKET_STOCKS.find((s) => s.symbol === item.symbol);
     if (h && marketStock) {
-      this.orderModal.set({ stock: marketStock, mode: 'sell' });
+      this.orderModal.set({ stock: { ...marketStock, price: h.current }, mode: 'sell' });
     }
   }
 }

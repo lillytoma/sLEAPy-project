@@ -5,6 +5,7 @@ import com.sleapy.project.exceptions.InsufficientSharesException;
 import com.sleapy.project.mappers.ClientMapper;
 import com.sleapy.project.mappers.HoldingMapper;
 import com.sleapy.project.mappers.InstrumentMapper;
+import com.sleapy.project.mappers.MarketPriceMapper;
 import com.sleapy.project.mappers.OrderMapper;
 import com.sleapy.project.mappers.OrderStatusMapper;
 import com.sleapy.project.models.dtos.BuyOrderRequestDTO;
@@ -35,6 +36,7 @@ public class TradeService {
 
     private final ClientMapper clientMapper;
     private final InstrumentMapper instrumentMapper;
+    private final MarketPriceMapper marketPriceMapper;
     private final HoldingMapper holdingMapper;
     private final OrderMapper orderMapper;
     private final OrderStatusMapper orderStatusMapper;
@@ -273,12 +275,17 @@ public class TradeService {
         }
 
         if ((currentPrice == null || currentPrice.compareTo(BigDecimal.ZERO) <= 0)
-                && instrument.getCurrentPrice() != null
-                && instrument.getCurrentPrice().compareTo(BigDecimal.ZERO) > 0) {
-            return instrument.getCurrentPrice();
+                ) {
+            currentPrice = marketPriceMapper.findBySymbol(instrument.getSymbol())
+                    .map(price -> price.getCurrentPrice())
+                    .orElse(null);
         }
 
         if (currentPrice == null || currentPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            if (instrument.getCurrentPrice() != null
+                    && instrument.getCurrentPrice().compareTo(BigDecimal.ZERO) > 0) {
+                return instrument.getCurrentPrice();
+            }
             throw new IllegalArgumentException("Invalid price for instrument: " + instrument.getSymbol());
         }
 

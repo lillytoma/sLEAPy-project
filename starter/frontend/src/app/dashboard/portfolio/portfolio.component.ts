@@ -88,7 +88,7 @@ export class PortfolioComponent {
   openSell(symbol: string, shares: number, price: number): void {
     const stock = MARKET_STOCKS.find(s => s.symbol === symbol);
     if (stock) {
-      this.orderModal.set({ stock, mode: 'sell' });
+      this.orderModal.set({ stock: { ...stock, price }, mode: 'sell' });
     }
   }
 }
