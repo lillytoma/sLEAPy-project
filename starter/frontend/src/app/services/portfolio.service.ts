@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, switchMap } from 'rxjs';
+import { Observable, map, switchMap, tap } from 'rxjs';
 import { holdings, Holding } from '../data/mock-data';
 import { environment } from '../../environments/environment';
 
@@ -42,14 +42,71 @@ interface TradeResponse {
   message: string;
 }
 
+interface HoldingResponse {
+  quantity: number;
+  costBasis: number;
+  currentMarketValue: number;
+  instrument: {
+    symbol: string;
+    symbolName: string;
+    currentPrice: number;
+    instrumentType?: { name?: string };
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class PortfolioService {
   watchlistedSymbols = signal<string[]>(['META', 'GOOG', 'BRK.B', 'V', 'NFLX']);
   holdings = signal<Holding[]>([...holdings]);
-  availableCash = signal(10000);  // Default $10,000 cash available
+  availableCash = signal(0);
   private apiBaseUrl = `${environment.apiUrl}/api`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    this.refreshCashBalance();
+    this.refreshHoldings();
+  }
+
+  refreshCashBalance(): void {
+    const clientId = this.resolveClientId(false);
+    if (clientId === null) return;
+
+    this.http.get<number>(`${this.apiBaseUrl}/clients/${clientId}/balance`).subscribe({
+      next: (balance) => this.availableCash.set(Number(balance) || 0),
+      error: () => this.availableCash.set(0)
+    });
+  }
+
+  addCash(amount: number): Observable<number> {
+    const clientId = this.resolveClientId();
+    if (clientId === null) {
+      throw new Error('No valid user_id found in localStorage. Please log in again.');
+    }
+
+    return this.http.post<number>(`${this.apiBaseUrl}/clients/${clientId}/deposit`, { amount }).pipe(
+      tap((balance) => this.availableCash.set(Number(balance) || 0))
+    );
+  }
+
+  refreshHoldings(): void {
+    const clientId = this.resolveClientId(false);
+    if (clientId === null) return;
+
+    this.http.get<HoldingResponse[]>(`${this.apiBaseUrl}/holdings/${clientId}`).subscribe({
+      next: (responses) => this.holdings.set(responses.map((holding) => {
+        const quantity = Number(holding.quantity) || 0;
+        const costBasis = Number(holding.costBasis) || 0;
+        return {
+          symbol: holding.instrument.symbol,
+          name: holding.instrument.symbolName,
+          shares: quantity,
+          avgCost: quantity > 0 ? costBasis / quantity : 0,
+          current: Number(holding.instrument.currentPrice) || 0,
+          sector: holding.instrument.instrumentType?.name || 'Other'
+        };
+      })),
+      error: () => this.holdings.set([])
+    });
+  }
 
   /**
    * Place a buy order with the backend
@@ -67,12 +124,20 @@ export class PortfolioService {
 
   private submitTrade(order: OrderRequest, side: 'buy' | 'sell'): Observable<OrderResponse> {
     return this.resolveInstrumentId(order.symbol).pipe(
-      map((instrumentId): TradeRequest => ({
-        clientId: this.resolveClientId(),
-        instrumentId,
-        quantity: order.quantity
-      })),
+      map((instrumentId): TradeRequest => {
+        const clientId = this.resolveClientId();
+        if (clientId === null) {
+          throw new Error('No valid user_id found in localStorage. Please log in again.');
+        }
+        return { clientId, instrumentId, quantity: order.quantity };
+      }),
       switchMap((tradeRequest) => this.http.post<TradeResponse>(`${this.apiBaseUrl}/trades/${side}`, tradeRequest)),
+      tap((response) => {
+        this.availableCash.update((cash) => side === 'buy'
+          ? cash - response.totalAmount
+          : cash + response.totalAmount);
+        this.refreshHoldings();
+      }),
       map((response) => ({
         success: true,
         orderId: response.orderId,
@@ -95,10 +160,11 @@ export class PortfolioService {
       );
   }
 
-  private resolveClientId(): number {
+  private resolveClientId(required = true): number | null {
     const userId = localStorage.getItem('user_id');
     const parsed = userId ? Number(userId) : NaN;
     if (!Number.isFinite(parsed) || parsed <= 0) {
+      if (!required) return null;
       throw new Error('No valid user_id found in localStorage. Please log in again.');
     }
     return parsed;

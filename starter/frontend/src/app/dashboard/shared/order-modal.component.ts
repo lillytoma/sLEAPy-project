@@ -46,7 +46,9 @@ export class OrderModalComponent {
     if (this.inputMode() === 'shares') {
       return this.shares() || 0;
     } else {
-      return Math.floor((this.moneyAmount() || 0) / this.effectivePrice());
+      return this.moneyAmount() > 0 && this.effectivePrice() > 0
+        ? this.moneyAmount() / this.effectivePrice()
+        : 0;
     }
   });
 
@@ -59,8 +61,10 @@ export class OrderModalComponent {
     if (this.inputMode() === 'shares') {
       return Math.min(this.sharesToSell() || 0, this.sharesOwned);
     } else {
-      const shares = Math.floor((this.moneyAmountToReceive() || 0) / this.effectivePrice());
-      return Math.min(shares, this.sharesOwned);
+      const shares = this.moneyAmountToReceive() > 0 && this.effectivePrice() > 0
+        ? this.moneyAmountToReceive() / this.effectivePrice()
+        : 0;
+      return shares;
     }
   });
 
@@ -86,19 +90,22 @@ export class OrderModalComponent {
   }
 
   executeBuy(): void {
-    if (this.calculatedBuyShares() < 1 || this.estimatedBuyTotal() > this.availableCash) return;
+    const quantity = this.calculatedBuyShares();
+    const total = quantity * this.effectivePrice();
+    if (quantity <= 0 || total > this.availableCash) return;
 
     this.loading.set(true);
     this.error.set(null);
-    this.shares.set(0);
-    this.moneyAmount.set(0);
 
     const orderRequest: OrderRequest = {
       symbol: this.stock.symbol,
-      quantity: this.calculatedBuyShares(),
+      quantity,
       price: this.effectivePrice(),
       side: 'buy'
     };
+
+    this.shares.set(0);
+    this.moneyAmount.set(0);
 
     this.portfolioService.placeOrder(orderRequest).subscribe({
       next: (response) => {
@@ -107,8 +114,8 @@ export class OrderModalComponent {
         this.orderStatus.set(response.status);
 
         if (response.success && response.status === 'FILLED') {
-          this.confirmedShares.set(this.calculatedBuyShares());
-          this.confirmedTotal.set(this.estimatedBuyTotal());
+          this.confirmedShares.set(quantity);
+          this.confirmedTotal.set(total);
           this.success.set(true);
         } else if (response.status === 'REJECTED') {
           this.error.set(response.error || response.message);
@@ -123,19 +130,22 @@ export class OrderModalComponent {
   }
 
   executeSell(): void {
-    if (this.calculatedSellShares() < 1 || this.calculatedSellShares() > this.sharesOwned) return;
+    const quantity = this.calculatedSellShares();
+    const total = quantity * this.effectivePrice();
+    if (quantity <= 0 || quantity > this.sharesOwned) return;
 
     this.loading.set(true);
     this.error.set(null);
-    this.sharesToSell.set(0);
-    this.moneyAmountToReceive.set(0);
 
     const orderRequest: OrderRequest = {
       symbol: this.stock.symbol,
-      quantity: this.calculatedSellShares(),
+      quantity,
       price: this.effectivePrice(),
       side: 'sell'
     };
+
+    this.sharesToSell.set(0);
+    this.moneyAmountToReceive.set(0);
 
     this.portfolioService.sellOrder(orderRequest).subscribe({
       next: (response) => {
@@ -144,8 +154,8 @@ export class OrderModalComponent {
         this.orderStatus.set(response.status);
 
         if (response.success && response.status === 'FILLED') {
-          this.confirmedShares.set(this.calculatedSellShares());
-          this.confirmedTotal.set(this.estimatedSellProceeds());
+          this.confirmedShares.set(quantity);
+          this.confirmedTotal.set(total);
           this.success.set(true);
         } else if (response.status === 'REJECTED') {
           this.error.set(response.error || response.message);

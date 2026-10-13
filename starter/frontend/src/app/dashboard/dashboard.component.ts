@@ -1,16 +1,29 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { signal } from '@angular/core';
+import { PortfolioService } from '../services/portfolio.service';
+import { AddCashModalComponent } from './shared/add-cash-modal.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, AddCashModalComponent],
   template: `
     <div class="min-h-screen" style="background-color:var(--background);color:var(--foreground)">
       <header class="border-b" style="border-color:var(--border)">
         <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <h1 class="text-xl font-semibold">sLEAPy Dashboard</h1>
-          <a routerLink="/login" class="text-sm" style="color:var(--muted-foreground)">Sign out</a>
+          <div class="flex items-center gap-4">
+            <span class="text-sm" style="color:var(--muted-foreground)">
+              Cash: {{ '$' }}{{ portfolioService.availableCash().toFixed(2) }}
+            </span>
+            <button type="button" (click)="showAddCash.set(true)"
+              class="px-3 py-2 rounded-md text-sm font-semibold"
+              style="background-color:var(--primary);color:var(--primary-foreground)">
+              Add Cash
+            </button>
+            <a routerLink="/login" class="text-sm" style="color:var(--muted-foreground)">Sign out</a>
+          </div>
         </div>
       </header>
 
@@ -30,7 +43,18 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
           <router-outlet></router-outlet>
         </section>
       </div>
+
+      @if (showAddCash()) {
+        <app-add-cash-modal
+          [currentBalance]="portfolioService.availableCash()"
+          (close)="showAddCash.set(false)">
+        </app-add-cash-modal>
+      }
     </div>
   `
 })
-export class DashboardComponent {}
+export class DashboardComponent {
+  showAddCash = signal(false);
+
+  constructor(public portfolioService: PortfolioService) {}
+}

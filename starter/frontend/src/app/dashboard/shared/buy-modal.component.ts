@@ -36,7 +36,9 @@ export class BuyModalComponent {
     if (this.inputMode() === 'shares') {
       return this.shares() || 0;
     } else {
-      return Math.floor((this.moneyAmount() || 0) / this.effectivePrice());
+      return this.moneyAmount() > 0 && this.effectivePrice() > 0
+        ? this.moneyAmount() / this.effectivePrice()
+        : 0;
     }
   });
 
@@ -45,19 +47,22 @@ export class BuyModalComponent {
   remainingCash = computed(() => this.availableCash - this.estimatedTotal());
 
   executeBuy(): void {
-    if (this.calculatedShares() < 1) return;
+    const quantity = this.calculatedShares();
+    const total = quantity * this.effectivePrice();
+    if (quantity <= 0 || total > this.availableCash) return;
 
     this.loading.set(true);
     this.error.set(null);
-    this.shares.set(0);
-    this.moneyAmount.set(0);
 
     const orderRequest: OrderRequest = {
       symbol: this.stock.symbol,
-      quantity: this.calculatedShares(),
+      quantity,
       price: this.effectivePrice(),
       side: 'buy'
     };
+
+    this.shares.set(0);
+    this.moneyAmount.set(0);
 
     this.portfolioService.placeOrder(orderRequest).subscribe({
       next: (response) => {
@@ -66,8 +71,8 @@ export class BuyModalComponent {
         this.orderStatus.set(response.status);
         
         if (response.success && response.status === 'FILLED') {
-          this.confirmedShares.set(this.calculatedShares());
-          this.confirmedTotal.set(this.estimatedTotal());
+          this.confirmedShares.set(quantity);
+          this.confirmedTotal.set(total);
           this.success.set(true);
         } else if (response.status === 'REJECTED') {
           this.error.set(response.error || response.message);

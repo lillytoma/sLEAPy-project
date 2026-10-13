@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.math.BigDecimal;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
 @Service
@@ -27,6 +28,17 @@ public class ClientService {
         
         ClientEntity client = clientMapper.findById(clientId).orElseThrow(() -> new RuntimeException("Client not found"));  
         return client.getCashBalance(); // Return the actual current balance from the client entity
+    }
+
+    public double addCash(Long clientId, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than 0");
+        }
+
+        clientMapper.findById(clientId)
+                .orElseThrow(() -> new java.util.NoSuchElementException("Client not found"));
+        clientMapper.addCash(clientId, amount);
+        return getCashBalance(clientId);
     }
     
 //Entry point for checking a login attempt. Given an email and the plaintext password. It returns a bool answering whether the credentials exist in the db

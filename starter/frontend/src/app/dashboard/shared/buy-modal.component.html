@@ -113,10 +113,10 @@
 
             <!-- Submit -->
             <button (click)="executeBuy()"
-              [disabled]="calculatedShares() < 1 || loading()"
+              [disabled]="calculatedShares() <= 0 || estimatedTotal() > availableCash || loading()"
               class="w-full py-3 rounded-md font-semibold text-sm transition-opacity flex items-center justify-center gap-2"
               style="background-color:var(--primary);color:var(--primary-foreground)"
-              [style.opacity]="(calculatedShares() < 1 || loading()) ? '0.5' : '1'">
+              [style.opacity]="(calculatedShares() <= 0 || estimatedTotal() > availableCash || loading()) ? '0.5' : '1'">
               @if (loading()) {
                 <svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" opacity="0.25"></circle>
