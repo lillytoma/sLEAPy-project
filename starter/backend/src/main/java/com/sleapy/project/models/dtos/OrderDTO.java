@@ -16,6 +16,7 @@ public class OrderDTO{
         this.timeFilled = entity.getTimeFilled();
         this.purchasePrice = entity.getPurchasePrice();
         this.status = entity.getStatus() == null ? null : entity.getStatus().getName();
+        this.tradeType = entity.getTradeType();
     }
 
     public OrderDTO(LocalDate timeOfPurchase, BigDecimal quantity, InstrumentDTO instrument) {
@@ -29,6 +30,7 @@ public class OrderDTO{
     private LocalDate timeFilled;
     private BigDecimal purchasePrice;
     private String status;
+    private String tradeType;
 
  
 

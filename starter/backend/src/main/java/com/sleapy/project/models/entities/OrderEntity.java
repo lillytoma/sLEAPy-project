@@ -31,6 +31,7 @@ public class OrderEntity {
     private LocalDate timeOfPurchase;
     private LocalDate timeFilled;
     private BigDecimal purchasePrice;
+    private String tradeType;
     private OrderStatus status;
     private ClientEntity client;
     private InstrumentEntity instrument;

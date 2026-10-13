@@ -57,6 +57,7 @@ CREATE TABLE Orders (
     Time_purchased TIMESTAMP,
     Time_filled TIMESTAMP,
     Purchase_Price NUMERIC(15,2),
+    trade_type VARCHAR(4) NOT NULL CHECK (trade_type IN ('BUY', 'SELL')),
     Status INTEGER NOT NULL REFERENCES Order_Status(OrderStatus_ID)
 );
 

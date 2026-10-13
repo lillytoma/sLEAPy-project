@@ -19,7 +19,6 @@ asgiref==3.11.1
 asn1crypto==1.5.1
 attrs==26.1.0
 aws-cfn-bootstrap==2.0
-awscli==2.27.57
 awscrt==0.26.1
 babel==2.18.0
 backports-datetime-fromisoformat==2.0.3
@@ -138,7 +137,7 @@ pyrsistent==0.17.3
 pyserial==3.4
 PySocks==1.7.1
 python-daemon==3.1.2
-python-dateutil==2.9.0.post0
+python-dateutil==2.9.0
 python-dotenv==1.2.1
 python-multipart==0.0.20
 python-slugify==8.0.4
