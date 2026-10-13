@@ -1,4 +1,15 @@
    <div class="space-y-6">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="eyebrow">Long-term view</p>
+          <h1 class="text-2xl font-semibold" style="color:var(--foreground)">Portfolio</h1>
+          <p class="text-sm mt-1" style="color:var(--muted-foreground)">Track allocation, performance, and available capital.</p>
+        </div>
+        <button type="button" (click)="showAddCash.set(true)" class="button button-primary flex-shrink-0">
+          <span aria-hidden="true">+</span> Add cash
+        </button>
+      </div>
+
       <!-- Stat Cards -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         @for (card of statCards(); track card.label) {
@@ -81,7 +92,6 @@
               <tr style="border-bottom:1px solid var(--border)">
                 <th class="px-4 py-3 text-left font-medium" style="color:var(--muted-foreground)">Symbol</th>
                 <th class="px-4 py-3 text-left font-medium hidden md:table-cell" style="color:var(--muted-foreground)">Sector</th>
-                <th class="px-4 py-3 text-center font-medium hidden lg:table-cell" style="color:var(--muted-foreground)">Sparkline</th>
                 <th class="px-4 py-3 text-right font-medium" style="color:var(--muted-foreground)">Shares</th>
                 <th class="px-4 py-3 text-right font-medium hidden sm:table-cell" style="color:var(--muted-foreground)">Avg Cost</th>
                 <th class="px-4 py-3 text-right font-medium" style="color:var(--muted-foreground)">Current</th>
@@ -98,19 +108,10 @@
                     <p class="text-xs" style="color:var(--muted-foreground)">{{ h.name }}</p>
                   </td>
                   <td class="px-4 py-3 hidden md:table-cell" style="color:var(--muted-foreground)">{{ h.sector }}</td>
-                  <td class="px-4 py-3 hidden lg:table-cell">
-                    @if (sparklineData(h.symbol)) {
-                      <svg width="60" height="28" viewBox="0 0 60 28">
-                        <polyline [attr.points]="sparklinePoints(h.symbol)" fill="none"
-                          [attr.stroke]="sparklineTrend(h.symbol) ? 'var(--success)' : 'var(--error)'"
-                          stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
-                      </svg>
-                    }
-                  </td>
                   <td class="px-4 py-3 text-right font-mono" style="color:var(--foreground)">{{ h.shares }}</td>
-                  <td class="px-4 py-3 text-right font-mono hidden sm:table-cell" style="color:var(--muted-foreground)">\${{ h.avgCost.toFixed(2) }}</td>
-                  <td class="px-4 py-3 text-right font-mono" style="color:var(--foreground)">\${{ h.current.toFixed(2) }}</td>
-                  <td class="px-4 py-3 text-right font-mono hidden sm:table-cell" style="color:var(--foreground)">\${{ (h.shares * h.current).toFixed(0) }}</td>
+                  <td class="px-4 py-3 text-right font-mono hidden sm:table-cell" style="color:var(--muted-foreground)">${{ h.avgCost.toFixed(2) }}</td>
+                  <td class="px-4 py-3 text-right font-mono" style="color:var(--foreground)">${{ h.current.toFixed(2) }}</td>
+                  <td class="px-4 py-3 text-right font-mono hidden sm:table-cell" style="color:var(--foreground)">${{ (h.shares * h.current).toFixed(0) }}</td>
                   <td class="px-4 py-3 text-right">
                     <span class="font-mono text-sm font-medium"
                       [style.color]="h.current >= h.avgCost ? 'var(--success)' : 'var(--error)'">
@@ -118,7 +119,7 @@
                     </span>
                     <p class="text-xs font-mono"
                       [style.color]="h.current >= h.avgCost ? 'var(--success)' : 'var(--error)'">
-                      {{ h.current >= h.avgCost ? '+' : '' }}\${{ ((h.current - h.avgCost) * h.shares).toFixed(0) }}
+                      {{ h.current >= h.avgCost ? '+' : '' }}${{ ((h.current - h.avgCost) * h.shares).toFixed(0) }}
                     </p>
                   </td>
                   <td class="px-4 py-3 text-right">
@@ -144,4 +145,11 @@
         [sharesOwned]="portfolioService.getHolding(orderModal()!.stock.symbol)?.shares ?? 0"
         (close)="orderModal.set(null)">
       </app-order-modal>
+    }
+
+    @if (showAddCash()) {
+      <app-add-cash-modal
+        [currentBalance]="portfolioService.availableCash()"
+        (close)="showAddCash.set(false)">
+      </app-add-cash-modal>
     }

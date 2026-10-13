@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, of, Subscription, Subject, switchMap } from 'rxjs';
-import { MARKET_STOCKS, MarketStock } from '../../data/mock-data';
+import { MarketStock } from '../../data/mock-data';
 import { PortfolioService } from '../../services/portfolio.service';
 import { MarketDataService } from '../../services/market-data.service';
 import { OrderModalComponent } from '../shared/order-modal.component';
@@ -83,6 +83,8 @@ export class MarketsComponent implements OnInit, OnDestroy {
     };
   }
 
+  allStocks = computed(() => this.marketDataService.instruments().map((instrument) => this.toMarketStock(instrument)));
+
   private withLivePrice(stock: MarketStock): MarketStock {
     const live = this.livePrices().get(stock.symbol);
     if (!live || live.currentPrice == null) return stock;
@@ -95,7 +97,7 @@ export class MarketsComponent implements OnInit, OnDestroy {
     if (!q || q.length < 1) return [];
     const results = this.searchResults();
     if (results !== null) return results.slice(0, 8);
-    return MARKET_STOCKS.filter(
+    return this.allStocks().filter(
       (s) => s.symbol.toLowerCase().startsWith(q) || s.name.toLowerCase().startsWith(q)
     ).slice(0, 8).map((s) => this.withLivePrice(s));
   });
@@ -103,7 +105,7 @@ export class MarketsComponent implements OnInit, OnDestroy {
   filteredStocks = computed(() => {
     const backendResults = this.searchResults();
     let stocks = backendResults === null
-      ? MARKET_STOCKS.map((s) => this.withLivePrice(s))
+      ? this.allStocks().map((s) => this.withLivePrice(s))
       : backendResults;
     const q = this.searchQuery().toLowerCase();
 

@@ -61,7 +61,7 @@ def get_quote(symbol: str):
 
 @app.get("/quotes")
 def get_quotes(symbols: str):
-    tickers = [s.strip().upper() for s in symbols.split(",") if s.strip()]
+    tickers = list(dict.fromkeys(s.strip().upper() for s in symbols.split(",") if s.strip()))
     if not tickers:
         raise HTTPException(status_code=400, detail="symbols query param is required")
 

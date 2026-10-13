@@ -32,7 +32,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws/prices")
-                .setAllowedOrigins("*")  // Allow all origins for development; restrict in production
+            .setAllowedOrigins("http://localhost:4200", "http://127.0.0.1:4200")
                 .withSockJS();            // Fallback for browsers without native WebSocket support
     }
 }

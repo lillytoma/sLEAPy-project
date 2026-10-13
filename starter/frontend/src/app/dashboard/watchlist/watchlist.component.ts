@@ -2,7 +2,7 @@ import { Component, computed, OnDestroy, OnInit, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { PortfolioService } from '../../services/portfolio.service';
 import { MarketDataService } from '../../services/market-data.service';
-import { extendedWatchlist, MARKET_STOCKS, MarketStock, WatchlistStock } from '../../data/mock-data';
+import { MarketStock, WatchlistStock } from '../../data/mock-data';
 import { OrderModalComponent } from '../shared/order-modal.component';
 
 @Component({
@@ -34,10 +34,19 @@ export class WatchlistComponent implements OnInit, OnDestroy {
     const symbols = this.portfolioService.watchlistedSymbols();
     return symbols
       .map((sym) => {
-        const item = extendedWatchlist.find((w) => w.symbol === sym);
+        const instrument = this.marketDataService.instruments().find((item) => item.symbol === sym);
+        if (!instrument) return undefined;
         const live = this.livePrices().get(sym);
-        if (!item || live?.currentPrice == null) return item;
-        return { ...item, price: Number(live.currentPrice) };
+        const item: WatchlistStock = {
+          symbol: sym,
+          name: instrument.symbolName,
+          price: live?.currentPrice == null ? Number(instrument.currentPrice) || 0 : Number(live.currentPrice),
+          change: null,
+          high52: undefined,
+          low52: undefined,
+          mktCap: undefined
+        };
+        return item;
       })
       .filter((item): item is WatchlistStock => item !== undefined);
   });
@@ -47,42 +56,39 @@ export class WatchlistComponent implements OnInit, OnDestroy {
   }
 
   openBuy(item: WatchlistStock): void {
-    const marketStock = MARKET_STOCKS.find((s) => s.symbol === item.symbol);
-    if (marketStock) {
+    const instrument = this.marketDataService.instruments().find((s) => s.symbol === item.symbol);
+    if (instrument) {
       const live = this.livePrices().get(item.symbol);
-      const stock = live?.currentPrice == null
-        ? marketStock
-        : { ...marketStock, price: Number(live.currentPrice) };
+      const stock = this.toMarketStock(instrument, live?.currentPrice == null ? item.price : Number(live.currentPrice));
       this.orderModal.set({ stock, mode: 'buy' });
-    } else {
-      this.orderModal.set({
-        stock: {
-          symbol: item.symbol,
-          name: item.name,
-          chg: item.change,
-          price: item.price,
-          vol: '—',
-          relVol: '—',
-          mktCap: item.mktCap,
-          pe: '—',
-          eps: 0,
-          epsGrowth: 0,
-          divYield: '0.00%',
-          sector: '—',
-          rating: '—',
-        },
-        mode: 'buy'
-      });
     }
   }
 
   openSell(item: WatchlistStock): void {
     const h = this.portfolioService.getHolding(item.symbol);
-    const marketStock = MARKET_STOCKS.find((s) => s.symbol === item.symbol);
-    if (h && marketStock) {
+    const instrument = this.marketDataService.instruments().find((s) => s.symbol === item.symbol);
+    if (h && instrument) {
       const live = this.livePrices().get(item.symbol);
       const price = live?.currentPrice == null ? h.current : Number(live.currentPrice);
-      this.orderModal.set({ stock: { ...marketStock, price }, mode: 'sell' });
+      this.orderModal.set({ stock: this.toMarketStock(instrument, price), mode: 'sell' });
     }
+  }
+
+  private toMarketStock(instrument: any, price: number): MarketStock {
+    return {
+      symbol: instrument.symbol,
+      name: instrument.symbolName,
+      chg: 0,
+      price,
+      vol: 'N/A',
+      relVol: 'N/A',
+      mktCap: 'N/A',
+      pe: 'N/A',
+      eps: 0,
+      epsGrowth: 0,
+      divYield: 'N/A',
+      sector: instrument.instrumentType?.name || 'Other',
+      rating: 'N/A'
+    };
   }
 }
