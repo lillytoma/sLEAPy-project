@@ -1,12 +1,13 @@
 import { Component } from '@angular/core';
-import { transactions } from '../../data/mock-data';
 
 @Component({
   selector: 'app-history',
   standalone: true,
-  templateUrl: './history.component.html'
-    
+  template: `
+    <div class="space-y-2">
+      <h2 class="text-xl font-semibold">Order History</h2>
+      <p style="color:var(--muted-foreground)">History endpoint is available at /api/orders/?clientId=&lt;id&gt;.</p>
+    </div>
+  `
 })
-export class HistoryComponent {
-  transactions = transactions;
-}
+export class HistoryComponent {}

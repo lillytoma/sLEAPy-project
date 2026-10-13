@@ -1,5 +1,6 @@
 package com.sleapy.project.models.dtos;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import com.sleapy.project.models.entities.OrderEntity;
@@ -16,14 +17,14 @@ public class OrderDTO{
         this.tradeType = entity.getTradeType();
     }
 
-    public OrderDTO(LocalDate timeOfPurchase, Integer quantity, InstrumentDTO instrument) {
+    public OrderDTO(LocalDate timeOfPurchase, BigDecimal quantity, InstrumentDTO instrument) {
         this.timeOfPurchase = timeOfPurchase;
         this.quantity = quantity;
         this.instrument = instrument;
     }
 
     private LocalDate timeOfPurchase;
-    private Integer quantity;
+    private BigDecimal quantity;
     private LocalDate timeFilled;
     private String tradeType;
 

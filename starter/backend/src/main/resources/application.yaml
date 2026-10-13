@@ -4,7 +4,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:8101/${POSTGRES_DB:sleapy_db}
     username: ${POSTGRES_USER:postgres}
-    password: ${POSTGRES_PASSWORD:postgres}
+    password: ${POSTGRES_PASSWORD:sleapy_neueda}
     driver-class-name: org.postgresql.Driver
 # spring:
 #   datasource:
@@ -29,6 +29,11 @@ jwt:
 # Server configuration
 server:
   port: 8081
+
+# Base URL of the Python price service (starter/backend/etl/price_service.py)
+# that wraps yfinance for live stock quotes.
+price-service:
+  base-url: ${PRICE_SERVICE_URL:http://localhost:8000}
 # spring:
 #   datasource:
 #     url: jdbc:h2:mem:mydb

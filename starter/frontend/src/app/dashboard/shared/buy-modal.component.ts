@@ -1,47 +1,89 @@
 import { Component, Input, Output, EventEmitter, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { PortfolioService } from '../../services/portfolio.service';
+import { HttpClientModule } from '@angular/common/http';
+import { PortfolioService, OrderRequest } from '../../services/portfolio.service';
 import { MarketStock } from '../../data/mock-data';
 
 @Component({
   selector: 'app-buy-modal',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, HttpClientModule],
   templateUrl: './buy-modal.component.html'
 })
 export class BuyModalComponent {
   @Input() stock!: MarketStock;
+  @Input() availableCash = 0;
+  @Input() sharesOwned = 0;
   @Output() close = new EventEmitter<void>();
+  @Output() switchToSell = new EventEmitter<void>();
 
-  orderType = signal<'market' | 'limit'>('market');
-  shares: number = 0;
-  limitPrice: number = 0;
+  inputMode = signal<'shares' | 'money'>('shares');
+  shares = signal(0);
+  moneyAmount = signal(0);
   success = signal(false);
+  loading = signal(false);
+  orderMessage = signal('');
+  orderStatus = signal<'PENDING' | 'ACCEPTED' | 'FILLED' | 'REJECTED' | null>(null);
   confirmedShares = signal(0);
   confirmedTotal = signal(0);
+  error = signal<string | null>(null);
 
   constructor(private portfolioService: PortfolioService) {}
 
-  effectivePrice = computed(() => {
-    if (this.orderType() === 'limit' && this.limitPrice > 0) return this.limitPrice;
-    return this.stock?.price ?? 0;
+  effectivePrice = computed(() => this.stock?.price ?? 0);
+
+  calculatedShares = computed(() => {
+    if (this.inputMode() === 'shares') {
+      return this.shares() || 0;
+    } else {
+      return this.moneyAmount() > 0 && this.effectivePrice() > 0
+        ? this.moneyAmount() / this.effectivePrice()
+        : 0;
+    }
   });
 
-  estimatedTotal = computed(() => (this.shares || 0) * this.effectivePrice());
+  estimatedTotal = computed(() => this.calculatedShares() * this.effectivePrice());
+
+  remainingCash = computed(() => this.availableCash - this.estimatedTotal());
 
   executeBuy(): void {
-    if (!this.shares || this.shares < 1) return;
-    const total = this.shares * this.effectivePrice();
-    this.confirmedShares.set(this.shares);
-    this.confirmedTotal.set(total);
-    this.portfolioService.buyShares(
-      this.stock.symbol,
-      this.stock.name,
-      this.shares,
-      this.effectivePrice(),
-      this.stock.sector
-    );
-    this.success.set(true);
+    const quantity = this.calculatedShares();
+    const total = quantity * this.effectivePrice();
+    if (quantity <= 0 || total > this.availableCash) return;
+
+    this.loading.set(true);
+    this.error.set(null);
+
+    const orderRequest: OrderRequest = {
+      symbol: this.stock.symbol,
+      quantity,
+      price: this.effectivePrice(),
+      side: 'buy'
+    };
+
+    this.shares.set(0);
+    this.moneyAmount.set(0);
+
+    this.portfolioService.placeOrder(orderRequest).subscribe({
+      next: (response) => {
+        this.loading.set(false);
+        this.orderMessage.set(response.message);
+        this.orderStatus.set(response.status);
+        
+        if (response.success && response.status === 'FILLED') {
+          this.confirmedShares.set(quantity);
+          this.confirmedTotal.set(total);
+          this.success.set(true);
+        } else if (response.status === 'REJECTED') {
+          this.error.set(response.error || response.message);
+        }
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.error.set(err.error?.message || 'Failed to place order. Please try again.');
+        this.orderStatus.set('REJECTED');
+      }
+    });
   }
 
   onBackdropClick(event: Event): void {

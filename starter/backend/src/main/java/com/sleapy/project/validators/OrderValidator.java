@@ -34,11 +34,11 @@ public class OrderValidator {
     }
  
     // Quantity must be positive
-    private void validateQuantity(Integer quantity) throws InvalidOrderException{
+    private void validateQuantity(BigDecimal quantity) throws InvalidOrderException{
         if(quantity == null){
             throw new InvalidOrderException("Quantity cannot be null");
         }
-        if(quantity <= 0){
+        if(quantity.compareTo(BigDecimal.ZERO) <= 0){
             throw new InvalidOrderException("Quantity must be greater than 0. Received: " + quantity);
         }
     }

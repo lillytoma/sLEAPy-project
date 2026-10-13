@@ -1,29 +1,13 @@
-import { Component, signal } from '@angular/core';
-import { ThemeService } from '../../services/theme.service';
-import { AuthService } from '../../services/auth.service';
-import { Router } from '@angular/router';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  templateUrl: './settings.component.html'
+  template: `
+    <div class="space-y-2">
+      <h2 class="text-xl font-semibold">Settings</h2>
+      <p style="color:var(--muted-foreground)">Profile and preferences can be managed here.</p>
+    </div>
+  `
 })
-export class SettingsComponent {
-  notifItems = [
-    { label: 'Price Alerts', desc: 'Get notified when stocks hit your target prices', on: true },
-    { label: 'Trade Confirmations', desc: 'Receive confirmation emails for every trade', on: true },
-    { label: 'Weekly Summary', desc: 'Weekly portfolio performance digest', on: false },
-    { label: 'Market News', desc: 'Breaking market news and analyst updates', on: false },
-  ];
-
-  constructor(
-    public themeService: ThemeService,
-    private authService: AuthService,
-    private router: Router,
-  ) {}
-
-  signOut(): void {
-    this.authService.logout();
-    this.router.navigate(['/login']);
-  }
-}
+export class SettingsComponent {}
