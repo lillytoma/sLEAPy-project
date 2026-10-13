@@ -84,6 +84,8 @@ export class MarketDataService {
       return;
     }
 
+    this.loadInitialPrices();
+
     this.stompClient = new Client({
       webSocketFactory: () => new SockJS(this.wsEndpoint),
       reconnectDelay: 5000,
@@ -116,6 +118,27 @@ export class MarketDataService {
     });
 
     this.stompClient.activate();
+  }
+
+  private loadInitialPrices(): void {
+    this.getInstruments().subscribe({
+      next: (instruments) => {
+        const merged = new Map(this.priceUpdatesSubject.value);
+        instruments.forEach((instrument) => {
+          if (instrument.symbol && instrument.currentPrice != null) {
+            merged.set(instrument.symbol, {
+              symbol: instrument.symbol,
+              currentPrice: Number(instrument.currentPrice),
+              highPrice: instrument.highPrice,
+              lowPrice: instrument.lowPrice,
+              lastUpdated: instrument.lastUpdated
+            });
+          }
+        });
+        this.priceUpdatesSubject.next(merged);
+      },
+      error: (error) => console.error('Unable to load initial market prices:', error)
+    });
   }
 
   /**

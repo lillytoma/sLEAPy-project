@@ -1,6 +1,8 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, OnDestroy, OnInit, signal } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { RouterLink } from '@angular/router';
 import { PortfolioService } from '../../services/portfolio.service';
+import { MarketDataService } from '../../services/market-data.service';
 import { portfolioHistory, transactions, extendedWatchlist, MARKET_STOCKS, MarketStock } from '../../data/mock-data';
 import { OrderModalComponent } from '../shared/order-modal.component';
 
@@ -11,19 +13,41 @@ import { OrderModalComponent } from '../shared/order-modal.component';
   imports: [RouterLink, OrderModalComponent]
 })
 
-export class HomeComponent {
+export class HomeComponent implements OnInit, OnDestroy {
   portfolioHistory = portfolioHistory;
   transactions = transactions;
   orderModal = signal<{ stock: MarketStock; mode: 'buy' | 'sell' } | null>(null);
 
-  constructor(public portfolioService: PortfolioService) {}
+  private livePrices = signal<Map<string, any>>(new Map());
+  private priceSubscription?: Subscription;
+
+  constructor(public portfolioService: PortfolioService, private marketDataService: MarketDataService) {}
+
+  ngOnInit(): void {
+    this.marketDataService.connectWebSocket();
+    this.priceSubscription = this.marketDataService.priceUpdates$.subscribe((updates) => {
+      this.livePrices.set(new Map(updates));
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.priceSubscription?.unsubscribe();
+  }
 
   miniWatchlist = computed(() =>
     this.portfolioService.watchlistedSymbols().slice(0, 5).map((sym) => {
       const ew = extendedWatchlist.find((e) => e.symbol === sym);
-      if (ew) return { symbol: ew.symbol, name: ew.name, price: ew.price, change: ew.change };
+      if (ew) {
+        const live = this.livePrices().get(ew.symbol);
+        const price = live?.currentPrice == null ? ew.price : Number(live.currentPrice);
+        return { symbol: ew.symbol, name: ew.name, price, change: ew.change };
+      }
       const ms = MARKET_STOCKS.find((e) => e.symbol === sym);
-      if (ms) return { symbol: ms.symbol, name: ms.name, price: ms.price, change: ms.chg };
+      if (ms) {
+        const live = this.livePrices().get(ms.symbol);
+        const price = live?.currentPrice == null ? ms.price : Number(live.currentPrice);
+        return { symbol: ms.symbol, name: ms.name, price, change: ms.chg };
+      }
       return { symbol: sym, name: sym, price: 0, change: 0 };
     })
   );
@@ -91,7 +115,9 @@ export class HomeComponent {
   openSell(symbol: string, shares: number, price: number): void {
     const stock = MARKET_STOCKS.find(s => s.symbol === symbol);
     if (stock) {
-      this.orderModal.set({ stock: { ...stock, price }, mode: 'sell' });
+      const live = this.livePrices().get(symbol);
+      const currentPrice = live?.currentPrice == null ? price : Number(live.currentPrice);
+      this.orderModal.set({ stock: { ...stock, price: currentPrice }, mode: 'sell' });
     }
   }
 }

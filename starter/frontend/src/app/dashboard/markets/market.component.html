@@ -7,7 +7,7 @@
           </svg>
           <input type="text" 
             [ngModel]="searchQuery()" 
-            (ngModelChange)="searchQuery.set($event); showSuggestions.set($event.length > 0)"
+            (ngModelChange)="onSearch($event)"
             (blur)="closeSuggestions()"
             placeholder="Search stocks... (symbol or name)"
             class="w-full pl-9 pr-4 py-2.5 rounded-md text-sm border outline-none"
