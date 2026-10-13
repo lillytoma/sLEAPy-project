@@ -133,6 +133,7 @@ public class TradeService {
         order.setQuantity(request.getQuantity());
         order.setTimeOfPurchase(LocalDate.now());
         order.setPurchasePrice(currentPrice);
+        order.setTradeType("BUY");
         
         // Set order status to "Filled" (ID = 2 based on seeded lookup data)
         OrderStatus filledStatus = orderStatusMapper.findById(2L)
@@ -243,6 +244,7 @@ public class TradeService {
         order.setQuantity(request.getQuantity());
         order.setTimeOfPurchase(LocalDate.now());
         order.setPurchasePrice(currentPrice);
+        order.setTradeType("SELL");
         
         // Set order status to "Filled" (ID = 2 based on seeded lookup data)
         OrderStatus filledStatus = orderStatusMapper.findById(2L)
