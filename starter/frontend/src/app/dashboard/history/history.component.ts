@@ -50,6 +50,7 @@ export class HistoryComponent implements OnInit {
       .get<OrderApiResponse[]>(`http://localhost:8081/api/orders/?clientId=${clientId}`, { headers })
       .subscribe({
         next: (orders) => {
+          console.log(orders);
           this.transactions = orders.map((order) => this.mapOrderToTransaction(order));
         },
         error: (err) => {
