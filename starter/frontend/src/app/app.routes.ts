@@ -28,8 +28,8 @@ export const routes: Routes = [
   { path: 'signup', component: SignupComponent },
   {
     path: 'dashboard',
-    // component: DashboardComponent,
-    //canActivate: [authGuard],
+    component: DashboardComponent,
+   // canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'home', pathMatch: 'full' },
       // { path: 'home', component: HomeComponent },

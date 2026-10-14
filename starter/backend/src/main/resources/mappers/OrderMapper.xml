@@ -14,6 +14,7 @@
     <result column="Time_purchased" property="timeOfPurchase" />
     <result column="Time_filled" property="timeFilled" />
     <result column="Purchase_Price" property="purchasePrice" />
+    <result column="trade_type" property="tradeType" />
     
     <!-- Foreign key relationship: Order_Status -->
     <association property="status" javaType="com.sleapy.project.models.entities.OrderStatus">
@@ -43,7 +44,7 @@
   <!-- Find order by ID with all related entities -->
   <select id="findById" parameterType="Long" resultMap="OrderResultMap">
     SELECT o.Order_ID, 
-           o.Quantity, o.Time_purchased, o.Time_filled, o.Purchase_Price,
+           o.Quantity, o.Time_purchased, o.Time_filled, o.Purchase_Price, o.trade_type,
            o.Status AS OrderStatus_ID, os.OrderStatus_Name,
            c.Client_ID, c.email AS client_email, c.cash_balance AS client_cash_balance, 
            c.password_hash AS client_password_hash, c.street_address AS client_street_address, 
@@ -59,7 +60,7 @@
   <!-- Retrieve all orders with related entities -->
   <select id="findAll" resultMap="OrderResultMap">
     SELECT o.Order_ID, 
-           o.Quantity, o.Time_purchased, o.Time_filled, o.Purchase_Price,
+           o.Quantity, o.Time_purchased, o.Time_filled, o.Purchase_Price, o.trade_type,
            o.Status AS OrderStatus_ID, os.OrderStatus_Name,
            c.Client_ID, c.email AS client_email, c.cash_balance AS client_cash_balance, 
            c.password_hash AS client_password_hash, c.street_address AS client_street_address, 
@@ -75,7 +76,7 @@
   <!-- This replaces the JPA nested property query with explicit SQL JOIN -->
   <select id="findByClient_IdOrderByTimeOfPurchaseAsc" parameterType="Long" resultMap="OrderResultMap">
     SELECT o.Order_ID, 
-           o.Quantity, o.Time_purchased, o.Time_filled, o.Purchase_Price,
+           o.Quantity, o.Time_purchased, o.Time_filled, o.Purchase_Price, o.trade_type,
            o.Status AS OrderStatus_ID, os.OrderStatus_Name,
            c.Client_ID, c.email AS client_email, c.cash_balance AS client_cash_balance, 
            c.password_hash AS client_password_hash, c.street_address AS client_street_address, 
@@ -91,8 +92,8 @@
 
   <!-- Insert new order (auto-generated ID) -->
   <insert id="save" parameterType="com.sleapy.project.models.entities.OrderEntity" useGeneratedKeys="true" keyProperty="id">
-    INSERT INTO Orders (Client_ID, Instrument_ID, Quantity, Time_purchased, Time_filled, Purchase_Price, Status)
-    VALUES (#{client.id}, #{instrument.id}, #{quantity}, #{timeOfPurchase}, #{timeFilled}, #{purchasePrice}, #{status.id})
+    INSERT INTO Orders (Client_ID, Instrument_ID, Quantity, Time_purchased, Time_filled, Purchase_Price, trade_type, Status)
+    VALUES (#{client.id}, #{instrument.id}, #{quantity}, #{timeOfPurchase}, #{timeFilled}, #{purchasePrice}, #{tradeType}, #{status.id})
   </insert>
 
   <!-- Update existing order -->
@@ -104,6 +105,7 @@
         Time_purchased = #{timeOfPurchase}, 
         Time_filled = #{timeFilled}, 
         Purchase_Price = #{purchasePrice}, 
+        trade_type = #{tradeType},
         Status = #{status.id}
     WHERE Order_ID = #{id}
   </update>

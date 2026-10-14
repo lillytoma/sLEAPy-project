@@ -87,6 +87,12 @@
     WHERE Client_ID = #{id}
   </update>
 
+  <update id="addCash">
+    UPDATE Clients
+    SET cash_balance = cash_balance + #{amount}
+    WHERE Client_ID = #{id}
+  </update>
+
   <!-- Delete client by ID -->
   <delete id="deleteById" parameterType="Long">
     DELETE FROM Clients WHERE Client_ID = #{id}

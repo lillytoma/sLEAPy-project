@@ -4,6 +4,7 @@ import com.sleapy.project.models.entities.ClientEntity;
 import org.apache.ibatis.annotations.Mapper;
 import java.util.List;
 import java.util.Optional;
+import java.math.BigDecimal;
 
 /**
  * MyBatis mapper interface for ClientEntity.
@@ -45,6 +46,9 @@ public interface ClientMapper {
      * @param client the client entity with updated values
      */
     void update(ClientEntity client);
+
+    void addCash(@org.apache.ibatis.annotations.Param("id") Long id,
+                 @org.apache.ibatis.annotations.Param("amount") BigDecimal amount);
     
     /**
      * Delete a client by ID.
