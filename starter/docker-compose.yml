@@ -31,6 +31,16 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
 
+  redis:
+    image: redis:7-alpine #image name
+    container_name: sleapy-redis #docker container name
+    restart: unless-stopped #wont stop unless it has been stopped manually
+    ports: 
+      - "6379:6379" #internal:external
+    volumes:
+      - redis_data:/data
+
 volumes:
   postgres_data:
   pgadmin_data:
+  redis_data:

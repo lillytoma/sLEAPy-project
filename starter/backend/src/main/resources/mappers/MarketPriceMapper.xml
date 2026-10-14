@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sleapy.project.mappers.MarketPriceMapper">
+
+    <!-- Result map for MarketPriceEntity -->
+    <resultMap id="MarketPriceResultMap" type="com.sleapy.project.models.entities.MarketPriceEntity">
+        <id column="symbol" property="symbol"/>
+        <result column="current_price" property="currentPrice"/>
+        <result column="high_price" property="highPrice"/>
+        <result column="low_price" property="lowPrice"/>
+        <result column="last_updated" property="lastUpdated"/>
+    </resultMap>
+
+    <!-- Find price by symbol -->
+    <select id="findBySymbol" parameterType="String" resultMap="MarketPriceResultMap">
+        SELECT symbol, current_price, high_price, low_price, last_updated
+        FROM market_prices
+        WHERE symbol = #{symbol}
+    </select>
+
+    <!-- Get all market prices -->
+    <select id="findAll" resultMap="MarketPriceResultMap">
+        SELECT symbol, current_price, high_price, low_price, last_updated
+        FROM market_prices
+        ORDER BY symbol ASC
+    </select>
+
+    <!-- Upsert (insert or update) market price -->
+    <insert id="saveOrUpdate" parameterType="com.sleapy.project.models.entities.MarketPriceEntity">
+        INSERT INTO market_prices (symbol, current_price, high_price, low_price, last_updated)
+        VALUES (#{symbol}, #{currentPrice}, #{highPrice}, #{lowPrice}, #{lastUpdated})
+        ON CONFLICT (symbol) DO UPDATE SET
+            current_price = #{currentPrice},
+            high_price = #{highPrice},
+            low_price = #{lowPrice},
+            last_updated = #{lastUpdated}
+    </insert>
+
+    <!-- Update market price -->
+    <update id="update" parameterType="com.sleapy.project.models.entities.MarketPriceEntity">
+        UPDATE market_prices
+        SET current_price = #{currentPrice},
+            high_price = #{highPrice},
+            low_price = #{lowPrice},
+            last_updated = #{lastUpdated}
+        WHERE symbol = #{symbol}
+    </update>
+
+    <!-- Delete market price by symbol -->
+    <delete id="deleteBySymbol" parameterType="String">
+        DELETE FROM market_prices WHERE symbol = #{symbol}
+    </delete>
+
+    <!-- Check if price exists -->
+    <select id="existsBySymbol" parameterType="String" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM market_prices WHERE symbol = #{symbol}
+    </select>
+
+</mapper>

@@ -32,10 +32,12 @@
             c.email as client_email,
             c.username as client_username,
             i.Symbol as instrument_symbol,
-            i.Symbol_Name as instrument_symbol_name
+            i.Symbol_Name as instrument_symbol_name,
+            mp.current_price as instrument_current_price
         FROM Holdings h
         LEFT JOIN Clients c ON h.Client_ID = c.Client_ID
         LEFT JOIN Instruments i ON h.Instrument_ID = i.Instrument_ID
+        LEFT JOIN market_prices mp ON mp.symbol = i.Symbol
         WHERE h.Holdings_ID = #{id}
     </select>
 
@@ -50,10 +52,12 @@
             c.email as client_email,
             c.username as client_username,
             i.Symbol as instrument_symbol,
-            i.Symbol_Name as instrument_symbol_name
+            i.Symbol_Name as instrument_symbol_name,
+            mp.current_price as instrument_current_price
         FROM Holdings h
         LEFT JOIN Clients c ON h.Client_ID = c.Client_ID
         LEFT JOIN Instruments i ON h.Instrument_ID = i.Instrument_ID
+        LEFT JOIN market_prices mp ON mp.symbol = i.Symbol
         WHERE h.Client_ID = #{clientId}
         ORDER BY i.Symbol ASC
     </select>
@@ -69,10 +73,12 @@
             c.email as client_email,
             c.username as client_username,
             i.Symbol as instrument_symbol,
-            i.Symbol_Name as instrument_symbol_name
+            i.Symbol_Name as instrument_symbol_name,
+            mp.current_price as instrument_current_price
         FROM Holdings h
         LEFT JOIN Clients c ON h.Client_ID = c.Client_ID
         LEFT JOIN Instruments i ON h.Instrument_ID = i.Instrument_ID
+        LEFT JOIN market_prices mp ON mp.symbol = i.Symbol
         WHERE h.Client_ID = #{clientId} AND h.Instrument_ID = #{instrumentId}
     </select>
 
@@ -87,10 +93,12 @@
             c.email as client_email,
             c.username as client_username,
             i.Symbol as instrument_symbol,
-            i.Symbol_Name as instrument_symbol_name
+            i.Symbol_Name as instrument_symbol_name,
+            mp.current_price as instrument_current_price
         FROM Holdings h
         LEFT JOIN Clients c ON h.Client_ID = c.Client_ID
         LEFT JOIN Instruments i ON h.Instrument_ID = i.Instrument_ID
+        LEFT JOIN market_prices mp ON mp.symbol = i.Symbol
         ORDER BY c.username ASC, i.Symbol ASC
     </select>
 

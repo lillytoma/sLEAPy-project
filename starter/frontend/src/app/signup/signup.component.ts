@@ -145,7 +145,6 @@ export class SignupComponent {
       return;
     }
     this.submitted.set(true);
-    setTimeout(() => this.router.navigate(['/login']), 2000);
     // Prepare data matching backend DTO field names
     const signupData = {
       firstName: this.form.get('firstName')?.value,
