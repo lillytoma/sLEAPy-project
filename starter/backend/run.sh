@@ -16,4 +16,5 @@ echo "Press Ctrl+C to stop the server cleanly"
 echo ""
 
 # Start the application
-SERVER_PORT=8081 ./mvnw spring-boot:run
+exec java -jar target/project-0.0.1-SNAPSHOT.jar
+
