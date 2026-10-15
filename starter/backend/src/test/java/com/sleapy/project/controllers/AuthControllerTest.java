@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
  
 @WebMvcTest(AuthController.class) // Test only the web layer (controller)
-class TestAuthController {
+class AuthControllerTest {
  
     @Autowired
     private MockMvc mockMvc; // Simulates HTTP requests

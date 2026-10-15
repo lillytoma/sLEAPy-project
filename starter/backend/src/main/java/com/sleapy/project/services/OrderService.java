@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 
 
 import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor 
@@ -23,10 +23,9 @@ public class OrderService {
 
 
     public List<OrderDTO> getTransactionsPerClient(Long clientId){
-        List<OrderEntity> entities = orderMapper.findByClient_IdOrderByTimeOfPurchaseAsc(clientId);
-        System.out.println(entities.size());
-        if(entities.isEmpty()){
-            throw new NoSuchElementException("Could not find transactions for client id " + clientId);
+        List<OrderEntity> entities = orderMapper.findTransactionsByClientId(clientId);
+        if (entities == null) {
+            return Collections.emptyList();
         }
 
         return entities.stream().map(OrderDTO::new).toList();

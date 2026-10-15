@@ -4,6 +4,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 
-public class ClientDTOTests {
+public class ClientDTOTest {
     
 }
