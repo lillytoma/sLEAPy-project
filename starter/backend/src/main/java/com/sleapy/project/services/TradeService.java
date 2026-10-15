@@ -1,11 +1,7 @@
 package com.sleapy.project.services;
 
-import com.sleapy.project.exceptions.InsufficientCashException;
-import com.sleapy.project.exceptions.InsufficientSharesException;
-import com.sleapy.project.mappers.ClientMapper;
 import com.sleapy.project.mappers.HoldingMapper;
-import com.sleapy.project.mappers.InstrumentMapper;
-import com.sleapy.project.mappers.MarketPriceMapper;
+import com.sleapy.project.mappers.ClientMapper;
 import com.sleapy.project.mappers.OrderMapper;
 import com.sleapy.project.mappers.OrderStatusMapper;
 import com.sleapy.project.models.dtos.BuyOrderRequestDTO;
@@ -26,7 +22,6 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
@@ -34,14 +29,11 @@ import java.util.Optional;
 @CrossOrigin(origins = "http://localhost:4200")
 public class TradeService {
 
+    private final OrderBusinessRuleValidationService orderValidationService;
     private final ClientMapper clientMapper;
-    private final InstrumentMapper instrumentMapper;
-    private final MarketPriceMapper marketPriceMapper;
     private final HoldingMapper holdingMapper;
     private final OrderMapper orderMapper;
     private final OrderStatusMapper orderStatusMapper;
-    @Autowired 
-    private final PriceService priceService;
 
     /**
      * Execute a BUY order for the client.
@@ -60,44 +52,14 @@ public class TradeService {
      */
     @Transactional
     public TradeResponseDTO buyStock(BuyOrderRequestDTO request) {
-        // Validate request
-        if (request.getQuantity() == null || request.getQuantity().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Quantity must be positive");
-        }
-
-        // Fetch client and validate
-        ClientEntity client = clientMapper.findById(request.getClientId())
-                .orElseThrow(() -> new NoSuchElementException("Client not found with ID: " + request.getClientId()));
-
-        if (client.getClientStatus() == null
-            || client.getClientStatus().getName() == null
-            || !"active".equalsIgnoreCase(client.getClientStatus().getName())) {
-            throw new IllegalArgumentException("Client is not active and cannot trade");
-        }
-
-        // Fetch instrument and validate
-        InstrumentEntity instrument = instrumentMapper.findById(request.getInstrumentId())
-                .orElseThrow(() -> new NoSuchElementException("Instrument not found with ID: " + request.getInstrumentId()));
-
-        BigDecimal currentPrice = resolveCurrentPrice(instrument);
-
-        // Calculate total cost of purchase
-        BigDecimal totalCost = currentPrice.multiply(request.getQuantity());
-
-        // Validate client has sufficient cash
+        OrderBusinessRuleValidationService.BuyValidation validation =
+                orderValidationService.validateBuy(request.getClientId(), request.getInstrumentId(), request.getQuantity());
+        ClientEntity client = validation.client();
+        InstrumentEntity instrument = validation.instrument();
+        BigDecimal quantity = validation.quantity();
+        BigDecimal currentPrice = validation.price();
+        BigDecimal totalCost = validation.total();
         BigDecimal cashBalance = BigDecimal.valueOf(client.getCashBalance());
-        if (cashBalance.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InsufficientCashException(
-                "Insufficient cash balance. Required: $" + totalCost +
-                ", Available: $" + cashBalance
-            );
-        }
-        if (cashBalance.compareTo(totalCost) < 0) {
-            throw new InsufficientCashException(
-                    "Insufficient cash balance. Required: $" + totalCost +
-                    ", Available: $" + cashBalance
-            );
-        }
 
         // Execute transaction in database
         // 1. Update client cash balance (debit)
@@ -113,7 +75,7 @@ public class TradeService {
         if (existingHolding.isPresent()) {
             // Update existing holding - add quantity
             HoldingEntity holding = existingHolding.get();
-            BigDecimal newQuantity = holding.getQuantityShares().add(request.getQuantity());
+            BigDecimal newQuantity = holding.getQuantityShares().add(quantity);
             holding.setQuantityShares(newQuantity);
             holdingMapper.update(holding);
         } else {
@@ -121,7 +83,7 @@ public class TradeService {
             HoldingEntity newHolding = new HoldingEntity();
             newHolding.setClient(client);
             newHolding.setInstrument(instrument);
-            newHolding.setQuantityShares(request.getQuantity());
+            newHolding.setQuantityShares(quantity);
             newHolding.setPurchasePrice(currentPrice);
             holdingMapper.save(newHolding);
         }
@@ -130,7 +92,7 @@ public class TradeService {
         OrderEntity order = new OrderEntity();
         order.setClient(client);
         order.setInstrument(instrument);
-        order.setQuantity(request.getQuantity());
+        order.setQuantity(quantity);
         order.setTimeOfPurchase(LocalDate.now());
         order.setPurchasePrice(currentPrice);
         order.setTradeType("BUY");
@@ -148,11 +110,11 @@ public class TradeService {
                 request.getClientId(),
                 instrument.getSymbol(),
                 "BUY",
-                request.getQuantity(),
+                quantity,
                 currentPrice,
                 totalCost,
                 LocalDate.now(),
-                "Successfully purchased " + request.getQuantity() + " shares of " + instrument.getSymbol() +
+                "Successfully purchased " + quantity + " shares of " + instrument.getSymbol() +
                         " at $" + currentPrice + " per share"
         );
     }
@@ -175,50 +137,14 @@ public class TradeService {
      */
     @Transactional
     public TradeResponseDTO sellStock(SellOrderRequestDTO request) {
-        // Validate request
-        if (request.getQuantity() == null || request.getQuantity().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Quantity must be positive");
-        }
-
-        // Fetch client and validate
-        ClientEntity client = clientMapper.findById(request.getClientId())
-                .orElseThrow(() -> new NoSuchElementException("Client not found with ID: " + request.getClientId()));
-
-        if (client.getClientStatus() == null
-            || client.getClientStatus().getName() == null
-            || !"active".equalsIgnoreCase(client.getClientStatus().getName())) {
-            throw new IllegalArgumentException("Client is not active and cannot trade");
-        }
-
-        // Fetch instrument and validate
-        InstrumentEntity instrument = instrumentMapper.findById(request.getInstrumentId())
-                .orElseThrow(() -> new NoSuchElementException("Instrument not found with ID: " + request.getInstrumentId()));
-
-        // Check if client owns this instrument
-        HoldingEntity holding = holdingMapper.findByClientIdAndInstrumentId(
-                request.getClientId(),
-                request.getInstrumentId()
-        ).orElseThrow(() -> new NoSuchElementException(
-                "Client does not own " + instrument.getSymbol()
-        ));
-
-        // Validate client has sufficient shares
-        if (holding.getQuantityShares() == null || holding.getQuantityShares().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InsufficientSharesException(
-                "Insufficient shares. Owned: 0, Attempting to sell: " + request.getQuantity()
-            );
-        }
-        if (holding.getQuantityShares().compareTo(request.getQuantity()) < 0) {
-            throw new InsufficientSharesException(
-                    "Insufficient shares. Owned: " + holding.getQuantityShares() +
-                    ", Attempting to sell: " + request.getQuantity()
-            );
-        }
-
-        BigDecimal currentPrice = resolveCurrentPrice(instrument);
-
-        // Calculate proceeds from sale
-        BigDecimal totalProceeds = currentPrice.multiply(request.getQuantity());
+        OrderBusinessRuleValidationService.SellValidation validation =
+            orderValidationService.validateSell(request.getClientId(), request.getInstrumentId(), request.getQuantity());
+        ClientEntity client = validation.client();
+        InstrumentEntity instrument = validation.instrument();
+        HoldingEntity holding = validation.holding();
+        BigDecimal quantity = validation.quantity();
+        BigDecimal currentPrice = validation.price();
+        BigDecimal totalProceeds = validation.total();
 
         // Execute transaction in database
         // 1. Update client cash balance (credit)
@@ -227,7 +153,7 @@ public class TradeService {
         clientMapper.update(client);
 
         // 2. Update holding - reduce quantity or delete if zero
-        BigDecimal newQuantity = holding.getQuantityShares().subtract(request.getQuantity());
+        BigDecimal newQuantity = holding.getQuantityShares().subtract(quantity);
         if (newQuantity.compareTo(BigDecimal.ZERO) <= 0) {
             // Delete holding if no shares remain
             holdingMapper.deleteById(holding.getId());
@@ -241,7 +167,7 @@ public class TradeService {
         OrderEntity order = new OrderEntity();
         order.setClient(client);
         order.setInstrument(instrument);
-        order.setQuantity(request.getQuantity());
+        order.setQuantity(quantity);
         order.setTimeOfPurchase(LocalDate.now());
         order.setPurchasePrice(currentPrice);
         order.setTradeType("SELL");
@@ -259,38 +185,13 @@ public class TradeService {
                 request.getClientId(),
                 instrument.getSymbol(),
                 "SELL",
-                request.getQuantity(),
+                quantity,
                 currentPrice,
                 totalProceeds,
                 LocalDate.now(),
-                "Successfully sold " + request.getQuantity() + " shares of " + instrument.getSymbol() +
+                "Successfully sold " + quantity + " shares of " + instrument.getSymbol() +
                         " at $" + currentPrice + " per share"
         );
     }
 
-    private BigDecimal resolveCurrentPrice(InstrumentEntity instrument) {
-        BigDecimal currentPrice;
-        try {
-            currentPrice = priceService.getCurrentPrice(instrument.getSymbol());
-        } catch (UnsupportedOperationException ex) {
-            currentPrice = null;
-        }
-
-        if ((currentPrice == null || currentPrice.compareTo(BigDecimal.ZERO) <= 0)
-                ) {
-            currentPrice = marketPriceMapper.findBySymbol(instrument.getSymbol())
-                    .map(price -> price.getCurrentPrice())
-                    .orElse(null);
-        }
-
-        if (currentPrice == null || currentPrice.compareTo(BigDecimal.ZERO) <= 0) {
-            if (instrument.getCurrentPrice() != null
-                    && instrument.getCurrentPrice().compareTo(BigDecimal.ZERO) > 0) {
-                return instrument.getCurrentPrice();
-            }
-            throw new IllegalArgumentException("Invalid price for instrument: " + instrument.getSymbol());
-        }
-
-        return currentPrice;
-    }
 }

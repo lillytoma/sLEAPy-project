@@ -61,6 +61,16 @@ class OrderBusinessRuleValidationServiceTest {
     }
 
     @Test
+    void roundsFractionalQuantityToThreeDecimalPlaces() {
+        when(priceService.getCurrentPrice("ABC")).thenThrow(new UnsupportedOperationException());
+
+        OrderBusinessRuleValidationService.BuyValidation validation =
+                validationService.validateBuy(1L, 2L, BigDecimal.valueOf(0.1236));
+
+        assertEquals(BigDecimal.valueOf(0.124), validation.quantity());
+    }
+
+    @Test
     void rejectsSellWhenInstrumentIsNotOwned() {
         when(holdingMapper.findByClientIdAndInstrumentId(1L, 2L)).thenReturn(Optional.empty());
 

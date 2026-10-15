@@ -9,6 +9,7 @@ Endpoints:
     GET /quote/{symbol}        -> single quote, 404 if the symbol has no price
     GET /quotes?symbols=A,B,C  -> {"A": {...}, "B": {...}, ...} (symbols with no
                                    price are omitted rather than erroring the batch)
+    GET /search?query=apple     -> matching Yahoo Finance symbols
 """
 
 import logging
@@ -78,3 +79,29 @@ def get_quotes(symbols: str):
             continue
 
     return result
+
+
+@app.get("/search")
+def search(query: str):
+    query = query.strip()
+    if not query:
+        raise HTTPException(status_code=400, detail="query parameter is required")
+
+    try:
+        search = yf.Search(query, max_results=20, news_count=0)
+        results = []
+        for quote in search.quotes or []:
+            symbol = quote.get("symbol")
+            if not symbol:
+                continue
+            results.append({
+                "symbol": symbol,
+                "symbolName": quote.get("longname") or quote.get("shortname") or symbol,
+                "exchange": quote.get("exchange"),
+                "quoteType": quote.get("quoteType"),
+                "currentPrice": quote.get("regularMarketPrice"),
+            })
+        return results
+    except Exception as e:
+        logger.error(f"Failed to search Yahoo Finance for {query}: {e}")
+        raise HTTPException(status_code=502, detail="Yahoo Finance search failed") from e

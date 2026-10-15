@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { debounceTime, distinctUntilChanged, of, Subscription, Subject, switchMap } from 'rxjs';
+import { debounceTime, distinctUntilChanged, finalize, of, Subscription, Subject, switchMap } from 'rxjs';
 import { MarketStock } from '../../data/mock-data';
 import { PortfolioService } from '../../services/portfolio.service';
 import { MarketDataService } from '../../services/market-data.service';
@@ -17,6 +17,7 @@ export class MarketsComponent implements OnInit, OnDestroy {
   showSuggestions = signal(false);
   showFavoritesOnly = signal(false);
   pendingRemoval = signal<Set<string>>(new Set());
+  importingSymbols = signal<Set<string>>(new Set());
   orderModal = signal<{ stock: MarketStock; mode: 'buy' | 'sell' } | null>(null);
 
   // Live quotes from the backend's WebSocket broadcast (/topic/prices), keyed by symbol.
@@ -67,6 +68,7 @@ export class MarketsComponent implements OnInit, OnDestroy {
       ? Number(live.currentPrice)
       : Number(result.currentPrice) || 0;
     return {
+      instrumentId: result.instrumentId,
       symbol: result.symbol,
       name: result.symbolName,
       chg: 0,
@@ -96,7 +98,7 @@ export class MarketsComponent implements OnInit, OnDestroy {
     const q = this.searchQuery().toLowerCase();
     if (!q || q.length < 1) return [];
     const results = this.searchResults();
-    if (results !== null) return results.slice(0, 8);
+    if (results !== null) return results.slice(0, 8).map((stock) => this.withLivePrice(stock));
     return this.allStocks().filter(
       (s) => s.symbol.toLowerCase().startsWith(q) || s.name.toLowerCase().startsWith(q)
     ).slice(0, 8).map((s) => this.withLivePrice(s));
@@ -106,7 +108,7 @@ export class MarketsComponent implements OnInit, OnDestroy {
     const backendResults = this.searchResults();
     let stocks = backendResults === null
       ? this.allStocks().map((s) => this.withLivePrice(s))
-      : backendResults;
+      : backendResults.map((s) => this.withLivePrice(s));
     const q = this.searchQuery().toLowerCase();
 
     if (q && backendResults === null) {
@@ -169,7 +171,39 @@ export class MarketsComponent implements OnInit, OnDestroy {
   }
 
   openBuy(stock: MarketStock): void {
-    this.orderModal.set({ stock, mode: 'buy' });
+    if (this.importingSymbols().has(stock.symbol)) return;
+
+    if (stock.instrumentId) {
+      this.orderModal.set({ stock, mode: 'buy' });
+      return;
+    }
+
+    const importing = new Set(this.importingSymbols());
+    importing.add(stock.symbol);
+    this.importingSymbols.set(importing);
+
+    this.marketDataService.importInstrument(stock).pipe(
+      finalize(() => {
+        const updated = new Set(this.importingSymbols());
+        updated.delete(stock.symbol);
+        this.importingSymbols.set(updated);
+      })
+    ).subscribe({
+      next: (imported) => {
+        const importedStock = this.toMarketStock(imported);
+        this.orderModal.set({ stock: importedStock, mode: 'buy' });
+        this.searchInstrumentsAgain();
+      },
+      error: (error) => console.error('Unable to import instrument:', error)
+    });
+  }
+
+  private searchInstrumentsAgain(): void {
+    const query = this.searchQuery().trim();
+    if (!query) return;
+    this.marketDataService.searchInstruments(query).subscribe((results) => {
+      this.searchResults.set(results.map((result) => this.toMarketStock(result)));
+    });
   }
 
   openSell(stock: MarketStock): void {

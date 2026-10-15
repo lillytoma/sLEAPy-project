@@ -45,10 +45,10 @@ export class OrderModalComponent {
   // Buy computed properties
   calculatedBuyShares = computed(() => {
     if (this.inputMode() === 'shares') {
-      return this.shares() || 0;
+      return Number((this.shares() || 0).toFixed(3));
     } else {
       return this.moneyAmount() > 0 && this.effectivePrice() > 0
-        ? this.moneyAmount() / this.effectivePrice()
+        ? Number((this.moneyAmount() / this.effectivePrice()).toFixed(3))
         : 0;
     }
   });
@@ -60,12 +60,12 @@ export class OrderModalComponent {
   // Sell computed properties
   calculatedSellShares = computed(() => {
     if (this.inputMode() === 'shares') {
-      return Math.min(this.sharesToSell() || 0, this.sharesOwned);
+      return Number(Math.min(this.sharesToSell() || 0, this.sharesOwned).toFixed(3));
     } else {
       const shares = this.moneyAmountToReceive() > 0 && this.effectivePrice() > 0
         ? this.moneyAmountToReceive() / this.effectivePrice()
         : 0;
-      return shares;
+      return Number(shares.toFixed(3));
     }
   });
 
@@ -93,10 +93,12 @@ export class OrderModalComponent {
   executeBuy(): void {
     const quantity = this.calculatedBuyShares();
     const total = quantity * this.effectivePrice();
-    if (quantity <= 0 || total > this.availableCash) return;
+    if (quantity < 0.001 || total > this.availableCash) return;
 
     this.loading.set(true);
     this.error.set(null);
+    this.orderStatus.set('PENDING');
+    this.orderMessage.set('Order is being validated...');
 
     const orderRequest: OrderRequest = {
       symbol: this.stock.symbol,
@@ -125,7 +127,7 @@ export class OrderModalComponent {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(err.error?.message || 'Failed to place order. Please try again.');
+        this.error.set(err.error?.message || err.error?.error || 'Failed to place order. Please try again.');
         this.orderStatus.set('REJECTED');
       }
     });
@@ -134,10 +136,12 @@ export class OrderModalComponent {
   executeSell(): void {
     const quantity = this.calculatedSellShares();
     const total = quantity * this.effectivePrice();
-    if (quantity <= 0 || quantity > this.sharesOwned) return;
+    if (quantity < 0.001 || quantity > this.sharesOwned) return;
 
     this.loading.set(true);
     this.error.set(null);
+    this.orderStatus.set('PENDING');
+    this.orderMessage.set('Order is being validated...');
 
     const orderRequest: OrderRequest = {
       symbol: this.stock.symbol,
@@ -166,7 +170,7 @@ export class OrderModalComponent {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(err.error?.message || 'Failed to place order. Please try again.');
+        this.error.set(err.error?.message || err.error?.error || 'Failed to place order. Please try again.');
         this.orderStatus.set('REJECTED');
       }
     });
