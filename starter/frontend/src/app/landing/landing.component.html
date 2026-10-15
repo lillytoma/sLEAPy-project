@@ -1,0 +1,22 @@
+<app-marketing-shell>
+  <section class="max-w-3xl mx-auto text-center flex flex-col items-center gap-7">
+    <app-frog-mascot [size]="64" />
+
+    <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold" style="background-color:var(--muted);color:var(--primary)">
+      <span class="status-dot"></span> Markets live
+    </span>
+
+    <h1 class="font-serif font-bold" style="font-size:clamp(40px, 6vw, 68px); line-height:1.08; letter-spacing:-0.01em;">
+      Welcome to <span style="color:var(--primary)">sLEAPy</span> Stocks
+    </h1>
+
+    <p class="italic" style="color:var(--muted-foreground); font-family:'Nunito',sans-serif; font-size:19px;">
+      "trading made so easy you can do it in your sLEAP"
+    </p>
+
+    <div class="flex items-center justify-center gap-4 pt-2 flex-wrap">
+      <a routerLink="/signup" class="button button-primary" style="padding:14px 28px;font-size:14px;">Start trading free</a>
+      <a routerLink="/login" class="button" style="background-color:var(--card);color:var(--foreground);">Sign in to account</a>
+    </div>
+  </section>
+</app-marketing-shell>
