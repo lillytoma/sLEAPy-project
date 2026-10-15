@@ -40,6 +40,7 @@ public class TradeService {
     private final HoldingMapper holdingMapper;
     private final OrderMapper orderMapper;
     private final OrderStatusMapper orderStatusMapper;
+    private final OrderStatusNotificationService orderStatusNotificationService;
     @Autowired 
     private final PriceService priceService;
 
@@ -79,6 +80,8 @@ public class TradeService {
         InstrumentEntity instrument = instrumentMapper.findById(request.getInstrumentId())
                 .orElseThrow(() -> new NoSuchElementException("Instrument not found with ID: " + request.getInstrumentId()));
 
+        orderStatusNotificationService.publish(null, request.getClientId(), instrument.getSymbol(), "BUY", "PENDING", "Buy order received");
+
         BigDecimal currentPrice = resolveCurrentPrice(instrument);
 
         // Calculate total cost of purchase
@@ -98,6 +101,8 @@ public class TradeService {
                     ", Available: $" + cashBalance
             );
         }
+
+        orderStatusNotificationService.publish(null, request.getClientId(), instrument.getSymbol(), "BUY", "ACCEPTED", "Buy order accepted");
 
         // Execute transaction in database
         // 1. Update client cash balance (debit)
@@ -142,6 +147,8 @@ public class TradeService {
         
         orderMapper.save(order);
 
+        orderStatusNotificationService.publish(order.getId(), request.getClientId(), instrument.getSymbol(), "BUY", "FILLED", "Buy order filled");
+
         // Build response
         return new TradeResponseDTO(
                 order.getId(),
@@ -152,6 +159,7 @@ public class TradeService {
                 currentPrice,
                 totalCost,
                 LocalDate.now(),
+                "FILLED",
                 "Successfully purchased " + request.getQuantity() + " shares of " + instrument.getSymbol() +
                         " at $" + currentPrice + " per share"
         );
@@ -194,6 +202,8 @@ public class TradeService {
         InstrumentEntity instrument = instrumentMapper.findById(request.getInstrumentId())
                 .orElseThrow(() -> new NoSuchElementException("Instrument not found with ID: " + request.getInstrumentId()));
 
+        orderStatusNotificationService.publish(null, request.getClientId(), instrument.getSymbol(), "SELL", "PENDING", "Sell order received");
+
         // Check if client owns this instrument
         HoldingEntity holding = holdingMapper.findByClientIdAndInstrumentId(
                 request.getClientId(),
@@ -214,6 +224,8 @@ public class TradeService {
                     ", Attempting to sell: " + request.getQuantity()
             );
         }
+
+        orderStatusNotificationService.publish(null, request.getClientId(), instrument.getSymbol(), "SELL", "ACCEPTED", "Sell order accepted");
 
         BigDecimal currentPrice = resolveCurrentPrice(instrument);
 
@@ -253,6 +265,8 @@ public class TradeService {
         
         orderMapper.save(order);
 
+        orderStatusNotificationService.publish(order.getId(), request.getClientId(), instrument.getSymbol(), "SELL", "FILLED", "Sell order filled");
+
         // Build response
         return new TradeResponseDTO(
                 order.getId(),
@@ -263,6 +277,7 @@ public class TradeService {
                 currentPrice,
                 totalProceeds,
                 LocalDate.now(),
+                "FILLED",
                 "Successfully sold " + request.getQuantity() + " shares of " + instrument.getSymbol() +
                         " at $" + currentPrice + " per share"
         );
