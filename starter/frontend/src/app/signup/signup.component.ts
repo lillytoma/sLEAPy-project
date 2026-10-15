@@ -5,6 +5,7 @@ import { ThemeService } from '../services/theme.service';
 
 import { HttpClientModule } from '@angular/common/http';
 import {SignupService} from '../services/signup.service';
+import { FrogMascotComponent } from '../shared/frog-mascot.component';
 // Component for handling user signup, including personal information, email, and password input with validation.
 function passwordStrength(password: string): number {
   if (!password) return 0;
@@ -25,7 +26,7 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
 @Component({
   selector: 'app-signup',
   standalone: true,
-  imports: [RouterLink, ReactiveFormsModule],
+  imports: [RouterLink, ReactiveFormsModule, FrogMascotComponent],
   templateUrl: './signup.component.html'
 })
 export class SignupComponent {

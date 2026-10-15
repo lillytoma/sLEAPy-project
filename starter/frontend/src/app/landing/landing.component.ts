@@ -1,14 +1,16 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { FrogMascotComponent } from '../shared/frog-mascot.component';
 
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, FrogMascotComponent],
   template: `
     <main class="min-h-screen flex items-center justify-center px-6" style="background-color:var(--background);color:var(--foreground)">
       <section class="max-w-2xl text-center space-y-6">
-        <h1 class="text-5xl font-bold" style="color:var(--primary)">sLEAPy Stocks</h1>
+        <app-frog-mascot [size]="88" />
+        <h1 class="font-serif text-5xl font-bold" style="color:var(--foreground)">sLEAPy</h1>
         <p class="text-lg" style="color:var(--muted-foreground)">
           Trade, monitor, and manage your portfolio in one place.
         </p>

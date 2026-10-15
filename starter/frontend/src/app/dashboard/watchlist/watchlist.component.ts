@@ -4,11 +4,12 @@ import { PortfolioService } from '../../services/portfolio.service';
 import { MarketDataService } from '../../services/market-data.service';
 import { MarketStock, WatchlistStock } from '../../data/mock-data';
 import { OrderModalComponent } from '../shared/order-modal.component';
+import { FrogMascotComponent } from '../../shared/frog-mascot.component';
 
 @Component({
   selector: 'app-watchlist',
   standalone: true,
-  imports: [OrderModalComponent],
+  imports: [OrderModalComponent, FrogMascotComponent],
   templateUrl: './watchlist.component.html'
 })
 export class WatchlistComponent implements OnInit, OnDestroy {

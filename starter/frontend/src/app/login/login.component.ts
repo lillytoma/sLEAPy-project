@@ -3,12 +3,13 @@ import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../services/auth.service';
 import { ThemeService } from '../services/theme.service';
+import { FrogMascotComponent } from '../shared/frog-mascot.component';
 // Component for handling user login, including email and password input and dark mode toggle.
 @Component({
   selector: 'app-login',
   standalone: true,
   templateUrl: './login.component.html',
-  imports: [RouterLink, FormsModule]
+  imports: [RouterLink, FormsModule, FrogMascotComponent]
 })
 export class LoginComponent {
   loginError = signal(false);

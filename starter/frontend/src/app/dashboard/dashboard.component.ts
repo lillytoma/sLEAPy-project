@@ -1,17 +1,20 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { PortfolioService } from '../services/portfolio.service';
+import { FrogMascotComponent } from '../shared/frog-mascot.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, FrogMascotComponent],
   template: `
     <div class="dashboard-shell">
       <header class="dashboard-header">
         <div class="dashboard-header-inner">
           <a routerLink="home" class="dashboard-brand" aria-label="sLEAPy dashboard home">
-            <span class="brand-mark">S</span>
+            <span class="brand-mark">
+              <app-frog-mascot [size]="24" color="var(--primary-foreground)" ink="var(--primary-foreground)" [detailed]="false" [sleepy]="false" />
+            </span>
             <span>sLEAPy</span>
           </a>
           <div class="dashboard-actions">

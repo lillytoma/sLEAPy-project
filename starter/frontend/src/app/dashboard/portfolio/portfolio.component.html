@@ -37,7 +37,7 @@
                   transform="rotate(-90 80 80)"/>
               }
               <circle cx="80" cy="80" r="46" fill="var(--card)"/>
-              <text x="80" y="76" text-anchor="middle" font-size="11" fill="var(--muted-foreground)" font-family="DM Sans,sans-serif">Total</text>
+              <text x="80" y="76" text-anchor="middle" font-size="11" fill="var(--muted-foreground)" font-family="Nunito,sans-serif">Total</text>
               <text x="80" y="92" text-anchor="middle" font-size="14" font-weight="600" fill="var(--foreground)" font-family="DM Mono,monospace">{{ sectorCount() }}</text>
             </svg>
             <div class="space-y-2 flex-1">
@@ -75,7 +75,7 @@
                 font-family="DM Mono,monospace">
                 {{ bar.pct >= 0 ? '+' : '' }}{{ bar.pct.toFixed(1) }}%
               </text>
-              <text [attr.x]="i * 46 + 27" y="190" text-anchor="middle" font-size="9" fill="var(--muted-foreground)" font-family="DM Sans,sans-serif">{{ bar.symbol }}</text>
+              <text [attr.x]="i * 46 + 27" y="190" text-anchor="middle" font-size="9" fill="var(--muted-foreground)" font-family="Nunito,sans-serif">{{ bar.symbol }}</text>
             }
           </svg>
         </div>

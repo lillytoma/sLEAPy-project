@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { FrogMascotComponent } from '../../shared/frog-mascot.component';
 
 interface OrderApiResponse {
   timeOfPurchase: string;
@@ -24,8 +25,9 @@ interface Transaction {
 @Component({
   selector: 'app-history',
   standalone: true,
+  imports: [FrogMascotComponent],
   templateUrl: './history.component.html'
-    
+
 })
 export class HistoryComponent implements OnInit {
   transactions: Transaction[] = [];
