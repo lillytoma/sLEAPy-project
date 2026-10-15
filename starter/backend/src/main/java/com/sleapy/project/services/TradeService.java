@@ -137,6 +137,7 @@ public class TradeService {
         order.setInstrument(instrument);
         order.setQuantity(request.getQuantity());
         order.setTimeOfPurchase(LocalDate.now());
+        order.setTimeFilled(LocalDate.now());
         order.setPurchasePrice(currentPrice);
         order.setTradeType("BUY");
         
@@ -255,6 +256,7 @@ public class TradeService {
         order.setInstrument(instrument);
         order.setQuantity(request.getQuantity());
         order.setTimeOfPurchase(LocalDate.now());
+        order.setTimeFilled(LocalDate.now());
         order.setPurchasePrice(currentPrice);
         order.setTradeType("SELL");
         
