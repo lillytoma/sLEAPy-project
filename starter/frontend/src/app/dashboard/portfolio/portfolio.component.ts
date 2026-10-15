@@ -28,10 +28,10 @@ export class PortfolioComponent implements OnInit {
     const pnl = totalValue - totalCost;
     const returnPct = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
     return [
-      { label: 'Net Worth', value: '$' + this.portfolioService.netWorth().toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: 'var(--foreground)' },
-      { label: 'Total Cost', value: '$' + totalCost.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: 'var(--foreground)' },
-      { label: 'Unrealised P&L', value: (pnl >= 0 ? '+$' : '-$') + Math.abs(pnl).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: pnl >= 0 ? 'var(--success)' : 'var(--error)' },
-      { label: 'Overall Return', value: (returnPct >= 0 ? '+' : '') + returnPct.toFixed(1) + '%', color: returnPct >= 0 ? 'var(--success)' : 'var(--error)' },
+      { label: 'Total Value', value: '$' + this.portfolioService.netWorth().toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: 'var(--foreground)' },
+      { label: 'Total Cost', value: '$' + totalCost.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: 'var(--foreground)' },
+      { label: 'Overall Return', value: (returnPct >= 0 ? '+' : '') + returnPct.toFixed(2) + '%', color: returnPct >= 0 ? 'var(--success)' : 'var(--error)' },
+      { label: 'Cash Balance', value: '$' + this.portfolioService.availableCash().toFixed(2), color: 'var(--foreground)' },
     ];
   });
 
@@ -50,7 +50,7 @@ export class PortfolioComponent implements OnInit {
       const dashLen = (pct / 100) * circumference;
       const dashOffset = -cumulative * circumference / 100;
       cumulative += pct;
-      return { label, pct, color: colors[i % colors.length], dash: `${dashLen} ${circumference - dashLen}`, offset: dashOffset };
+      return { label, pct, value, color: colors[i % colors.length], dash: `${dashLen} ${circumference - dashLen}`, offset: dashOffset };
     });
   });
 
@@ -59,14 +59,24 @@ export class PortfolioComponent implements OnInit {
     return sectors.size;
   });
 
-  barData = computed(() => {
+  // Bars use the exact same per-holding return % as the holdings table below;
+  // gridlines are just evenly-spaced axis labels derived from that same max, for readability.
+  barChart = computed(() => {
     const h = this.portfolioService.holdings();
-    const maxPct = Math.max(...h.map((x) => Math.abs(((x.current - x.avgCost) / x.avgCost) * 100)), 1);
     const maxH = 80;
-    return h.map((x) => {
+    const maxPct = Math.max(...h.map((x) => Math.abs(((x.current - x.avgCost) / x.avgCost) * 100)), 1);
+    const step = Math.max(Math.ceil(maxPct / 3 / 5) * 5, 5);
+
+    const bars = h.map((x) => {
       const pct = ((x.current - x.avgCost) / x.avgCost) * 100;
       return { symbol: x.symbol, pct, height: Math.abs(pct) / maxPct * maxH };
     });
+    const gridlines = [step * 3, step * 2, step, 0, -step].map((value) => ({
+      value,
+      y: 100 - (value / maxPct) * maxH
+    }));
+
+    return { bars, gridlines, maxH };
   });
 
   openSell(symbol: string, shares: number, price: number): void {
