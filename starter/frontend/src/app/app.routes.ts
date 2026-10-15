@@ -30,7 +30,7 @@ export const routes: Routes = [
   {
     path: 'dashboard',
     component: DashboardComponent,
-  //  canActivate: [authGuard],
+    canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'home', pathMatch: 'full' },
         { path: 'history', component: HistoryComponent },

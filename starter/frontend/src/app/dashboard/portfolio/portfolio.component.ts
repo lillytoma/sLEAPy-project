@@ -28,7 +28,7 @@ export class PortfolioComponent implements OnInit {
     const pnl = totalValue - totalCost;
     const returnPct = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
     return [
-      { label: 'Total Value', value: '$' + totalValue.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: 'var(--foreground)' },
+      { label: 'Net Worth', value: '$' + this.portfolioService.netWorth().toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: 'var(--foreground)' },
       { label: 'Total Cost', value: '$' + totalCost.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: 'var(--foreground)' },
       { label: 'Unrealised P&L', value: (pnl >= 0 ? '+$' : '-$') + Math.abs(pnl).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: pnl >= 0 ? 'var(--success)' : 'var(--error)' },
       { label: 'Overall Return', value: (returnPct >= 0 ? '+' : '') + returnPct.toFixed(1) + '%', color: returnPct >= 0 ? 'var(--success)' : 'var(--error)' },

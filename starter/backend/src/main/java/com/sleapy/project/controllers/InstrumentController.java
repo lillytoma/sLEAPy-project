@@ -1,6 +1,7 @@
 package com.sleapy.project.controllers;
 
 import com.sleapy.project.models.dtos.InstrumentWithPriceDTO;
+import com.sleapy.project.models.dtos.YahooSearchResultDTO;
 import com.sleapy.project.services.InstrumentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -91,6 +92,16 @@ public class InstrumentController {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Error searching instruments: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/import")
+    public ResponseEntity<?> importInstrument(@RequestBody YahooSearchResultDTO request) {
+        try {
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(instrumentService.importFromYahoo(request));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
 }

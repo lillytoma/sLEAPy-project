@@ -1,10 +1,12 @@
 package com.sleapy.project.services;
 
 import com.sleapy.project.models.dtos.PriceUpdateDTO;
+import com.sleapy.project.models.dtos.YahooSearchResultDTO;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.List;
 
 /**
  * Service interface for fetching current stock prices.
@@ -41,4 +43,6 @@ public interface PriceService {
      * @return map of symbol -> PriceUpdateDTO; symbols that could not be fetched are omitted
      */
     Map<String, PriceUpdateDTO> getQuotes(List<String> symbols);
+
+    List<YahooSearchResultDTO> search(String query);
 }

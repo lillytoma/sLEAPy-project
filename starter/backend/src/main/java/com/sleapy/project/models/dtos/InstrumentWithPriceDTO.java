@@ -40,6 +40,14 @@ public class InstrumentWithPriceDTO {
             this.highPrice = marketPrice.getHighPrice();
             this.lowPrice = marketPrice.getLowPrice();
             this.lastUpdated = marketPrice.getLastUpdated();
+        } else {
+            this.currentPrice = instrument.getCurrentPrice();
         }
+    }
+
+    public InstrumentWithPriceDTO(YahooSearchResultDTO result) {
+        this.symbol = result.getSymbol();
+        this.symbolName = result.getSymbolName();
+        this.currentPrice = result.getCurrentPrice();
     }
 }

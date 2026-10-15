@@ -97,9 +97,11 @@
                   <td class="px-4 py-3 text-right">
                     <div class="flex items-center gap-2 justify-end">
                       <button (click)="openBuy(stock)"
+                        [disabled]="importingSymbols().has(stock.symbol)"
+                        [title]="'Buy this stock'"
                         class="px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap"
                         style="background-color:rgba(87,136,108,0.15);color:var(--success)">
-                        Buy
+                        {{ importingSymbols().has(stock.symbol) ? 'Preparing...' : 'Buy' }}
                       </button>
                       @if (portfolioService.getHolding(stock.symbol)) {
                         <button (click)="openSell(stock)"

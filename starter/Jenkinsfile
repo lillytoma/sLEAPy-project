@@ -1,37 +1,64 @@
 pipeline {
     agent any
-    tools {
-        maven 'Maven Install'
+
+    options {
+        timestamps()
+        skipDefaultCheckout(true)
+        disableConcurrentBuilds()
     }
+
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-        stage('Build') {
+
+        stage('Backend Build and Test') {
             steps {
                 dir('starter/backend') {
-                    sh 'mvn -B clean package'
-                }
-            }
-        }
-        stage('Test') {
-            steps {
-                dir('starter/backend') {
-                    sh 'mvn -B test'
+                    sh 'chmod +x mvnw'
+                    sh './mvnw -B clean verify'
                 }
             }
             post {
                 always {
-                    junit testResults: 'starter/backend/target/surefire-reports/*.xml', allowEmptyResults: true
+                    junit testResults: 'starter/backend/target/surefire-reports/*.xml', allowEmptyResults: false
                 }
             }
         }
+
+        stage('Frontend Build') {
+            steps {
+                dir('starter/frontend') {
+                    sh 'npm ci'
+                    sh 'npm run build'
+                }
+            }
+        }
+
+        stage('Python Price Service Validation') {
+            steps {
+                dir('starter/backend/etl') {
+                    sh '''
+                        python3 -m venv .ci-venv
+                        .ci-venv/bin/python -m pip install --disable-pip-version-check --no-cache-dir fastapi "uvicorn[standard]" yfinance
+                        .ci-venv/bin/python -m compileall -q price_service.py
+                    '''
+                }
+            }
+        }
+
         stage('Archive') {
             steps {
-                archiveArtifacts artifacts: 'starter/backend/target/*.jar', fingerprint: true
+                archiveArtifacts artifacts: 'starter/backend/target/*.jar,starter/frontend/dist/**', fingerprint: true, allowEmptyArchive: false
             }
+        }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: 'starter/backend/target/surefire-reports/**', allowEmptyArchive: true
         }
     }
 }

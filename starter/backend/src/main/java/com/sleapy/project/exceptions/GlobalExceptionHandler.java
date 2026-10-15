@@ -76,6 +76,13 @@ public class GlobalExceptionHandler {
         );   
     }
 
+    @ExceptionHandler(OrderValidationException.class)
+    ResponseEntity<ErrorResponse> handleOrderValidation(OrderValidationException e, HttpServletRequest request) {
+        return ResponseEntity.status(422).body(
+            ErrorResponse.of(422, e.getRule(), e.getMessage(), request.getRequestURI())
+        );
+    }
+
     /**
      * Handles invalid email format errors when email validation fails against the strict RFC 5322 standard.
      * The ClientValidator uses comprehensive RFC 5322 regex to enforce strict email formatting requirements,
