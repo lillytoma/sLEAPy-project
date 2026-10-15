@@ -3,6 +3,7 @@ package com.sleapy.project.exceptions;
 import com.sleapy.project.controllers.ClientController;
 import com.sleapy.project.controllers.OrderController;
 import com.sleapy.project.services.ClientService;
+import com.sleapy.project.services.JwtService;
 import com.sleapy.project.services.OrderService;
 import com.sleapy.project.validators.ClientValidator;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.NoSuchElementException;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -44,6 +46,9 @@ public class GlobalExceptionHandlerTest {
     @MockitoBean
     private ClientValidator clientValidator;
 
+    @MockitoBean
+    private JwtService jwtService;
+
     /**
      * Tests that resource not found errors return a 404 Not Found response.
      * Configures the mocked ClientService to throw NoSuchElementException when fetching a non-existent client.
@@ -54,11 +59,13 @@ public class GlobalExceptionHandlerTest {
      */
     @Test
     void testNotFound() throws Exception {
+        when(jwtService.verifyAuthorizationHeader(anyString())).thenReturn(true);
         when(clientService.getCashBalance(999L))
             .thenThrow(new NoSuchElementException("Client with ID 999 not found"));
         
         assertDoesNotThrow(() ->
-            mockMvc.perform(get("/api/clients/999/balance"))
+            mockMvc.perform(get("/api/clients/999/balance")
+                    .header("Authorization", "Bearer valid-test-token"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.error").value("Not Found"))
@@ -75,11 +82,13 @@ public class GlobalExceptionHandlerTest {
      */
     @Test
     void testInsufficientCash() throws Exception {
+        when(jwtService.verifyAuthorizationHeader(anyString())).thenReturn(true);
         when(clientService.getCashBalance(1L))
             .thenThrow(new InsufficientCashException("Client has insufficient cash balance to complete this transaction"));
         
         assertDoesNotThrow(() ->
-            mockMvc.perform(get("/api/clients/1/balance"))
+            mockMvc.perform(get("/api/clients/1/balance")
+                    .header("Authorization", "Bearer valid-test-token"))
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.status").value(422))
                 .andExpect(jsonPath("$.error").value("Insufficient Cash"))
@@ -96,11 +105,13 @@ public class GlobalExceptionHandlerTest {
      */
     @Test
     void testInsufficientShares() throws Exception {
+        when(jwtService.verifyAuthorizationHeader(anyString())).thenReturn(true);
         when(orderService.getTransactionsPerClient(2L))
             .thenThrow(new InsufficientSharesException("Client does not have enough shares to complete this sale"));
         
         assertDoesNotThrow(() ->
-            mockMvc.perform(get("/api/orders/?clientId=2"))
+            mockMvc.perform(get("/api/orders/?clientId=2")
+                    .header("Authorization", "Bearer valid-test-token"))
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.status").value(422))
                 .andExpect(jsonPath("$.error").value("Insufficient Shares"))
@@ -117,11 +128,13 @@ public class GlobalExceptionHandlerTest {
      */
     @Test
     void testUnexpectedException() throws Exception {
+        when(jwtService.verifyAuthorizationHeader(anyString())).thenReturn(true);
         when(clientService.getCashBalance(4L))
             .thenThrow(new RuntimeException("Unexpected database connection error"));
         
         assertDoesNotThrow(() ->
-            mockMvc.perform(get("/api/clients/4/balance"))
+            mockMvc.perform(get("/api/clients/4/balance")
+                    .header("Authorization", "Bearer valid-test-token"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.status").value(500))
                 .andExpect(jsonPath("$.error").value("Unexpected Error"))
