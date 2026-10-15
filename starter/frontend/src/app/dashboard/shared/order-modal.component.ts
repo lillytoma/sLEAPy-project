@@ -86,7 +86,10 @@ export class OrderModalComponent {
   }
 
   setSharesByPct(pct: number): void {
-    this.sharesToSell.set(Math.floor(this.sharesOwned * pct / 100));
+    const shares = pct === 100
+      ? this.sharesOwned
+      : Math.round(this.sharesOwned * pct / 100 * 1000) / 1000;
+    this.sharesToSell.set(shares);
     this.inputMode.set('shares');
   }
 

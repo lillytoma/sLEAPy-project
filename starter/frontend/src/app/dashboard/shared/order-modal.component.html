@@ -44,7 +44,7 @@
         <!-- Current price -->
         <div class="flex items-center justify-between p-3 rounded-lg" style="background-color:var(--muted)">
           <span class="text-sm" style="color:var(--muted-foreground)">Current Price</span>
-          <span class="font-mono font-semibold" style="color:var(--foreground)">{{ '$' }}{{ stock.price.toFixed(2) }}</span>
+          <span class="font-mono font-semibold" style="color:var(--foreground)">{{ '$' }}{{ stock.price.toFixed(3) }}</span>
         </div>
 
         <!-- Quick sell buttons (only for sell mode) -->
@@ -110,7 +110,7 @@
               <span class="font-mono font-bold text-lg" style="color:var(--foreground)">{{ '$' }}{{ estimatedBuyTotal().toFixed(2) }}</span>
             </div>
             <p class="text-xs mt-1" style="color:var(--muted-foreground)">
-              {{ calculatedBuyShares() }} shares × {{ '$' }}{{ effectivePrice().toFixed(2) }}
+              {{ calculatedBuyShares() }} shares × {{ '$' }}{{ effectivePrice().toFixed(3) }}
             </p>
           </div>
 
@@ -154,7 +154,7 @@
               <span class="font-mono font-bold text-lg" style="color:var(--error)">{{ '$' }}{{ estimatedSellProceeds().toFixed(2) }}</span>
             </div>
             <p class="text-xs mt-1" style="color:var(--muted-foreground)">
-              {{ calculatedSellShares() }} shares × {{ '$' }}{{ effectivePrice().toFixed(2) }}
+              {{ calculatedSellShares() }} shares × {{ '$' }}{{ effectivePrice().toFixed(3) }}
             </p>
           </div>
 

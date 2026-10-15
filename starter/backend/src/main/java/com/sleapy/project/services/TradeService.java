@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Optional;
 
@@ -41,6 +42,7 @@ public class TradeService {
         BigDecimal quantity = validation.quantity();
         BigDecimal currentPrice = validation.price();
         BigDecimal totalCost = validation.total();
+        BigDecimal displayPrice = currentPrice.setScale(3, RoundingMode.HALF_UP);
 
         orderStatusNotificationService.publish(null, request.getClientId(), instrument.getSymbol(),
                 "BUY", "PENDING", "Buy order received");
@@ -73,7 +75,7 @@ public class TradeService {
         return new TradeResponseDTO(order.getId(), request.getClientId(), instrument.getSymbol(), "BUY",
                 quantity, currentPrice, totalCost, LocalDate.now(), "FILLED",
                 "Successfully purchased " + quantity + " shares of " + instrument.getSymbol()
-                        + " at $" + currentPrice + " per share");
+                        + " at $" + displayPrice + " per share");
     }
 
     @Transactional
@@ -86,6 +88,7 @@ public class TradeService {
         BigDecimal quantity = validation.quantity();
         BigDecimal currentPrice = validation.price();
         BigDecimal totalProceeds = validation.total();
+        BigDecimal displayPrice = currentPrice.setScale(3, RoundingMode.HALF_UP);
 
         orderStatusNotificationService.publish(null, request.getClientId(), instrument.getSymbol(),
                 "SELL", "PENDING", "Sell order received");
@@ -111,7 +114,7 @@ public class TradeService {
         return new TradeResponseDTO(order.getId(), request.getClientId(), instrument.getSymbol(), "SELL",
                 quantity, currentPrice, totalProceeds, LocalDate.now(), "FILLED",
                 "Successfully sold " + quantity + " shares of " + instrument.getSymbol()
-                        + " at $" + currentPrice + " per share");
+                        + " at $" + displayPrice + " per share");
     }
 
     private OrderEntity createOrder(ClientEntity client, InstrumentEntity instrument,
