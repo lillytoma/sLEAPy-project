@@ -2,7 +2,6 @@ package com.sleapy.project.kafka;
 
 import com.sleapy.project.events.ClientActivityEvent;
 import com.sleapy.project.events.OrderEvent;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -19,11 +18,14 @@ import org.springframework.stereotype.Service;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @ConditionalOnBean(KafkaTemplate.class)
 public class KafkaProducerService {
     
     private final KafkaTemplate<String, Object> kafkaTemplate;
+
+    public KafkaProducerService(KafkaTemplate<String, Object> kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
     
     @Value("${spring.kafka.topics.client-activity:client-activity}")
     private String clientActivityTopic;
