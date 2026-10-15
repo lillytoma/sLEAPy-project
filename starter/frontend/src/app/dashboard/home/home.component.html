@@ -28,22 +28,62 @@
             <p class="eyebrow">Performance</p>
             <h2 class="font-mono" style="font-size:22px">${{ portfolioService.netWorth().toFixed(2) }}</h2>
           </div>
-          <span class="text-xs" style="color:var(--muted-foreground)" title="Illustrative trend — the backend doesn't track historical portfolio value yet">This week</span>
+          <div class="flex gap-1.5">
+            @for (range of chartRanges; track range) {
+              <button type="button" class="period-pill" [class.is-active]="selectedRange() === range"
+                (click)="selectedRange.set(range)"
+                style="border:none;cursor:pointer"
+                title="Illustrative trend — the backend doesn't track historical portfolio value by range yet">{{ range }}</button>
+            }
+          </div>
         </div>
-        <svg [attr.viewBox]="'0 0 ' + performanceChart().width + ' ' + performanceChart().height" preserveAspectRatio="none" style="width:100%;height:220px;display:block">
-          <defs>
-            <linearGradient id="perfFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="var(--success)" stop-opacity="0.25"/>
-              <stop offset="100%" stop-color="var(--success)" stop-opacity="0"/>
-            </linearGradient>
-          </defs>
-          <path [attr.d]="performanceChart().areaPath" fill="url(#perfFill)" stroke="none"/>
-          <path [attr.d]="performanceChart().linePath" fill="none" stroke="var(--success)" stroke-width="2.5" vector-effect="non-scaling-stroke"/>
-        </svg>
-        <div class="flex items-center justify-between" style="margin-top:6px">
-          @for (point of performanceChart().points; track $index) {
-            <span class="text-xs font-mono" style="color:var(--muted-foreground)">{{ point.label }}</span>
-          }
+
+        <div class="flex gap-2">
+          <!-- Y-axis labels -->
+          <div class="flex flex-col justify-between" style="height:220px">
+            @for (g of performanceChart().yGridlines.slice().reverse(); track g.value) {
+              <span class="text-xs font-mono" style="color:var(--muted-foreground)">{{ g.label }}</span>
+            }
+          </div>
+
+          <div class="flex-1 min-w-0">
+            <div style="position:relative">
+              <svg #perfSvg [attr.viewBox]="'0 0 ' + performanceChart().width + ' ' + performanceChart().height"
+                preserveAspectRatio="none" style="width:100%;height:220px;display:block;cursor:crosshair"
+                (mousemove)="onChartHover($event, perfSvg)" (mouseleave)="onChartLeave()">
+                <defs>
+                  <linearGradient id="perfFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="var(--success)" stop-opacity="0.25"/>
+                    <stop offset="100%" stop-color="var(--success)" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                @for (g of performanceChart().yGridlines; track g.value) {
+                  <line x1="0" [attr.y1]="g.y" [attr.x2]="performanceChart().width" [attr.y2]="g.y"
+                    stroke="var(--border)" stroke-dasharray="3 3" stroke-width="1"/>
+                }
+                <path [attr.d]="performanceChart().areaPath" fill="url(#perfFill)" stroke="none"/>
+                <path [attr.d]="performanceChart().linePath" fill="none" stroke="var(--success)" stroke-width="2.5" vector-effect="non-scaling-stroke"/>
+                @if (hoveredPoint(); as hp) {
+                  <line [attr.x1]="hp.coord.x" y1="0" [attr.x2]="hp.coord.x" [attr.y2]="performanceChart().height"
+                    stroke="var(--muted-foreground)" stroke-width="1" vector-effect="non-scaling-stroke"/>
+                  <circle [attr.cx]="hp.coord.x" [attr.cy]="hp.coord.y" r="4.5" fill="var(--success)" stroke="var(--card)" stroke-width="2" vector-effect="non-scaling-stroke"/>
+                }
+              </svg>
+              @if (hoveredPoint(); as hp) {
+                <div class="chart-tooltip"
+                  [style.left.%]="(hp.coord.x / performanceChart().width) * 100"
+                  [style.top.%]="(hp.coord.y / performanceChart().height) * 100">
+                  <p class="chart-tooltip-label">{{ hp.point.label }}</p>
+                  <p class="chart-tooltip-value">Value: ${{ hp.point.value.toFixed(2) }}</p>
+                </div>
+              }
+            </div>
+            <div class="flex items-center justify-between" style="margin-top:6px">
+              @for (point of performanceChart().points; track $index) {
+                <span class="text-xs font-mono" style="color:var(--muted-foreground)">{{ point.label }}</span>
+              }
+            </div>
+          </div>
         </div>
       </div>
 

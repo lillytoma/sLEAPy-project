@@ -85,9 +85,16 @@ body {
 /* Account avatar + dropdown */
 .account-menu-wrap { position: relative; }
 .avatar-badge { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--frog-ink); background: var(--primary); color: var(--primary-foreground); font: 800 12px 'Nunito', sans-serif; cursor: pointer; }
-.account-menu { position: absolute; top: calc(100% + 10px); right: 0; min-width: 160px; padding: 6px; border: 1.5px solid var(--border); border-radius: 14px; background: var(--card); box-shadow: var(--card-shadow); z-index: 20; }
-.account-menu a { display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: 9px; color: var(--foreground); font-size: 13px; font-weight: 600; }
-.account-menu a:hover, .account-menu a.is-active { background: var(--muted); color: var(--primary); }
+.account-menu { position: absolute; top: calc(100% + 10px); right: 0; min-width: 220px; padding: 6px; border: 1.5px solid var(--border); border-radius: 14px; background: var(--card); box-shadow: var(--card-shadow); z-index: 20; }
+.account-menu-header { padding: 10px 12px 12px; }
+.account-menu-name { margin: 0; font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 14px; color: var(--foreground); }
+.account-menu-email { margin: 2px 0 0; font-size: 12px; color: var(--muted-foreground); }
+.account-menu-divider { height: 1px; margin: 6px 4px; background: var(--border); }
+.account-menu a, .account-menu-row-button { display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px 12px; border: 0; border-radius: 9px; background: none; color: var(--foreground); font: 600 13px 'Nunito', sans-serif; cursor: pointer; text-align: left; }
+.account-menu a:hover, .account-menu a.is-active, .account-menu-row-button:hover { background: var(--muted); color: var(--primary); }
+.account-menu-value { margin-left: auto; color: var(--muted-foreground); font-size: 12px; font-weight: 600; }
+.account-menu-danger { color: var(--error); }
+.account-menu-danger:hover { background: rgba(196, 69, 58, 0.1); color: var(--error); }
 
 .dashboard-content-full { max-width: 1440px; margin: 0 auto; padding: 32px 40px 56px; min-width: 0; }
 .dashboard-home { display: flex; flex-direction: column; gap: 26px; }
@@ -109,6 +116,12 @@ body {
 .panel-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .panel-heading h2 { margin-top: 3px; font-family: 'Baloo 2', sans-serif; font-size: 16px; font-weight: 700; }
 .period-pill { padding: 5px 10px; border-radius: 999px; color: var(--primary); background: var(--muted); font: 700 10px 'DM Mono', monospace; }
+.period-pill.is-active { background: var(--primary); color: var(--primary-foreground); }
+
+/* Chart hover tooltip (Performance chart) */
+.chart-tooltip { position: absolute; transform: translate(-50%, -115%); background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; padding: 8px 12px; box-shadow: var(--card-shadow); pointer-events: none; white-space: nowrap; z-index: 5; }
+.chart-tooltip-label { margin: 0; font-size: 11px; font-weight: 700; color: var(--muted-foreground); }
+.chart-tooltip-value { margin: 2px 0 0; font-size: 12px; font-weight: 700; color: var(--success); font-family: 'DM Mono', monospace; }
 .table-heading { padding: 20px 22px 16px; margin: 0; border-bottom: 1px solid var(--border); }
 .table-panel table { min-width: 500px; }
 .table-panel th, .table-panel td { padding: 13px 16px; }

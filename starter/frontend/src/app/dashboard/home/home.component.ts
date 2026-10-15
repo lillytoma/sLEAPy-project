@@ -102,6 +102,12 @@ export class HomeComponent implements OnInit, OnDestroy {
     ];
   });
 
+  hoveredIndex = signal<number | null>(null);
+  // Cosmetic only — see the pill's title attribute: there's no per-range historical
+  // data to actually switch between yet, so selecting a range just restyles the pill.
+  chartRanges = ['1M', '3M', '6M', '1Y'];
+  selectedRange = signal('1Y');
+
   // Illustrative trend only — there's no historical portfolio-value tracking in the
   // backend, so this reuses the shape of the existing mock weekly series but rescales
   // it to end at the real current net worth, so the chart and the headline never disagree.
@@ -123,10 +129,71 @@ export class HomeComponent implements OnInit, OnDestroy {
       x: i * stepX,
       y: height - ((p.value - min) / span) * height
     }));
-    const linePath = coords.map((c, i) => `${i === 0 ? 'M' : 'L'} ${c.x.toFixed(1)} ${c.y.toFixed(1)}`).join(' ');
+    const linePath = this.smoothPath(coords);
     const areaPath = `${linePath} L ${width} ${height} L 0 ${height} Z`;
 
-    return { points, coords, linePath, areaPath, max, min, width, height };
+    const gridlineSteps = 4;
+    const yGridlines = Array.from({ length: gridlineSteps + 1 }, (_, i) => {
+      const value = min + (span * i) / gridlineSteps;
+      return { value, y: height - (i / gridlineSteps) * height, label: this.formatCompactDollar(value) };
+    });
+
+    return { points, coords, linePath, areaPath, yGridlines, width, height };
+  });
+
+  // Catmull-Rom-to-Bezier spline so the line reads as a smooth curve instead of
+  // sharp straight-line segments between points.
+  private smoothPath(coords: { x: number; y: number }[]): string {
+    if (coords.length === 0) return '';
+    if (coords.length === 1) return `M ${coords[0].x} ${coords[0].y}`;
+
+    let path = `M ${coords[0].x.toFixed(1)} ${coords[0].y.toFixed(1)}`;
+    for (let i = 0; i < coords.length - 1; i++) {
+      const p0 = coords[i - 1] ?? coords[i];
+      const p1 = coords[i];
+      const p2 = coords[i + 1];
+      const p3 = coords[i + 2] ?? p2;
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+      path += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+    }
+    return path;
+  }
+
+  private formatCompactDollar(value: number): string {
+    return Math.abs(value) >= 1000 ? '$' + (value / 1000).toFixed(0) + 'k' : '$' + value.toFixed(0);
+  }
+
+  onChartHover(event: MouseEvent, svg: Element): void {
+    const rect = svg.getBoundingClientRect();
+    if (rect.width === 0) return;
+    const relX = (event.clientX - rect.left) / rect.width;
+    const chart = this.performanceChart();
+    const svgX = relX * chart.width;
+
+    let nearest = 0;
+    let minDist = Infinity;
+    chart.coords.forEach((c, i) => {
+      const dist = Math.abs(c.x - svgX);
+      if (dist < minDist) {
+        minDist = dist;
+        nearest = i;
+      }
+    });
+    this.hoveredIndex.set(nearest);
+  }
+
+  onChartLeave(): void {
+    this.hoveredIndex.set(null);
+  }
+
+  hoveredPoint = computed(() => {
+    const i = this.hoveredIndex();
+    if (i === null) return null;
+    const chart = this.performanceChart();
+    return { coord: chart.coords[i], point: chart.points[i] };
   });
 
   openSell(symbol: string, shares: number, price: number): void {

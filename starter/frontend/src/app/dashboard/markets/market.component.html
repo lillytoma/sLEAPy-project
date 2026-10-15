@@ -1,7 +1,7 @@
     <div class="space-y-5">
       <div>
-        <p class="eyebrow">Trade</p>
-        <h1 class="text-2xl font-semibold" style="color:var(--foreground)">Markets</h1>
+        <h1 class="font-serif text-2xl font-bold" style="color:var(--foreground)">Markets</h1>
+        <p class="text-sm mt-1" style="color:var(--muted-foreground)">Stock screener & quotes</p>
       </div>
       <!-- Search bar with auto-suggest -->
       <div class="flex items-center gap-3">
@@ -40,7 +40,7 @@
             </div>
           }
         </div>
-        <span class="text-sm" style="color:var(--muted-foreground)">{{ filteredStocks().length }} results</span>
+        <span class="text-sm" style="color:var(--muted-foreground)">{{ filteredStocks().length }} stocks</span>
       </div>
 
       <!-- Favorites toggle -->
@@ -67,11 +67,11 @@
           <table class="w-full text-sm">
             <thead>
               <tr style="border-bottom:1px solid var(--border)">
-                <th class="px-3 py-3 text-center font-medium w-10" style="color:var(--muted-foreground)">☆</th>
-                <th class="px-4 py-3 text-left font-medium" style="color:var(--muted-foreground)">Symbol</th>
+                <th class="px-3 py-3 text-center font-medium w-10" style="color:var(--muted-foreground)"></th>
+                <th class="px-4 py-3 text-left font-medium" style="color:var(--muted-foreground)">Stock</th>
                 <th class="px-4 py-3 text-right font-medium" style="color:var(--muted-foreground)">Price</th>
-                <th class="px-4 py-3 text-left font-medium hidden xl:table-cell" style="color:var(--muted-foreground)">Sector</th>
-                <th class="px-4 py-3 text-right font-medium" style="color:var(--muted-foreground)">Trade</th>
+                <th class="px-4 py-3 text-right font-medium" style="color:var(--muted-foreground)">Today</th>
+                <th class="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody>
@@ -80,33 +80,46 @@
                   [style.opacity]="pendingRemoval().has(stock.symbol) ? '0.4' : '1'">
                   <td class="px-3 py-3 text-center">
                     <button (click)="toggleWatchlist(stock.symbol)"
-                      class="text-lg transition-colors"
-                      [style.color]="pendingRemoval().has(stock.symbol) ? 'var(--error)' : (portfolioService.isWatchlisted(stock.symbol) ? '#F59E0B' : 'var(--border)')"
-                      [title]="pendingRemoval().has(stock.symbol) ? 'Click to cancel removal' : 'Remove from favorites'">
-                      {{ pendingRemoval().has(stock.symbol) ? '☆' : '★' }}
+                      class="transition-colors"
+                      [style.color]="pendingRemoval().has(stock.symbol) ? 'var(--error)' : (portfolioService.isWatchlisted(stock.symbol) ? 'var(--accent)' : 'var(--border)')"
+                      [title]="pendingRemoval().has(stock.symbol) ? 'Click to cancel removal' : (portfolioService.isWatchlisted(stock.symbol) ? 'Remove from favorites' : 'Add to favorites')">
+                      <svg width="17" height="17" viewBox="0 0 24 24" [attr.fill]="(portfolioService.isWatchlisted(stock.symbol) && !pendingRemoval().has(stock.symbol)) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                      </svg>
                     </button>
                   </td>
                   <td class="px-4 py-3">
-                    <p class="font-semibold" style="color:var(--foreground)">{{ stock.symbol }}</p>
-                    <p class="text-xs" style="color:var(--muted-foreground)">{{ stock.name }}</p>
+                    <div class="flex items-center gap-3">
+                      <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold" style="background-color:var(--muted);color:var(--primary)">
+                        {{ stock.symbol.slice(0, 2) }}
+                      </div>
+                      <div>
+                        <p class="font-semibold" style="color:var(--foreground)">{{ stock.symbol }}</p>
+                        <p class="text-xs" style="color:var(--muted-foreground)">{{ stock.name }}</p>
+                      </div>
+                    </div>
                   </td>
                   <td class="px-4 py-3 text-right font-mono" style="color:var(--foreground)">${{ stock.price.toFixed(2) }}</td>
-                  <td class="px-4 py-3 hidden xl:table-cell">
-                    <span class="px-2 py-0.5 rounded text-xs" style="background-color:var(--muted);color:var(--muted-foreground)">{{ stock.sector }}</span>
+                  <td class="px-4 py-3 text-right">
+                    <span class="px-2 py-0.5 rounded-full text-xs font-mono font-semibold"
+                      [style.background-color]="stock.chg >= 0 ? 'rgba(52,168,83,0.14)' : 'rgba(196,69,58,0.12)'"
+                      [style.color]="stock.chg >= 0 ? 'var(--success)' : 'var(--error)'">
+                      {{ stock.chg >= 0 ? '+' : '' }}{{ stock.chg.toFixed(2) }}%
+                    </span>
                   </td>
                   <td class="px-4 py-3 text-right">
                     <div class="flex items-center gap-2 justify-end">
                       <button (click)="openBuy(stock)"
                         [disabled]="importingSymbols().has(stock.symbol)"
                         [title]="'Buy this stock'"
-                        class="px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap"
-                        style="background-color:rgba(87,136,108,0.15);color:var(--success)">
+                        class="button button-primary"
+                        style="padding:8px 16px;font-size:12px;">
                         {{ importingSymbols().has(stock.symbol) ? 'Preparing...' : 'Buy' }}
                       </button>
                       @if (portfolioService.getHolding(stock.symbol)) {
                         <button (click)="openSell(stock)"
                           class="px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap"
-                          style="background-color:rgba(125,18,30,0.1);color:var(--error)">
+                          style="background-color:rgba(196,69,58,0.1);color:var(--error)">
                           Sell
                         </button>
                       }
