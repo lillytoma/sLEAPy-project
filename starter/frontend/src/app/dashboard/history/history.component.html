@@ -38,6 +38,29 @@
               </tbody>
             </table>
           </div>
+          <div class="flex items-center justify-between px-5 py-3" style="border-top:1px solid var(--border)">
+            <p class="text-xs" style="color:var(--muted-foreground)">
+              Page {{ currentPage }} · {{ transactions.length }} records on this page
+            </p>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class="rounded-md border px-3 py-1.5 text-xs font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+                style="border-color:var(--border);color:var(--foreground);background-color:var(--card)"
+                [disabled]="currentPage === 1 || isLoading"
+                (click)="loadPreviousPage()">
+                Previous
+              </button>
+              <button
+                type="button"
+                class="rounded-md border px-3 py-1.5 text-xs font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+                style="border-color:var(--border);color:var(--foreground);background-color:var(--card)"
+                [disabled]="!hasNextPage || isLoading"
+                (click)="loadNextPage()">
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       } @else {
         <div class="rounded-xl border p-10 text-center flex flex-col items-center gap-3" style="background-color:var(--card);border-color:var(--border)">

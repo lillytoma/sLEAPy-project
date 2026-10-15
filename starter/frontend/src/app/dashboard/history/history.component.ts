@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { FrogMascotComponent } from '../../shared/frog-mascot.component';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 
 interface OrderApiResponse {
   timeOfPurchase: string;
@@ -31,6 +31,11 @@ interface Transaction {
 })
 export class HistoryComponent implements OnInit {
   transactions: Transaction[] = [];
+  currentPage = 1;
+  readonly pageSize = 10;
+  hasNextPage = false;
+  isLoading = false;
+  private clientId: number | null = null;
 
   constructor(private http: HttpClient) {}
 
@@ -39,26 +44,60 @@ export class HistoryComponent implements OnInit {
     const clientId = storedUserId ? Number(storedUserId) : NaN;
 
     if (Number.isFinite(clientId)) {
-      this.loadTransactions(clientId);
+      this.clientId = clientId;
+      this.loadTransactions(clientId, 1);
     }
   }
 
-  private loadTransactions(clientId: number): void {
+  loadNextPage(): void {
+    if (this.clientId === null || !this.hasNextPage || this.isLoading) {
+      return;
+    }
+
+    this.loadTransactions(this.clientId, this.currentPage + 1);
+  }
+
+  loadPreviousPage(): void {
+    if (this.clientId === null || this.currentPage <= 1 || this.isLoading) {
+      return;
+    }
+
+    this.loadTransactions(this.clientId, this.currentPage - 1);
+  }
+
+  private loadTransactions(clientId: number, page: number): void {
     const jwtToken = localStorage.getItem('auth_token');
     const headers = jwtToken
       ? new HttpHeaders({ Authorization: `Bearer ${jwtToken}` })
       : new HttpHeaders();
+    const params = new HttpParams()
+      .set('clientId', String(clientId))
+      .set('page', String(page))
+      .set('pageSize', String(this.pageSize));
+
+    this.isLoading = true;
   
     this.http
-      .get<OrderApiResponse[]>(`http://localhost:8081/api/orders/?clientId=${clientId}`, { headers })
+      .get<OrderApiResponse[]>('http://localhost:8081/api/orders/', { headers, params })
       .subscribe({
         next: (orders) => {
-          console.log(orders);
+          // Guard against overshooting the last page when count is an exact page multiple.
+          if (orders.length === 0 && page > 1) {
+            this.hasNextPage = false;
+            this.isLoading = false;
+            return;
+          }
+
           this.transactions = orders.map((order) => this.mapOrderToTransaction(order));
+          this.currentPage = page;
+          this.hasNextPage = orders.length === this.pageSize;
+          this.isLoading = false;
         },
         error: (err) => {
           console.error('Failed to load order history', err);
           this.transactions = [];
+          this.hasNextPage = false;
+          this.isLoading = false;
         }
       });
   }
