@@ -5,40 +5,40 @@
 
     <!-- Result map for OrderStatus -->
     <resultMap id="OrderStatusResultMap" type="com.sleapy.project.models.entities.OrderStatus">
-        <id column="orderstatus_id" property="id"/>
-        <result column="orderstatus_name" property="name"/>
+        <id column="OrderStatus_ID" property="id"/>
+        <result column="OrderStatus_Name" property="name"/>
     </resultMap>
 
     <!-- Find order status by ID -->
     <select id="findById" parameterType="Long" resultMap="OrderStatusResultMap">
-        SELECT orderstatus_id, orderstatus_name
-        FROM order_status
-        WHERE orderstatus_id = #{id}
+        SELECT OrderStatus_ID, OrderStatus_Name
+        FROM Order_Status
+        WHERE OrderStatus_ID = #{id}
     </select>
 
     <!-- Get all order statuses -->
     <select id="findAll" resultMap="OrderStatusResultMap">
-        SELECT orderstatus_id, orderstatus_name
-        FROM order_status
-        ORDER BY orderstatus_id ASC
+        SELECT OrderStatus_ID, OrderStatus_Name
+        FROM Order_Status
+        ORDER BY OrderStatus_ID ASC
     </select>
 
     <!-- Insert new order status -->
     <insert id="save" parameterType="com.sleapy.project.models.entities.OrderStatus" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO order_status (orderstatus_name)
+        INSERT INTO Order_Status (OrderStatus_Name)
         VALUES (#{name})
     </insert>
 
     <!-- Update order status -->
     <update id="update" parameterType="com.sleapy.project.models.entities.OrderStatus">
-        UPDATE order_status
-        SET orderstatus_name = #{name}
-        WHERE orderstatus_id = #{id}
+        UPDATE Order_Status
+        SET OrderStatus_Name = #{name}
+        WHERE OrderStatus_ID = #{id}
     </update>
 
     <!-- Delete order status by ID -->
     <delete id="deleteById" parameterType="Long">
-        DELETE FROM order_status WHERE orderstatus_id = #{id}
+        DELETE FROM Order_Status WHERE OrderStatus_ID = #{id}
     </delete>
 
 </mapper>

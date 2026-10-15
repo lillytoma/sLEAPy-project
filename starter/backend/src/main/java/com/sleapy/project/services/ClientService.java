@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.math.BigDecimal;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
 @Service
@@ -27,6 +28,17 @@ public class ClientService {
         
         ClientEntity client = clientMapper.findById(clientId).orElseThrow(() -> new RuntimeException("Client not found"));  
         return client.getCashBalance(); // Return the actual current balance from the client entity
+    }
+
+    public double addCash(Long clientId, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than 0");
+        }
+
+        clientMapper.findById(clientId)
+                .orElseThrow(() -> new java.util.NoSuchElementException("Client not found"));
+        clientMapper.addCash(clientId, amount);
+        return getCashBalance(clientId);
     }
     
 //Entry point for checking a login attempt. Given an email and the plaintext password. It returns a bool answering whether the credentials exist in the db
@@ -57,7 +69,7 @@ public class ClientService {
 
     /**
      * Register a new client (signup flow)
-     * @param request SignUpRequestDTO containing email, password, address, phone, ssn
+     * @param request SignUpRequestDTO containing email, password, name, address, phone, ssn
      * @return the newly created ClientEntity with auto-generated ID
      */
     public ClientEntity signup(SignUpRequestDTO request) {
@@ -70,10 +82,17 @@ public class ClientService {
         newClient.setUsername(request.getUsername());
         newClient.setEmail(request.getEmail());
         newClient.setPasswordHash(hashedPassword);
-        newClient.setAddress(request.getAddress());
+        newClient.setFirstName(request.getFirstName());
+        newClient.setLastName(request.getLastName());
+        newClient.setDob(request.getDob());
+        newClient.setStreetAddress(request.getStreetAddress());
+        newClient.setCity(request.getCity());
+        newClient.setStateName(request.getStateName());
+        newClient.setZipCode(request.getZipCode());
+        newClient.setRegion(request.getRegion());
         newClient.setPhoneNumber(request.getPhoneNumber());
         newClient.setSsn(request.getSsn());
-        newClient.setCashBalance(0.0);  // Default balance for new users
+        newClient.setCashBalance(10000.0);  // Default balance for new users
         
         // Set active status (assuming 1 = ACTIVE in your database)
         ClientStatus activeStatus = new ClientStatus();
