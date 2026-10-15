@@ -74,8 +74,7 @@ class OrderStatusWebSocketIntegrationTest {
 
         notificationService.publish(null, 7L, null, "BUY", "REJECTED", "Insufficient cash");
 
-        OrderStatusUpdateDTO event = events.poll(5, TimeUnit.SECONDS);
-        assertNotNull(event);
+        OrderStatusUpdateDTO event = pollForStatus(events, "REJECTED");
         assertEquals("REJECTED", event.getStatus());
         assertEquals("Insufficient cash", event.getMessage());
         session.disconnect();
@@ -92,8 +91,7 @@ class OrderStatusWebSocketIntegrationTest {
         awaitSubscription(reconnectedSession, events);
         notificationService.publish(43L, 7L, "MSFT", "SELL", "FILLED", "Order filled after reconnect");
 
-        OrderStatusUpdateDTO event = events.poll(5, TimeUnit.SECONDS);
-        assertNotNull(event);
+        OrderStatusUpdateDTO event = pollForStatus(events, "FILLED");
         assertEquals("FILLED", event.getStatus());
         assertEquals(43L, event.getOrderId());
         reconnectedSession.disconnect();
@@ -112,8 +110,8 @@ class OrderStatusWebSocketIntegrationTest {
 
         notificationService.publish(44L, 7L, "NVDA", "BUY", "FILLED", "Order filled");
 
-        assertEquals("FILLED", firstEvents.poll(5, TimeUnit.SECONDS).getStatus());
-        assertEquals("FILLED", secondEvents.poll(5, TimeUnit.SECONDS).getStatus());
+        assertEquals("FILLED", pollForStatus(firstEvents, "FILLED").getStatus());
+        assertEquals("FILLED", pollForStatus(secondEvents, "FILLED").getStatus());
         firstSession.disconnect();
         secondSession.disconnect();
     }
@@ -171,5 +169,19 @@ class OrderStatusWebSocketIntegrationTest {
                 throw new AssertionError("Interrupted while waiting for order event", exception);
             }
         }).toList();
+    }
+
+    private OrderStatusUpdateDTO pollForStatus(BlockingQueue<OrderStatusUpdateDTO> events, String expectedStatus) {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        try {
+            while (System.nanoTime() < deadline) {
+                OrderStatusUpdateDTO event = events.poll(100, TimeUnit.MILLISECONDS);
+                if (event != null && expectedStatus.equals(event.getStatus())) return event;
+            }
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new AssertionError("Interrupted while waiting for order event", exception);
+        }
+        throw new AssertionError("Did not receive expected status: " + expectedStatus);
     }
 }
