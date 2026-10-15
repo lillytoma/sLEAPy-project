@@ -1,6 +1,7 @@
 package com.sleapy.project.mappers;
 
 import com.sleapy.project.models.entities.OrderEntity;
+
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Result;
@@ -85,12 +86,27 @@ public interface OrderMapper {
         @Result(column = "instrument_symbol_name", property = "instrument.symbolName")
     })
     List<OrderEntity> findTransactionsByClientId(@Param("clientId") Long clientId);
+
+
+    /**
+     * 
+     * @param clientId The client whose orders to search by
+     * @param offset how many rows to skip before returning list
+     * @param pageSize how large the page should be
+     * @return List of entities queried by page
+     */
+        List<OrderEntity> findTransactionsByClientAndPage(
+            @Param("clientId") Long clientId,
+            @Param("offset") Long offset,
+            @Param("pageSize") Long pageSize
+        );
     
     /**
      * Insert a new order.
      * @param order the order entity to insert
      */
     void save(OrderEntity order);
+    
     
     /**
      * Update an existing order.
@@ -103,4 +119,6 @@ public interface OrderMapper {
      * @param id the order ID
      */
     void deleteById(Long id);
+
+
 }
