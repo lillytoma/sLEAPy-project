@@ -7,13 +7,14 @@ import { AuthService } from './services/auth.service';
 import { LandingComponent } from './landing/landing.component';
 import { LoginComponent } from './login/login.component';
 import { SignupComponent } from './signup/signup.component';
-import { DashboardComponent } from './dashboard/dashboard.component';
 import { HomeComponent } from './dashboard/home/home.component';
 import { PortfolioComponent } from './dashboard/portfolio/portfolio.component';
 import { MarketsComponent } from './dashboard/markets/markets.component';
 import { WatchlistComponent } from './dashboard/watchlist/watchlist.component';
 import { HistoryComponent } from './dashboard/history/history.component';
 import { SettingsComponent } from './dashboard/settings/settings.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
+
 
 const authGuard = () => {
   const auth = inject(AuthService);
@@ -29,14 +30,16 @@ export const routes: Routes = [
   {
     path: 'dashboard',
     component: DashboardComponent,
-   // canActivate: [authGuard],
+  //  canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'home', pathMatch: 'full' },
+        { path: 'history', component: HistoryComponent },
+
       { path: 'home', component: HomeComponent },
       { path: 'portfolio', component: PortfolioComponent },
       { path: 'markets', component: MarketsComponent },
       { path: 'watchlist', component: WatchlistComponent },
-      { path: 'history', component: HistoryComponent },
+      
       { path: 'settings', component: SettingsComponent },
     ],
   },

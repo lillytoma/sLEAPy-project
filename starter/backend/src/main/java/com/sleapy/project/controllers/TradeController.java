@@ -6,6 +6,7 @@ import com.sleapy.project.models.dtos.BuyOrderRequestDTO;
 import com.sleapy.project.models.dtos.SellOrderRequestDTO;
 import com.sleapy.project.models.dtos.TradeResponseDTO;
 import com.sleapy.project.services.TradeService;
+import com.sleapy.project.services.OrderStatusNotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,7 @@ import java.util.NoSuchElementException;
 public class TradeController {
 
     private final TradeService tradeService;
+    private final OrderStatusNotificationService orderStatusNotificationService;
 
     /**
      * Execute a BUY order for a client.
@@ -68,18 +70,22 @@ public class TradeController {
             return ResponseEntity.ok(response);
 
         } catch (NoSuchElementException e) {
+            notifyRejected(request.getClientId(), "BUY", e.getMessage());
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {
+            notifyRejected(request.getClientId(), "BUY", e.getMessage());
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", e.getMessage()));
         } catch (InsufficientCashException e) {
+            notifyRejected(request.getClientId(), "BUY", e.getMessage());
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
+            notifyRejected(request.getClientId(), "BUY", e.getMessage());
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", e.getMessage()));
@@ -128,21 +134,29 @@ public class TradeController {
             return ResponseEntity.ok(response);
 
         } catch (NoSuchElementException e) {
+            notifyRejected(request.getClientId(), "SELL", e.getMessage());
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {
+            notifyRejected(request.getClientId(), "SELL", e.getMessage());
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", e.getMessage()));
         } catch (InsufficientSharesException e) {
+            notifyRejected(request.getClientId(), "SELL", e.getMessage());
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
+            notifyRejected(request.getClientId(), "SELL", e.getMessage());
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", e.getMessage()));
         }
+    }
+
+    private void notifyRejected(Long clientId, String tradeType, String message) {
+        orderStatusNotificationService.publish(null, clientId, null, tradeType, "REJECTED", message);
     }
 }
