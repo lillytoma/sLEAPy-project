@@ -6,7 +6,7 @@ and integrating them into the ETL pipeline.
 
 import json
 import logging
-from typing import Callable, Optional, List
+from typing import Callable, Dict, List, Optional
 from kafka import KafkaConsumer
 from kafka.errors import KafkaError
 
@@ -42,7 +42,7 @@ class KafkaEventConsumer:
         self.bootstrap_servers = bootstrap_servers
         self.group_id = group_id
         self.topics = topics
-        self.consumer = None
+        self.consumer: Optional[KafkaConsumer] = None
         self.max_poll_records = max_poll_records
         
         self._create_consumer(auto_offset_reset)
@@ -87,49 +87,52 @@ class KafkaEventConsumer:
         Returns:
             List of consumed events
         """
-        events = []
+        events: List[Dict] = []
         event_count = 0
         
         try:
             logger.info("Starting to consume events from Kafka...")
             
-            for message in self.consumer:
-                try:
-                    event = {
-                        'topic': message.topic,
-                        'partition': message.partition,
-                        'offset': message.offset,
-                        'timestamp': message.timestamp,
-                        'key': message.key,
-                        'value': message.value
-                    }
-                    
-                    events.append(event)
-                    event_count += 1
-                    
-                    logger.debug(
-                        f"Consumed event from topic '{message.topic}': "
-                        f"{event.get('key')} (offset: {message.offset})"
-                    )
-                    
-                    # Call callback if provided
-                    if callback:
-                        should_continue = callback(message.topic, message.value)
-                        if not should_continue:
-                            logger.info("Callback requested to stop consuming")
-                            break
-                    
-                    # Check max events limit
-                    if max_events and event_count >= max_events:
-                        logger.info(f"Reached max events limit: {max_events}")
+            while max_events is None or event_count < max_events:
+                records = self.consumer.poll(timeout_ms=timeout_ms)
+                if not records:
+                    if max_events is not None:
                         break
-                        
-                except json.JSONDecodeError as e:
-                    logger.error(f"Failed to decode JSON message: {e}")
                     continue
-                except Exception as e:
-                    logger.error(f"Error processing event: {e}")
-                    continue
+
+                for messages in records.values():
+                    for message in messages:
+                        if max_events is not None and event_count >= max_events:
+                            break
+
+                        try:
+                            event = {
+                                'topic': message.topic,
+                                'partition': message.partition,
+                                'offset': message.offset,
+                                'timestamp': message.timestamp,
+                                'key': message.key,
+                                'value': message.value
+                            }
+
+                            events.append(event)
+                            event_count += 1
+
+                            logger.debug(
+                                "Consumed event from topic '%s': %s (offset: %s)",
+                                message.topic,
+                                message.key,
+                                message.offset,
+                            )
+
+                            if callback and not callback(message.topic, message.value):
+                                logger.info("Callback requested to stop consuming")
+                                return events
+                        except Exception as e:
+                            logger.error("Error processing event: %s", e)
+
+                    if max_events is not None and event_count >= max_events:
+                        break
             
             logger.info(f"Consumed {event_count} events from Kafka")
             return events
@@ -143,7 +146,7 @@ class KafkaEventConsumer:
     
     def close(self) -> None:
         """Close the Kafka consumer."""
-        if self.consumer:
+        if self.consumer is not None:
             try:
                 self.consumer.close()
                 logger.info("Kafka consumer closed")

@@ -19,5 +19,8 @@ dist/
 .classpath
 .project
 
+# ETL
+__pycache__
+
 # OS
 .DS_Store

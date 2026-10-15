@@ -5,25 +5,21 @@ It integrates with the existing ETL pipeline to extract, transform, and load
 event data into the analytics warehouse.
 """
 
-import json
 import logging
-from typing import List, Dict, Any
-from datetime import datetime
+from typing import Any, Dict, List
 from sqlalchemy import text
 from database import create_engine_connection
 from config import load_db_config
-from loaders import load_to_warehouse
 from kafka_consumer import KafkaEventConsumer
 
 logger = logging.getLogger(__name__)
-
 
 class KafkaETLPipeline:
     """
     ETL pipeline that consumes events from Kafka and processes them.
     
     This pipeline:
-    1. Consumes events from Kafka topics (client-activity, orders, trades)
+    1. Consumes events from the active client-activity and orders topics
     2. Transforms events into analytics-ready data
     3. Loads data into the analytics warehouse schema
     """
@@ -72,8 +68,6 @@ class KafkaETLPipeline:
                 self._process_client_activity_event(event)
             elif topic == "orders":
                 self._process_order_event(event)
-            elif topic == "trades":
-                self._process_trade_event(event)
             else:
                 logger.warning(f"Unknown topic: {topic}")
             
@@ -150,40 +144,25 @@ class KafkaETLPipeline:
                 'timestamp': event.get('timestamp'),
                 'source_system': event.get('source_system')
             }
-            
-            # Store event for batch loading
-            logger.info(f"Order event processed: {order_data['event_id']}")
-            
+
+            required_fields = ('order_id', 'client_id', 'instrument_id', 'order_type')
+            missing_fields = [field for field in required_fields if order_data[field] is None]
+            if missing_fields:
+                logger.warning(
+                    "Ignoring order event %s; missing fields: %s",
+                    order_data['event_id'],
+                    ', '.join(missing_fields),
+                )
+                return
+
+            logger.info(
+                "Processed client order %s for client %s (%s)",
+                order_data['order_id'],
+                order_data['client_id'],
+                order_data['order_type'],
+            )
         except Exception as e:
-            logger.error(f"Error processing order event: {e}")
-    
-    def _process_trade_event(self, event: Dict[str, Any]) -> None:
-        """
-        Process trade events.
-        
-        Args:
-            event: Trade event data
-        """
-        try:
-            logger.debug(f"Processing trade: {event.get('event_id')}")
-            
-            # Extract and transform event data
-            trade_data = {
-                'event_id': event.get('event_id'),
-                'trade_id': event.get('trade_id'),
-                'client_id': event.get('client_id'),
-                'instrument_id': event.get('instrument_id'),
-                'quantity': event.get('quantity'),
-                'price': event.get('price'),
-                'timestamp': event.get('timestamp'),
-                'source_system': event.get('source_system')
-            }
-            
-            # Store event for batch loading
-            logger.info(f"Trade event processed: {trade_data['event_id']}")
-            
-        except Exception as e:
-            logger.error(f"Error processing trade event: {e}")
+            logger.error("Error processing order event: %s", e)
     
     def run(
         self,
@@ -204,7 +183,7 @@ class KafkaETLPipeline:
             max_events: Maximum number of events to process (None for unlimited)
         """
         if topics is None:
-            topics = ["client-activity", "orders", "trades"]
+            topics = ["client-activity", "orders"]
         
         try:
             print("Starting Kafka ETL Pipeline")
