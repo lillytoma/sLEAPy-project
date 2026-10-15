@@ -29,7 +29,7 @@ public class OrderController {
 
     //fetch and render transaction list
     // test with: curl -iX GET localhost:8081/api/orders/?clientId=1
-    @GetMapping("/")
+      @GetMapping(value = "/", params = {"clientId", "!page", "!pageSize"})
     public ResponseEntity<?> getTransactions(
             @RequestParam Long clientId,
             @RequestHeader(value = "Authorization", required = false) String authorizationHeader) {
@@ -38,7 +38,17 @@ public class OrderController {
                     .body(Map.of("error", "Invalid or missing JWT token"));
         }
 
+  
+   
         List<OrderDTO> transactionList = orderService.getTransactionsPerClient(clientId);
+        return ResponseEntity.ok(transactionList);
+    }
+
+    //test with curl -iX GET http://localhost:8081/api/orders?clientId=1&pageSize=10&page=1
+    // 
+    @GetMapping(value = "/", params = {"clientId", "page", "pageSize"})
+    public ResponseEntity<List<OrderDTO>> getTransactionsByPage(@RequestParam Long clientId, @RequestParam Long page, @RequestParam Long pageSize){
+        List<OrderDTO> transactionList = orderService.getTransactionsPerClientPaginated(clientId, page, pageSize);
         return ResponseEntity.ok(transactionList);
     }
 

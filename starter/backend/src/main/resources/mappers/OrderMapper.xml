@@ -72,14 +72,12 @@
     LEFT JOIN Instruments i ON o.Instrument_ID = i.Instrument_ID
   </select>
 
-  <!-- Find orders by client ID, ordered by purchase time (ascending) -->
-  <!-- This replaces the JPA nested property query with explicit SQL JOIN -->
-  <select id="findByClient_IdOrderByTimeOfPurchaseAsc" parameterType="Long" resultMap="OrderResultMap">
-    SELECT o.Order_ID, 
+  <select id="findTransactionsByClientAndPage" resultMap="OrderResultMap">
+    SELECT o.Order_ID,
            o.Quantity, o.Time_purchased, o.Time_filled, o.Purchase_Price, o.trade_type,
            o.Status AS OrderStatus_ID, os.OrderStatus_Name,
-           c.Client_ID, c.email AS client_email, c.cash_balance AS client_cash_balance, 
-           c.password_hash AS client_password_hash, c.street_address AS client_street_address, 
+           c.Client_ID, c.email AS client_email, c.cash_balance AS client_cash_balance,
+           c.password_hash AS client_password_hash, c.street_address AS client_street_address,
            c.phone_number AS client_phone_number, c.ssn AS client_ssn,
            i.Instrument_ID, i.Symbol AS instrument_symbol, i.Symbol_Name AS instrument_symbol_name
     FROM Orders o
@@ -88,7 +86,9 @@
     LEFT JOIN Instruments i ON o.Instrument_ID = i.Instrument_ID
     WHERE c.Client_ID = #{clientId}
     ORDER BY o.Time_purchased ASC
+    LIMIT #{pageSize} OFFSET #{offset}
   </select>
+
 
   <!-- Insert new order (auto-generated ID) -->
   <insert id="save" parameterType="com.sleapy.project.models.entities.OrderEntity" useGeneratedKeys="true" keyProperty="id">
