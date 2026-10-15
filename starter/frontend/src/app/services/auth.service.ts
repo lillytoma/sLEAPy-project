@@ -22,6 +22,9 @@ export class AuthService {
       const email = localStorage.getItem('user_email');
       if (email) {
         this.userName.set(email);
+        if (!this.userInitials()) {
+          this.userInitials.set(email.slice(0, 2).toUpperCase());
+        }
       }
     }
   }
