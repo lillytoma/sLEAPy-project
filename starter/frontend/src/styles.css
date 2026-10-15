@@ -225,3 +225,93 @@ input, select, textarea {
 .font-serif {
   font-family: 'Instrument Serif', serif;
 }
+
+/* Settings */
+.settings-page { display: flex; flex-direction: column; gap: 18px; }
+.settings-panel { padding: 24px; }
+.settings-section-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+.settings-section-heading h2 { margin-top: 4px; font-size: 18px; font-weight: 700; }
+.settings-section-icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; color: var(--primary-foreground); background: var(--primary); font-size: 19px; }
+.settings-option { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 20px 0; border-bottom: 1px solid var(--border); }
+.settings-option:last-child { border-bottom: 0; padding-bottom: 0; }
+.settings-option h3 { font-size: 14px; font-weight: 700; }
+.settings-option p, .settings-help { margin-top: 5px; color: var(--muted-foreground); font-size: 12px; line-height: 1.5; }
+.settings-help { margin: 17px 0 0; }
+.settings-toggle { display: flex; align-items: center; gap: 9px; min-width: 72px; border: 0; color: var(--muted-foreground); background: transparent; font: 700 12px 'DM Sans', sans-serif; cursor: pointer; }
+.settings-toggle-track { position: relative; display: block; width: 36px; height: 20px; padding: 3px; border-radius: 12px; background: var(--muted-foreground); transition: background .2s; }
+.settings-toggle-thumb { display: block; width: 14px; height: 14px; border-radius: 50%; background: var(--card); transition: transform .2s; }
+.settings-toggle.is-on { color: var(--primary); }
+.settings-toggle.is-on .settings-toggle-track { background: var(--primary); }
+.settings-toggle.is-on .settings-toggle-thumb { transform: translateX(16px); }
+.settings-segmented { display: flex; overflow: hidden; border: 1px solid var(--border); border-radius: 7px; }
+.settings-segmented button, .settings-color-option { border: 0; color: var(--muted-foreground); background: var(--card); font: 700 11px 'DM Sans', sans-serif; cursor: pointer; transition: color .2s, background .2s; }
+.settings-segmented button { padding: 9px 12px; border-right: 1px solid var(--border); }
+.settings-segmented button:last-child { border-right: 0; }
+.settings-segmented button.is-selected, .settings-color-option.is-selected { color: var(--primary-foreground); background: var(--primary); }
+.settings-color-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 18px; }
+.settings-color-option { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 10px; border: 1px solid var(--border); border-radius: 7px; }
+.settings-color-option:not(.is-selected):hover { border-color: var(--primary); color: var(--primary); }
+.color-swatch { width: 16px; height: 16px; border: 2px solid currentColor; border-radius: 50%; background: var(--primary); }
+.color-swatch-default { background: linear-gradient(135deg, #176b55 50%, #d59a43 50%); }
+.color-swatch-protanopia { background: linear-gradient(135deg, #2457d6 50%, #f0a202 50%); }
+.color-swatch-deuteranopia { background: linear-gradient(135deg, #005f73 50%, #ee9b00 50%); }
+.color-swatch-tritanopia { background: linear-gradient(135deg, #c51b8a 50%, #0077b6 50%); }
+
+/* Preferences apply to the whole dashboard. */
+html[data-font-size='small'] .dashboard-shell { zoom: .9; }
+html[data-font-size='large'] .dashboard-shell { zoom: 1.1; }
+.dark .dashboard-header { background: var(--card); }
+.dark .dashboard-nav a:hover, .dark .dashboard-nav a.is-active { background: var(--muted); }
+
+/* High-separation palettes keep status colors distinct without relying on red/green alone. */
+.color-vision-protanopia {
+  --background: #f2f5ff;
+  --foreground: #101a35;
+  --card: #ffffff;
+  --primary: #2457d6;
+  --muted: #e4eaff;
+  --muted-foreground: #35476f;
+  --accent: #f0a202;
+  --border: #c8d2ee;
+  --success: #0072b2;
+  --error: #d55e00;
+}
+.color-vision-deuteranopia {
+  --background: #edfafd;
+  --foreground: #092f3a;
+  --card: #ffffff;
+  --primary: #005f73;
+  --muted: #d9f1f5;
+  --muted-foreground: #2d5963;
+  --accent: #ee9b00;
+  --border: #b9dce3;
+  --success: #0072b2;
+  --error: #d55e00;
+}
+.color-vision-tritanopia {
+  --background: #fff2fb;
+  --foreground: #32132c;
+  --card: #ffffff;
+  --primary: #c51b8a;
+  --muted: #f7dff0;
+  --muted-foreground: #69445f;
+  --accent: #0077b6;
+  --border: #e8bfdc;
+  --success: #0072b2;
+  --error: #d55e00;
+}
+.color-vision-protanopia .dashboard-header, .color-vision-deuteranopia .dashboard-header, .color-vision-tritanopia .dashboard-header { background: var(--card); }
+.color-vision-protanopia .dashboard-nav a:hover, .color-vision-protanopia .dashboard-nav a.is-active,
+.color-vision-deuteranopia .dashboard-nav a:hover, .color-vision-deuteranopia .dashboard-nav a.is-active,
+.color-vision-tritanopia .dashboard-nav a:hover, .color-vision-tritanopia .dashboard-nav a.is-active { color: var(--primary); background: var(--muted); }
+
+/* Dark mode keeps each accessibility palette distinct. */
+.dark.color-vision-protanopia { --background: #0d1730; --foreground: #eef2ff; --card: #18264a; --muted: #253968; --muted-foreground: #b4c4f1; --border: #3c568f; --primary: #7f9cff; --accent: #ffc857; --primary-foreground: #0d1730; }
+.dark.color-vision-deuteranopia { --background: #071f26; --foreground: #e7fbff; --card: #103943; --muted: #174d58; --muted-foreground: #a9dbe3; --border: #32727c; --primary: #52d3e5; --accent: #ffc857; --primary-foreground: #071f26; }
+.dark.color-vision-tritanopia { --background: #2a1025; --foreground: #fff0fb; --card: #45183d; --muted: #632255; --muted-foreground: #ecc1e1; --border: #8e3f78; --primary: #ff77c8; --accent: #65c7f2; --primary-foreground: #2a1025; }
+
+@media (max-width: 620px) {
+  .settings-panel { padding: 18px; }
+  .settings-option { align-items: start; flex-direction: column; gap: 14px; }
+  .settings-color-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
