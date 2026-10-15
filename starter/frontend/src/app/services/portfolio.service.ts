@@ -102,7 +102,7 @@ export class PortfolioService {
   getTransactions(): Observable<TransactionResponse[]> {
     const clientId = this.resolveClientId(false);
     if (clientId === null) return of([]);
-    return this.http.get<TransactionResponse[]>(`${this.apiBaseUrl}/orders/?clientId=${clientId}`);
+    return this.http.get<TransactionResponse[]>(`${this.apiBaseUrl}/orders/?clientId=${clientId}&page=1&pageSize=5`);
   }
 
   refreshHoldings(): void {
