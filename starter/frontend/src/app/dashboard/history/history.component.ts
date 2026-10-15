@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FrogMascotComponent } from '../../shared/frog-mascot.component';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 interface OrderApiResponse {
   timeOfPurchase: string;
@@ -78,7 +79,7 @@ export class HistoryComponent implements OnInit {
     this.isLoading = true;
   
     this.http
-      .get<OrderApiResponse[]>('http://localhost:8081/api/orders/', { headers, params })
+      .get<OrderApiResponse[]>(`${environment.apiUrl}/api/orders/`, { headers, params })
       .subscribe({
         next: (orders) => {
           // Guard against overshooting the last page when count is an exact page multiple.
