@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
 import { PortfolioService } from '../../services/portfolio.service';
 import { MarketDataService } from '../../services/market-data.service';
 import { AuthService } from '../../services/auth.service';
-import { MarketStock, portfolioHistory } from '../../data/mock-data';
+import { MarketStock } from '../../data/mock-data';
 import { OrderModalComponent } from '../shared/order-modal.component';
 
 interface DashboardTransaction {
@@ -103,19 +103,19 @@ export class HomeComponent implements OnInit, OnDestroy {
   });
 
   hoveredIndex = signal<number | null>(null);
-  // Cosmetic only — see the pill's title attribute: there's no per-range historical
-  // data to actually switch between yet, so selecting a range just restyles the pill.
-  chartRanges = ['1M', '3M', '6M', '1Y'];
-  selectedRange = signal('1Y');
+  chartRanges = ['1M', '3M', '6M', '1Y'] as const;
+  selectedRange = signal<'1M' | '3M' | '6M' | '1Y'>('1Y');
 
   // Illustrative trend only — there's no historical portfolio-value tracking in the
-  // backend, so this reuses the shape of the existing mock weekly series but rescales
-  // it to end at the real current net worth, so the chart and the headline never disagree.
+  // backend. Each range gets its own deterministic (not random-every-render) synthetic
+  // shape so switching ranges visibly changes the chart, but every shape is rescaled to
+  // always end exactly at the real current net worth, so the chart and the headline
+  // never disagree. The x-axis labels are real calendar dates relative to today, though —
+  // only the line's shape between them is made up.
   performanceChart = computed(() => {
     const target = this.portfolioService.netWorth();
-    const baseline = portfolioHistory[portfolioHistory.length - 1].value;
-    const scale = baseline > 0 ? target / baseline : 1;
-    const points = portfolioHistory.map((p) => ({ label: p.date, value: p.value * scale }));
+    const range = this.selectedRange();
+    const points = this.buildRangeSeries(range, target);
 
     const values = points.map((p) => p.value);
     const max = Math.max(...values);
@@ -140,6 +140,61 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     return { points, coords, linePath, areaPath, yGridlines, width, height };
   });
+
+  private readonly rangeSeeds: Record<string, number> = { '1M': 1, '3M': 2, '6M': 3, '1Y': 4 };
+
+  private buildRangeSeries(range: '1M' | '3M' | '6M' | '1Y', target: number): { label: string; value: number }[] {
+    const configs = {
+      '1M': { count: 5, stepDays: 7 },
+      '3M': { count: 6, stepDays: 15 },
+      '6M': { count: 6, stepDays: 30 },
+      '1Y': { count: 12, stepDays: 30 }
+    } as const;
+    const { count, stepDays } = configs[range];
+
+    const labels = range === '6M' || range === '1Y'
+      ? this.monthLabels(count)
+      : this.dayLabels(count, stepDays);
+
+    const shape = this.deterministicTrend(count, this.rangeSeeds[range]);
+    const amplitude = 0.22;
+    const values = shape.map((n) => target * (1 - amplitude + n * amplitude));
+
+    return labels.map((label, i) => ({ label, value: values[i] }));
+  }
+
+  // Sum of a couple of sine waves at a range-specific seed, normalized to [0, 1] with the
+  // last point pinned to 1 — deterministic per (count, seed), not Math.random(), so the
+  // chart doesn't jitter on every change-detection cycle.
+  private deterministicTrend(count: number, seed: number): number[] {
+    const raw = Array.from({ length: count }, (_, i) => {
+      const t = count > 1 ? i / (count - 1) : 0;
+      return 0.5
+        + 0.3 * Math.sin(t * Math.PI * (1.6 + seed * 0.5) + seed)
+        + 0.15 * Math.sin(t * Math.PI * (3.1 + seed * 0.3) + seed * 2);
+    });
+    const min = Math.min(...raw);
+    const max = Math.max(...raw);
+    const span = max - min || 1;
+    const normalized = raw.map((v) => (v - min) / span);
+    normalized[normalized.length - 1] = 1;
+    return normalized;
+  }
+
+  private dayLabels(count: number, stepDays: number): string[] {
+    return Array.from({ length: count }, (_, i) => {
+      const d = new Date(this.today);
+      d.setDate(d.getDate() - (count - 1 - i) * stepDays);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+  }
+
+  private monthLabels(count: number): string[] {
+    return Array.from({ length: count }, (_, i) => {
+      const d = new Date(this.today.getFullYear(), this.today.getMonth() - (count - 1 - i), 1);
+      return d.toLocaleDateString('en-US', { month: 'short' });
+    });
+  }
 
   // Catmull-Rom-to-Bezier spline so the line reads as a smooth curve instead of
   // sharp straight-line segments between points.

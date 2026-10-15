@@ -1,7 +1,7 @@
 <div class="space-y-6">
       <div>
-        <h2 class="font-serif text-2xl mb-1" style="color:var(--foreground)">Transaction History</h2>
-        <p class="text-sm" style="color:var(--muted-foreground)">All your past trades and activity</p>
+        <h1 class="font-serif text-2xl font-bold" style="color:var(--foreground)">History</h1>
+        <p class="text-sm mt-1" style="color:var(--muted-foreground)">All your past trades and activity</p>
       </div>
 
       @if (transactions.length > 0) {
@@ -21,7 +21,7 @@
                     <td class="px-5 py-4 text-sm" style="color:var(--muted-foreground);white-space:nowrap">{{ tx.date }}</td>
                     <td class="px-5 py-4">
                       <span class="text-xs font-semibold px-2 py-0.5 rounded"
-                        [style.background-color]="tx.type === 'BUY' ? 'rgba(87,136,108,0.12)' : 'rgba(125,18,30,0.1)'"
+                        [style.background-color]="tx.type === 'BUY' ? 'var(--success-tint)' : 'var(--error-tint)'"
                         [style.color]="tx.type === 'BUY' ? 'var(--success)' : 'var(--error)'">
                         {{ tx.type }}
                       </span>

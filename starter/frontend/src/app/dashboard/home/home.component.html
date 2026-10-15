@@ -33,7 +33,7 @@
               <button type="button" class="period-pill" [class.is-active]="selectedRange() === range"
                 (click)="selectedRange.set(range)"
                 style="border:none;cursor:pointer"
-                title="Illustrative trend — the backend doesn't track historical portfolio value by range yet">{{ range }}</button>
+                title="Trend shape is illustrative — the backend doesn't track real historical portfolio value yet">{{ range }}</button>
             }
           </div>
         </div>
@@ -117,7 +117,7 @@
                   <td class="px-4 py-3 text-right font-mono" style="color:var(--foreground)">${{ (h.shares * h.current).toFixed(2) }}</td>
                   <td class="px-4 py-3 text-right">
                     <span class="px-2 py-0.5 rounded-full text-xs font-mono font-semibold"
-                      [style.background-color]="h.current >= h.avgCost ? 'rgba(52,168,83,0.14)' : 'rgba(196,69,58,0.12)'"
+                      [style.background-color]="h.current >= h.avgCost ? 'var(--success-tint)' : 'var(--error-tint)'"
                       [style.color]="h.current >= h.avgCost ? 'var(--success)' : 'var(--error)'">
                       {{ h.current >= h.avgCost ? '+' : '' }}{{ (((h.current - h.avgCost) / h.avgCost) * 100).toFixed(2) }}%
                     </span>
@@ -125,7 +125,7 @@
                   <td class="px-4 py-3 text-right">
                     <button (click)="openSell(h.symbol, h.shares, h.current)"
                       class="px-3 py-1 text-xs font-medium rounded-md"
-                      style="background-color:rgba(196,69,58,0.1);color:var(--error)">
+                      style="background-color:var(--error-tint);color:var(--error)">
                       Sell
                     </button>
                   </td>

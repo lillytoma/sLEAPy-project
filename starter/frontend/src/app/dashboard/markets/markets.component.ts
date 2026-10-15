@@ -162,14 +162,6 @@ export class MarketsComponent implements OnInit, OnDestroy {
     }
   }
 
-  ratingColor(rating: string): string {
-    if (rating === 'Strong buy') return 'var(--success)';
-    if (rating === 'Buy') return '#3B82F6';
-    if (rating === 'Hold') return '#F59E0B';
-    if (rating === 'Sell' || rating === 'Strong sell') return 'var(--error)';
-    return 'var(--muted-foreground)';
-  }
-
   openBuy(stock: MarketStock): void {
     if (this.importingSymbols().has(stock.symbol)) return;
 

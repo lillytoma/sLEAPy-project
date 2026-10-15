@@ -19,6 +19,9 @@
   --border: #e6dcc0;
   --error: #c4453a;
   --success: #34a853;
+  --error-tint: rgba(196, 69, 58, 0.1);
+  --success-tint: rgba(52, 168, 83, 0.14);
+  --accent-blue-tint: rgba(61, 165, 245, 0.16);
   --frog-ink: #1f2a20;
   --card-shadow: 3px 3px 0 rgba(31, 42, 32, 0.12);
   --radius: 16px;
@@ -37,6 +40,9 @@
   --border: rgba(243, 238, 221, 0.16);
   --error: #e2695c;
   --success: #4fc274;
+  --error-tint: rgba(226, 105, 92, 0.18);
+  --success-tint: rgba(79, 194, 116, 0.2);
+  --accent-blue-tint: rgba(111, 192, 255, 0.2);
   --frog-ink: #f3eedd;
   --card-shadow: 0 0 0 1px rgba(243, 238, 221, 0.08);
 }

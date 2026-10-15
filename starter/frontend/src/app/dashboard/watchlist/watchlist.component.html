@@ -1,10 +1,8 @@
 <div class="space-y-5">
       <!-- Header -->
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="eyebrow">Saved for later</p>
-          <h1 class="text-2xl font-semibold" style="color:var(--foreground)">Watchlist</h1>
-        </div>
+      <div>
+        <h1 class="font-serif text-2xl font-bold" style="color:var(--foreground)">Watchlist</h1>
+        <p class="text-sm mt-1" style="color:var(--muted-foreground)">Stocks you're keeping an eye on</p>
       </div>
 
       @if (watchlistItems().length === 0) {
@@ -23,10 +21,10 @@
             <table class="w-full text-sm">
               <thead>
                 <tr style="border-bottom:1px solid var(--border)">
-                  <th class="px-3 py-3 w-10 text-center font-medium" style="color:var(--muted-foreground)">☆</th>
-                  <th class="px-4 py-3 text-left font-medium" style="color:var(--muted-foreground)">Symbol</th>
+                  <th class="px-3 py-3 w-10 text-center font-medium" style="color:var(--muted-foreground)"></th>
+                  <th class="px-4 py-3 text-left font-medium" style="color:var(--muted-foreground)">Stock</th>
                   <th class="px-4 py-3 text-right font-medium" style="color:var(--muted-foreground)">Price</th>
-                  <th class="px-4 py-3 text-right font-medium" style="color:var(--muted-foreground)">Trade</th>
+                  <th class="px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody>
@@ -34,26 +32,35 @@
                   <tr style="border-bottom:1px solid var(--border)">
                     <td class="px-3 py-3 text-center">
                       <button (click)="removeFromWatchlist(item.symbol)"
-                        class="text-lg transition-colors" style="color:#F59E0B">
-                        ★
+                        class="transition-colors" style="color:var(--accent)" title="Remove from watchlist">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
                       </button>
                     </td>
                     <td class="px-4 py-3">
-                      <p class="font-semibold" style="color:var(--foreground)">{{ item.symbol }}</p>
-                      <p class="text-xs" style="color:var(--muted-foreground)">{{ item.name }}</p>
+                      <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold" style="background-color:var(--muted);color:var(--primary)">
+                          {{ item.symbol.slice(0, 2) }}
+                        </div>
+                        <div>
+                          <p class="font-semibold" style="color:var(--foreground)">{{ item.symbol }}</p>
+                          <p class="text-xs" style="color:var(--muted-foreground)">{{ item.name }}</p>
+                        </div>
+                      </div>
                     </td>
                     <td class="px-4 py-3 text-right font-mono" style="color:var(--foreground)">${{ item.price.toFixed(2) }}</td>
                     <td class="px-4 py-3">
                       <div class="flex items-center gap-2 justify-end">
                         <button (click)="openBuy(item)"
-                          class="px-3 py-1 text-xs font-medium rounded-md whitespace-nowrap"
-                          style="background-color:rgba(87,136,108,0.15);color:var(--success)">
+                          class="button button-primary"
+                          style="padding:8px 16px;font-size:12px;">
                           Buy
                         </button>
                         @if (portfolioService.getHolding(item.symbol)) {
                           <button (click)="openSell(item)"
-                            class="px-3 py-1 text-xs font-medium rounded-md whitespace-nowrap"
-                            style="background-color:rgba(125,18,30,0.1);color:var(--error)">
+                            class="px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap"
+                            style="background-color:var(--error-tint);color:var(--error)">
                             Sell
                           </button>
                         }
