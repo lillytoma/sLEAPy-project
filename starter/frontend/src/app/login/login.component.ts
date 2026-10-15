@@ -42,6 +42,17 @@ export class LoginComponent {
         localStorage.setItem('user_id', String(response.id));
         localStorage.setItem('user_email', this.email);
         
+        const userId = response?.userID ?? response?.userId;
+        const token = response?.token;
+
+        if (userId !== undefined && userId !== null) {
+          localStorage.setItem('userId', String(userId));
+        }
+
+        if (token) {
+          localStorage.setItem('jwt', token);
+        }
+
         this.authService.isLoggedIn.set(true);
         this.isLoading.set(false);
         this.authService.userName.set(response.userName || this.email);
