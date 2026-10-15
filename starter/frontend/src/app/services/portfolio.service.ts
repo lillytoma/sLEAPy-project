@@ -229,6 +229,7 @@ export interface TransactionResponse {
   quantity: number;
   purchasePrice: number;
   status?: string;
+  tradeType?: string;
   instrument: {
     symbol: string;
     symbolName: string;

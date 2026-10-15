@@ -5,6 +5,7 @@ interface OrderApiResponse {
   timeOfPurchase: string;
   timeFilled: string | null;
   quantity: number;
+  tradeType?: string | null;
   instrument?: {
     symbol?: string;
     currentPrice?: number | string;
@@ -32,7 +33,7 @@ export class HistoryComponent implements OnInit {
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
-    const storedUserId = localStorage.getItem('userId');
+    const storedUserId = localStorage.getItem('user_id');
     const clientId = storedUserId ? Number(storedUserId) : NaN;
 
     if (Number.isFinite(clientId)) {
@@ -41,7 +42,7 @@ export class HistoryComponent implements OnInit {
   }
 
   private loadTransactions(clientId: number): void {
-    const jwtToken = localStorage.getItem('jwt');
+    const jwtToken = localStorage.getItem('auth_token');
     const headers = jwtToken
       ? new HttpHeaders({ Authorization: `Bearer ${jwtToken}` })
       : new HttpHeaders();
@@ -63,7 +64,7 @@ export class HistoryComponent implements OnInit {
   private mapOrderToTransaction(order: OrderApiResponse): Transaction {
     const rawQuantity = Number(order.quantity ?? 0);
     const shares = Math.abs(rawQuantity);
-    const type: 'BUY' | 'SELL' = rawQuantity < 0 ? 'SELL' : 'BUY';
+    const type = this.resolveTradeType(order.tradeType);
     const rawPrice = Number(order.instrument?.currentPrice ?? 0);
     const price = Number.isFinite(rawPrice) ? rawPrice : 0;
 
@@ -75,5 +76,13 @@ export class HistoryComponent implements OnInit {
       price,
       total: shares * price
     };
+  }
+
+  private resolveTradeType(tradeType: string | null | undefined): 'BUY' | 'SELL' {
+    const normalized = (tradeType ?? '').toUpperCase();
+    if (normalized === 'BUY' || normalized === 'SELL') {
+      return normalized;
+    }
+    else {return 'BUY';}
   }
 }
