@@ -86,6 +86,7 @@ public class TradeController {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("error", e.getMessage()));
         } catch (OrderValidationException e) {
+            notifyRejected(request.getClientId(), "BUY", e.getMessage());
             return ResponseEntity
                     .status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(Map.of("success", false, "status", "REJECTED", "error", e.getRule(),
@@ -155,6 +156,7 @@ public class TradeController {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("error", e.getMessage()));
         } catch (OrderValidationException e) {
+            notifyRejected(request.getClientId(), "SELL", e.getMessage());
             return ResponseEntity
                     .status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(Map.of("success", false, "status", "REJECTED", "error", e.getRule(),
