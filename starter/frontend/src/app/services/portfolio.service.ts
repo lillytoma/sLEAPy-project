@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, of, switchMap, tap } from 'rxjs';
 import { Holding } from '../data/mock-data';
@@ -60,6 +60,10 @@ export class PortfolioService {
   watchlistedSymbols = signal<string[]>([]);
   holdings = signal<Holding[]>([]);
   availableCash = signal(0);
+  netWorth = computed(() => this.availableCash() + this.holdings().reduce(
+    (total, holding) => total + holding.shares * holding.current,
+    0
+  ));
   private apiBaseUrl = `${environment.apiUrl}/api`;
 
   constructor(private http: HttpClient, private marketDataService: MarketDataService) {

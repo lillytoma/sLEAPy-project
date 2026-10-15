@@ -19,6 +19,10 @@ import { PortfolioService } from '../services/portfolio.service';
               <span class="eyebrow">Available cash</span>
               <strong>{{ '$' }}{{ portfolioService.availableCash().toFixed(2) }}</strong>
             </div>
+            <div class="cash-balance">
+              <span class="eyebrow">Net worth</span>
+              <strong>{{ '$' }}{{ portfolioService.netWorth().toFixed(2) }}</strong>
+            </div>
             <a routerLink="/login" class="sign-out">Sign out</a>
           </div>
         </div>

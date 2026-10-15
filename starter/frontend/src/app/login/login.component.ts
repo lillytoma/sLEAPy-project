@@ -59,7 +59,7 @@ export class LoginComponent {
         const initials = response.userInitials || this.email.slice(0, 2).toUpperCase();
         this.authService.userInitials.set(initials);
 
-        this.router.navigate(['/dashboard']);
+        void this.router.navigateByUrl('/dashboard/home');
       },
       error: (err) => {
         this.isLoading.set(false);

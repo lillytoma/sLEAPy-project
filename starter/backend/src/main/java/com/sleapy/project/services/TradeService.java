@@ -1,11 +1,7 @@
 package com.sleapy.project.services;
 
-import com.sleapy.project.exceptions.InsufficientCashException;
-import com.sleapy.project.exceptions.InsufficientSharesException;
 import com.sleapy.project.mappers.ClientMapper;
 import com.sleapy.project.mappers.HoldingMapper;
-import com.sleapy.project.mappers.InstrumentMapper;
-import com.sleapy.project.mappers.MarketPriceMapper;
 import com.sleapy.project.mappers.OrderMapper;
 import com.sleapy.project.mappers.OrderStatusMapper;
 import com.sleapy.project.models.dtos.BuyOrderRequestDTO;
@@ -16,296 +12,124 @@ import com.sleapy.project.models.entities.HoldingEntity;
 import com.sleapy.project.models.entities.InstrumentEntity;
 import com.sleapy.project.models.entities.OrderEntity;
 import com.sleapy.project.models.entities.OrderStatus;
-
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:4200")
 public class TradeService {
-
+    private final OrderBusinessRuleValidationService orderValidationService;
     private final ClientMapper clientMapper;
-    private final InstrumentMapper instrumentMapper;
-    private final MarketPriceMapper marketPriceMapper;
     private final HoldingMapper holdingMapper;
     private final OrderMapper orderMapper;
     private final OrderStatusMapper orderStatusMapper;
     private final OrderStatusNotificationService orderStatusNotificationService;
-    @Autowired 
-    private final PriceService priceService;
 
-    /**
-     * Execute a BUY order for the client.
-     * 
-     * Validations:
-     * 1. Client exists and is active
-     * 2. Instrument exists
-     * 3. Client has sufficient cash balance
-     * 4. Quantity is positive
-     * 
-     * @param request BuyOrderRequestDTO with clientId, instrumentId, quantity
-     * @return TradeResponseDTO with order details and execution confirmation
-     * @throws NoSuchElementException if client or instrument not found
-     * @throws InsufficientCashException if client doesn't have enough cash
-     * @throws IllegalArgumentException if quantity is invalid
-     */
     @Transactional
     public TradeResponseDTO buyStock(BuyOrderRequestDTO request) {
-        // Validate request
-        if (request.getQuantity() == null || request.getQuantity().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Quantity must be positive");
-        }
+        OrderBusinessRuleValidationService.BuyValidation validation =
+                orderValidationService.validateBuy(request.getClientId(), request.getInstrumentId(), request.getQuantity());
+        ClientEntity client = validation.client();
+        InstrumentEntity instrument = validation.instrument();
+        BigDecimal quantity = validation.quantity();
+        BigDecimal currentPrice = validation.price();
+        BigDecimal totalCost = validation.total();
+        BigDecimal displayPrice = currentPrice.setScale(3, RoundingMode.HALF_UP);
 
-        // Fetch client and validate
-        ClientEntity client = clientMapper.findById(request.getClientId())
-                .orElseThrow(() -> new NoSuchElementException("Client not found with ID: " + request.getClientId()));
+        orderStatusNotificationService.publish(null, request.getClientId(), instrument.getSymbol(),
+                "BUY", "PENDING", "Buy order received");
+        orderStatusNotificationService.publish(null, request.getClientId(), instrument.getSymbol(),
+                "BUY", "ACCEPTED", "Buy order accepted");
 
-        if (client.getClientStatus() == null
-            || client.getClientStatus().getName() == null
-            || !"active".equalsIgnoreCase(client.getClientStatus().getName())) {
-            throw new IllegalArgumentException("Client is not active and cannot trade");
-        }
-
-        // Fetch instrument and validate
-        InstrumentEntity instrument = instrumentMapper.findById(request.getInstrumentId())
-                .orElseThrow(() -> new NoSuchElementException("Instrument not found with ID: " + request.getInstrumentId()));
-
-        orderStatusNotificationService.publish(null, request.getClientId(), instrument.getSymbol(), "BUY", "PENDING", "Buy order received");
-
-        BigDecimal currentPrice = resolveCurrentPrice(instrument);
-
-        // Calculate total cost of purchase
-        BigDecimal totalCost = currentPrice.multiply(request.getQuantity());
-
-        // Validate client has sufficient cash
         BigDecimal cashBalance = BigDecimal.valueOf(client.getCashBalance());
-        if (cashBalance.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InsufficientCashException(
-                "Insufficient cash balance. Required: $" + totalCost +
-                ", Available: $" + cashBalance
-            );
-        }
-        if (cashBalance.compareTo(totalCost) < 0) {
-            throw new InsufficientCashException(
-                    "Insufficient cash balance. Required: $" + totalCost +
-                    ", Available: $" + cashBalance
-            );
-        }
-
-        orderStatusNotificationService.publish(null, request.getClientId(), instrument.getSymbol(), "BUY", "ACCEPTED", "Buy order accepted");
-
-        // Execute transaction in database
-        // 1. Update client cash balance (debit)
         client.setCashBalance(cashBalance.subtract(totalCost).doubleValue());
         clientMapper.update(client);
 
-        // 2. Update or create holding
         Optional<HoldingEntity> existingHolding = holdingMapper.findByClientIdAndInstrumentId(
-                request.getClientId(),
-                request.getInstrumentId()
-        );
-
+                request.getClientId(), request.getInstrumentId());
         if (existingHolding.isPresent()) {
-            // Update existing holding - add quantity
             HoldingEntity holding = existingHolding.get();
-            BigDecimal newQuantity = holding.getQuantityShares().add(request.getQuantity());
-            holding.setQuantityShares(newQuantity);
+            holding.setQuantityShares(holding.getQuantityShares().add(quantity));
             holdingMapper.update(holding);
         } else {
-            // Create new holding
-            HoldingEntity newHolding = new HoldingEntity();
-            newHolding.setClient(client);
-            newHolding.setInstrument(instrument);
-            newHolding.setQuantityShares(request.getQuantity());
-            newHolding.setPurchasePrice(currentPrice);
-            holdingMapper.save(newHolding);
+            HoldingEntity holding = new HoldingEntity();
+            holding.setClient(client);
+            holding.setInstrument(instrument);
+            holding.setQuantityShares(quantity);
+            holding.setPurchasePrice(currentPrice);
+            holdingMapper.save(holding);
         }
 
-        // 3. Create order record (for transaction history)
-        OrderEntity order = new OrderEntity();
-        order.setClient(client);
-        order.setInstrument(instrument);
-        order.setQuantity(request.getQuantity());
-        order.setTimeOfPurchase(LocalDate.now());
-        order.setPurchasePrice(currentPrice);
-        order.setTradeType("BUY");
-        
-        // Set order status to "Filled" (ID = 2 based on seeded lookup data)
-        OrderStatus filledStatus = orderStatusMapper.findById(2L)
-            .orElseThrow(() -> new IllegalStateException("Order status ID 2 (Filled) not found"));
-        order.setStatus(filledStatus);
-        
-        orderMapper.save(order);
+        OrderEntity order = createOrder(client, instrument, quantity, currentPrice, "BUY");
+        orderStatusNotificationService.publish(order.getId(), request.getClientId(), instrument.getSymbol(),
+                "BUY", "FILLED", "Buy order filled");
 
-        orderStatusNotificationService.publish(order.getId(), request.getClientId(), instrument.getSymbol(), "BUY", "FILLED", "Buy order filled");
-
-        // Build response
-        return new TradeResponseDTO(
-                order.getId(),
-                request.getClientId(),
-                instrument.getSymbol(),
-                "BUY",
-                request.getQuantity(),
-                currentPrice,
-                totalCost,
-                LocalDate.now(),
-                "FILLED",
-                "Successfully purchased " + request.getQuantity() + " shares of " + instrument.getSymbol() +
-                        " at $" + currentPrice + " per share"
-        );
+        return new TradeResponseDTO(order.getId(), request.getClientId(), instrument.getSymbol(), "BUY",
+                quantity, currentPrice, totalCost, LocalDate.now(), "FILLED",
+                "Successfully purchased " + quantity + " shares of " + instrument.getSymbol()
+                        + " at $" + displayPrice + " per share");
     }
 
-    /**
-     * Execute a SELL order for the client.
-     * 
-     * Validations:
-     * 1. Client exists and is active
-     * 2. Instrument exists
-     * 3. Client owns the instrument
-     * 4. Client has sufficient shares to sell
-     * 5. Quantity is positive
-     * 
-     * @param request SellOrderRequestDTO with clientId, instrumentId, quantity
-     * @return TradeResponseDTO with order details and execution confirmation
-     * @throws NoSuchElementException if client, instrument, or holding not found
-     * @throws InsufficientSharesException if client doesn't own enough shares
-     * @throws IllegalArgumentException if quantity is invalid
-     */
     @Transactional
     public TradeResponseDTO sellStock(SellOrderRequestDTO request) {
-        // Validate request
-        if (request.getQuantity() == null || request.getQuantity().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Quantity must be positive");
-        }
+        OrderBusinessRuleValidationService.SellValidation validation =
+                orderValidationService.validateSell(request.getClientId(), request.getInstrumentId(), request.getQuantity());
+        ClientEntity client = validation.client();
+        InstrumentEntity instrument = validation.instrument();
+        HoldingEntity holding = validation.holding();
+        BigDecimal quantity = validation.quantity();
+        BigDecimal currentPrice = validation.price();
+        BigDecimal totalProceeds = validation.total();
+        BigDecimal displayPrice = currentPrice.setScale(3, RoundingMode.HALF_UP);
 
-        // Fetch client and validate
-        ClientEntity client = clientMapper.findById(request.getClientId())
-                .orElseThrow(() -> new NoSuchElementException("Client not found with ID: " + request.getClientId()));
+        orderStatusNotificationService.publish(null, request.getClientId(), instrument.getSymbol(),
+                "SELL", "PENDING", "Sell order received");
+        orderStatusNotificationService.publish(null, request.getClientId(), instrument.getSymbol(),
+                "SELL", "ACCEPTED", "Sell order accepted");
 
-        if (client.getClientStatus() == null
-            || client.getClientStatus().getName() == null
-            || !"active".equalsIgnoreCase(client.getClientStatus().getName())) {
-            throw new IllegalArgumentException("Client is not active and cannot trade");
-        }
-
-        // Fetch instrument and validate
-        InstrumentEntity instrument = instrumentMapper.findById(request.getInstrumentId())
-                .orElseThrow(() -> new NoSuchElementException("Instrument not found with ID: " + request.getInstrumentId()));
-
-        orderStatusNotificationService.publish(null, request.getClientId(), instrument.getSymbol(), "SELL", "PENDING", "Sell order received");
-
-        // Check if client owns this instrument
-        HoldingEntity holding = holdingMapper.findByClientIdAndInstrumentId(
-                request.getClientId(),
-                request.getInstrumentId()
-        ).orElseThrow(() -> new NoSuchElementException(
-                "Client does not own " + instrument.getSymbol()
-        ));
-
-        // Validate client has sufficient shares
-        if (holding.getQuantityShares() == null || holding.getQuantityShares().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InsufficientSharesException(
-                "Insufficient shares. Owned: 0, Attempting to sell: " + request.getQuantity()
-            );
-        }
-        if (holding.getQuantityShares().compareTo(request.getQuantity()) < 0) {
-            throw new InsufficientSharesException(
-                    "Insufficient shares. Owned: " + holding.getQuantityShares() +
-                    ", Attempting to sell: " + request.getQuantity()
-            );
-        }
-
-        orderStatusNotificationService.publish(null, request.getClientId(), instrument.getSymbol(), "SELL", "ACCEPTED", "Sell order accepted");
-
-        BigDecimal currentPrice = resolveCurrentPrice(instrument);
-
-        // Calculate proceeds from sale
-        BigDecimal totalProceeds = currentPrice.multiply(request.getQuantity());
-
-        // Execute transaction in database
-        // 1. Update client cash balance (credit)
         BigDecimal cashBalance = BigDecimal.valueOf(client.getCashBalance());
         client.setCashBalance(cashBalance.add(totalProceeds).doubleValue());
         clientMapper.update(client);
 
-        // 2. Update holding - reduce quantity or delete if zero
-        BigDecimal newQuantity = holding.getQuantityShares().subtract(request.getQuantity());
-        if (newQuantity.compareTo(BigDecimal.ZERO) <= 0) {
-            // Delete holding if no shares remain
+        BigDecimal remainingQuantity = holding.getQuantityShares().subtract(quantity);
+        if (remainingQuantity.compareTo(BigDecimal.ZERO) <= 0) {
             holdingMapper.deleteById(holding.getId());
         } else {
-            // Update holding with reduced quantity
-            holding.setQuantityShares(newQuantity);
+            holding.setQuantityShares(remainingQuantity);
             holdingMapper.update(holding);
         }
 
-        // 3. Create order record (for transaction history)
+        OrderEntity order = createOrder(client, instrument, quantity, currentPrice, "SELL");
+        orderStatusNotificationService.publish(order.getId(), request.getClientId(), instrument.getSymbol(),
+                "SELL", "FILLED", "Sell order filled");
+
+        return new TradeResponseDTO(order.getId(), request.getClientId(), instrument.getSymbol(), "SELL",
+                quantity, currentPrice, totalProceeds, LocalDate.now(), "FILLED",
+                "Successfully sold " + quantity + " shares of " + instrument.getSymbol()
+                        + " at $" + displayPrice + " per share");
+    }
+
+    private OrderEntity createOrder(ClientEntity client, InstrumentEntity instrument,
+                                    BigDecimal quantity, BigDecimal price, String tradeType) {
         OrderEntity order = new OrderEntity();
         order.setClient(client);
         order.setInstrument(instrument);
-        order.setQuantity(request.getQuantity());
+        order.setQuantity(quantity);
         order.setTimeOfPurchase(LocalDate.now());
-        order.setPurchasePrice(currentPrice);
-        order.setTradeType("SELL");
-        
-        // Set order status to "Filled" (ID = 2 based on seeded lookup data)
+        order.setPurchasePrice(price);
+        order.setTradeType(tradeType);
         OrderStatus filledStatus = orderStatusMapper.findById(2L)
-            .orElseThrow(() -> new IllegalStateException("Order status ID 2 (Filled) not found"));
+                .orElseThrow(() -> new IllegalStateException("Order status ID 2 (Filled) not found"));
         order.setStatus(filledStatus);
-        
         orderMapper.save(order);
-
-        orderStatusNotificationService.publish(order.getId(), request.getClientId(), instrument.getSymbol(), "SELL", "FILLED", "Sell order filled");
-
-        // Build response
-        return new TradeResponseDTO(
-                order.getId(),
-                request.getClientId(),
-                instrument.getSymbol(),
-                "SELL",
-                request.getQuantity(),
-                currentPrice,
-                totalProceeds,
-                LocalDate.now(),
-                "FILLED",
-                "Successfully sold " + request.getQuantity() + " shares of " + instrument.getSymbol() +
-                        " at $" + currentPrice + " per share"
-        );
-    }
-
-    private BigDecimal resolveCurrentPrice(InstrumentEntity instrument) {
-        BigDecimal currentPrice;
-        try {
-            currentPrice = priceService.getCurrentPrice(instrument.getSymbol());
-        } catch (UnsupportedOperationException ex) {
-            currentPrice = null;
-        }
-
-        if ((currentPrice == null || currentPrice.compareTo(BigDecimal.ZERO) <= 0)
-                ) {
-            currentPrice = marketPriceMapper.findBySymbol(instrument.getSymbol())
-                    .map(price -> price.getCurrentPrice())
-                    .orElse(null);
-        }
-
-        if (currentPrice == null || currentPrice.compareTo(BigDecimal.ZERO) <= 0) {
-            if (instrument.getCurrentPrice() != null
-                    && instrument.getCurrentPrice().compareTo(BigDecimal.ZERO) > 0) {
-                return instrument.getCurrentPrice();
-            }
-            throw new IllegalArgumentException("Invalid price for instrument: " + instrument.getSymbol());
-        }
-
-        return currentPrice;
+        return order;
     }
 }
