@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.Optional;
 
 @Service 
 public class JwtService {
@@ -57,6 +58,22 @@ public class JwtService {
             return true;
         } catch (JwtException | IllegalArgumentException ex) {
             return false;
+        }
+    }
+
+    public Optional<Long> getUserId(String authorizationHeader) {
+        if (!verifyAuthorizationHeader(authorizationHeader)) {
+            return Optional.empty();
+        }
+        String token = authorizationHeader.regionMatches(true, 0, "Bearer ", 0, 7)
+            ? authorizationHeader.substring(7).trim()
+            : authorizationHeader;
+        try {
+            Object userId = Jwts.parser().verifyWith(getSigningKey()).build()
+                .parseSignedClaims(token).getPayload().get("userId");
+            return userId instanceof Number number ? Optional.of(number.longValue()) : Optional.empty();
+        } catch (JwtException | IllegalArgumentException ex) {
+            return Optional.empty();
         }
     }
 

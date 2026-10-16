@@ -75,6 +75,7 @@ export class AuthService {
     localStorage.removeItem('user_id');
     localStorage.removeItem('user_email');
     localStorage.removeItem('account_frozen');
+    localStorage.removeItem('is_admin');
     this.isLoggedIn.set(false);
     this.userName.set('');
     this.userInitials.set('');

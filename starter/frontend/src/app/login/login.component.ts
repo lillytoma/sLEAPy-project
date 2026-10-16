@@ -42,6 +42,7 @@ export class LoginComponent {
         localStorage.setItem('user_id', String(response.id));
         localStorage.setItem('user_email', this.email);
         localStorage.setItem('account_frozen', String(response.frozen === true));
+        localStorage.setItem('is_admin', String(response.admin === true));
         
         const userId = response?.userID ?? response?.userId;
         const token = response?.token;
@@ -60,7 +61,7 @@ export class LoginComponent {
         const initials = response.userInitials || this.email.slice(0, 2).toUpperCase();
         this.authService.userInitials.set(initials);
 
-        void this.router.navigateByUrl('/dashboard/home');
+        void this.router.navigateByUrl(response.admin === true ? '/dashboard/admin' : '/dashboard/home');
       },
       error: (err) => {
         this.isLoading.set(false);
@@ -78,4 +79,3 @@ export class LoginComponent {
     });
   }
 }
-

@@ -14,6 +14,7 @@ import { WatchlistComponent } from './dashboard/watchlist/watchlist.component';
 import { HistoryComponent } from './dashboard/history/history.component';
 import { SettingsComponent } from './dashboard/settings/settings.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
+import { AdminComponent } from './dashboard/admin/admin.component';
 
 
 const authGuard = () => {
@@ -41,6 +42,7 @@ export const routes: Routes = [
       { path: 'watchlist', component: WatchlistComponent },
       
       { path: 'settings', component: SettingsComponent },
+      { path: 'admin', component: AdminComponent },
     ],
   },
   { path: '**', redirectTo: '' },

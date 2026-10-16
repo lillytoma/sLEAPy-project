@@ -12,5 +12,6 @@ public class SignUpResponseDTO{
     private Long id;           // User unique ID
     private String jwtToken;   // JWT token
     private boolean frozen;    // Whether the account is currently frozen
+    private boolean admin;     // Whether the authenticated user is an administrator
 
 }

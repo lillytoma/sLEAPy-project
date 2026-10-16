@@ -69,11 +69,13 @@ def load_to_warehouse(dataframes, engine, schema_name="sleapy_analytics"):
                     for idx, row in df.iterrows():
                         # Build column list with quoted identifiers
                         cols = ', '.join([f'"{c}"' for c in df.columns])
-                        # Build values list, converting None to NULL
-                        values_str = ', '.join([f"'{str(v)}'" if pd.notna(v) else 'NULL' for v in row.values])
-                        # Execute INSERT statement
-                        insert_sql = f"INSERT INTO {schema_name}.{table_name} ({cols}) VALUES ({values_str})"
-                        connection.execute(text(insert_sql))
+                        value_names = [f":value_{index}" for index in range(len(row))]
+                        insert_sql = f"INSERT INTO {schema_name}.{table_name} ({cols}) VALUES ({', '.join(value_names)})"
+                        values = {
+                            f"value_{index}": None if pd.isna(value) else value
+                            for index, value in enumerate(row.values)
+                        }
+                        connection.execute(text(insert_sql), values)
             
             # Log successful table load
             print(f"Loaded dataframe '{name}' to {schema_name}.{table_name}")
