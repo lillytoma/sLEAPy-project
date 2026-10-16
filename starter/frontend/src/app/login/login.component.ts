@@ -41,6 +41,7 @@ export class LoginComponent {
         localStorage.setItem('auth_token', response.jwtToken);
         localStorage.setItem('user_id', String(response.id));
         localStorage.setItem('user_email', this.email);
+        localStorage.setItem('account_frozen', String(response.frozen === true));
         
         this.authService.isLoggedIn.set(true);
         this.isLoading.set(false);

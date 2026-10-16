@@ -1,5 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { ThemeService } from '../../services/theme.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-settings',
@@ -79,9 +81,99 @@ import { ThemeService } from '../../services/theme.service';
           </button>
         </div>
       </section>
+
+      <section class="panel settings-panel settings-account-panel" aria-labelledby="account-heading">
+        <div class="settings-section-heading">
+          <div>
+            <div class="eyebrow">Account control</div>
+            <h2 id="account-heading">Account status</h2>
+          </div>
+          <span class="settings-section-icon settings-section-icon-warning" aria-hidden="true">!</span>
+        </div>
+        <div class="settings-option">
+          <div>
+            <h3>{{ frozen() ? 'Unfreeze account' : 'Freeze account' }}</h3>
+            <p>{{ frozen() ? 'Your account is frozen. Unfreeze it to resume normal activity.' : 'Temporarily pause account activity. You can log back in and unfreeze it yourself.' }}</p>
+          </div>
+          <button type="button" class="button settings-account-button" [class.button-primary]="frozen()"
+            [disabled]="isSaving()" (click)="toggleFreeze()">
+            {{ isSaving() ? 'Saving...' : (frozen() ? 'Unfreeze' : 'Freeze account') }}
+          </button>
+        </div>
+        <div class="settings-option settings-danger-option">
+          <div>
+            <h3>Delete account</h3>
+            <p>Permanently delete your account, holdings, and transaction history. This cannot be undone.</p>
+          </div>
+          <button type="button" class="button settings-delete-button" [disabled]="isSaving()" (click)="deleteAccount()">Delete account</button>
+        </div>
+        @if (accountError()) {
+          <p class="settings-account-error" role="alert">{{ accountError() }}</p>
+        }
+      </section>
     </div>
   `
 })
 export class SettingsComponent {
-  constructor(public themeService: ThemeService) {}
+  frozen = signal(false);
+  isSaving = signal(false);
+  accountError = signal('');
+
+  constructor(
+    public themeService: ThemeService,
+    private authService: AuthService,
+    private router: Router
+  ) {
+    const clientId = this.getClientId();
+    if (clientId !== null) {
+      this.authService.getAccountStatus(clientId).subscribe({
+        next: (status) => this.frozen.set(status.frozen),
+        error: () => this.accountError.set('Account status could not be loaded.')
+      });
+    }
+  }
+
+  toggleFreeze(): void {
+    const clientId = this.getClientId();
+    if (clientId === null) return;
+
+    this.isSaving.set(true);
+    this.accountError.set('');
+    const request = this.frozen()
+      ? this.authService.unfreezeAccount(clientId)
+      : this.authService.freezeAccount(clientId);
+    request.subscribe({
+      next: (status) => {
+        this.frozen.set(status.frozen);
+        this.isSaving.set(false);
+        if (status.frozen) {
+          this.authService.logout();
+        }
+      },
+      error: () => {
+        this.isSaving.set(false);
+        this.accountError.set('The account status could not be changed. Please try again.');
+      }
+    });
+  }
+
+  deleteAccount(): void {
+    const clientId = this.getClientId();
+    if (clientId === null || !window.confirm('Delete your account permanently? This action cannot be undone.')) return;
+
+    this.isSaving.set(true);
+    this.accountError.set('');
+    this.authService.deleteAccount(clientId).subscribe({
+      next: () => this.authService.logout(),
+      error: () => {
+        this.isSaving.set(false);
+        this.accountError.set('The account could not be deleted. Please try again.');
+      }
+    });
+  }
+
+  private getClientId(): number | null {
+    const clientId = Number(localStorage.getItem('user_id'));
+    return Number.isFinite(clientId) && clientId > 0 ? clientId : null;
+  }
 }

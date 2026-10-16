@@ -232,8 +232,16 @@ input, select, textarea {
 .settings-section-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
 .settings-section-heading h2 { margin-top: 4px; font-size: 18px; font-weight: 700; }
 .settings-section-icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; color: var(--primary-foreground); background: var(--primary); font-size: 19px; }
+.settings-section-icon-warning { color: #fff; background: var(--accent); }
 .settings-option { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 20px 0; border-bottom: 1px solid var(--border); }
 .settings-option:last-child { border-bottom: 0; padding-bottom: 0; }
+.settings-account-panel { margin-top: 4px; }
+.settings-account-button { min-width: 118px; color: var(--primary); background: var(--muted); }
+.settings-account-button:disabled, .settings-delete-button:disabled { cursor: wait; opacity: .6; }
+.settings-delete-button { min-width: 118px; color: var(--error); background: transparent; border: 1px solid var(--error); }
+.settings-delete-button:hover { color: #fff; background: var(--error); }
+.settings-danger-option { border-bottom: 0; }
+.settings-account-error { padding: 10px 12px; border-radius: 6px; color: var(--error); background: color-mix(in srgb, var(--error) 12%, transparent); font-size: 12px; }
 .settings-option h3 { font-size: 14px; font-weight: 700; }
 .settings-option p, .settings-help { margin-top: 5px; color: var(--muted-foreground); font-size: 12px; line-height: 1.5; }
 .settings-help { margin: 17px 0 0; }
