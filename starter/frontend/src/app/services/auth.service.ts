@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 // Service for handling user authentication, including login and logout functionality.
@@ -43,6 +43,22 @@ export class AuthService {
     return this.http.post(`${this.apiURL}/signup`, signupData);
   }
 
+  getAccountStatus(clientId: number): Observable<{ frozen: boolean }> {
+    return this.http.get<{ frozen: boolean }>(`${environment.apiUrl}/api/clients/${clientId}/account-status`);
+  }
+
+  freezeAccount(clientId: number): Observable<{ frozen: boolean }> {
+    return this.http.post<{ frozen: boolean }>(`${environment.apiUrl}/api/clients/${clientId}/freeze`, {});
+  }
+
+  unfreezeAccount(clientId: number): Observable<{ frozen: boolean }> {
+    return this.http.post<{ frozen: boolean }>(`${environment.apiUrl}/api/clients/${clientId}/unfreeze`, {});
+  }
+
+  deleteAccount(clientId: number): Observable<void> {
+    return this.http.delete<void>(`${environment.apiUrl}/api/clients/${clientId}`);
+  }
+
   // Mock login for demo purposes (used by landing page)
   mockLogin(email: string, password: string): boolean {
     if (email === 'demo@sleapystocks.com' && password === 'password123') {
@@ -61,6 +77,7 @@ export class AuthService {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_id');
     localStorage.removeItem('user_email');
+    localStorage.removeItem('account_frozen');
     this.isLoggedIn.set(false);
     this.userName.set('');
     this.userInitials.set('');

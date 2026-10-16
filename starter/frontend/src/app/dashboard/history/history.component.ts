@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FrogMascotComponent } from '../../shared/frog-mascot.component';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+
 import { environment } from '../../../environments/environment';
 
 interface OrderApiResponse {
@@ -37,6 +38,7 @@ export class HistoryComponent implements OnInit {
   hasNextPage = false;
   isLoading = false;
   private clientId: number | null = null;
+  private readonly baseApiUrl = `${environment.apiUrl}/api`;
 
   constructor(private http: HttpClient) {}
 
@@ -67,10 +69,6 @@ export class HistoryComponent implements OnInit {
   }
 
   private loadTransactions(clientId: number, page: number): void {
-    const jwtToken = localStorage.getItem('auth_token');
-    const headers = jwtToken
-      ? new HttpHeaders({ Authorization: `Bearer ${jwtToken}` })
-      : new HttpHeaders();
     const params = new HttpParams()
       .set('clientId', String(clientId))
       .set('page', String(page))
@@ -79,7 +77,7 @@ export class HistoryComponent implements OnInit {
     this.isLoading = true;
   
     this.http
-      .get<OrderApiResponse[]>(`${environment.apiUrl}/api/orders/`, { headers, params })
+      .get<OrderApiResponse[]>(`${this.baseApiUrl}/orders/`, { params })
       .subscribe({
         next: (orders) => {
           // Guard against overshooting the last page when count is an exact page multiple.

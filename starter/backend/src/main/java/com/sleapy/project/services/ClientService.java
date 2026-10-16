@@ -10,6 +10,7 @@ import com.sleapy.project.exceptions.InvalidEmailFormatException;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.math.BigDecimal;
@@ -19,6 +20,9 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:4200")
 public class ClientService {
+
+    private static final long ACTIVE_STATUS_ID = 1L;
+    private static final long FROZEN_STATUS_ID = 2L;
 
     private final ClientValidator clientValidator;
 
@@ -56,6 +60,40 @@ public class ClientService {
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         //checks the incoming hashed password against the stored hash and returns true if they match, (bool).
         return passwordEncoder.matches(rawPassword, client.getPasswordHash());
+    }
+
+    public boolean isFrozen(ClientEntity client) {
+        return client.getClientStatus() != null
+                && "suspended".equalsIgnoreCase(client.getClientStatus().getName());
+    }
+
+    public boolean isFrozen(Long clientId) {
+        ClientEntity client = clientMapper.findById(clientId)
+                .orElseThrow(() -> new java.util.NoSuchElementException("Client not found"));
+        return isFrozen(client);
+    }
+
+    public void freeze(Long clientId) {
+        requireClient(clientId);
+        clientMapper.updateStatus(clientId, FROZEN_STATUS_ID);
+    }
+
+    public void unfreeze(Long clientId) {
+        requireClient(clientId);
+        clientMapper.updateStatus(clientId, ACTIVE_STATUS_ID);
+    }
+
+    @Transactional
+    public void deleteAccount(Long clientId) {
+        requireClient(clientId);
+        clientMapper.deleteHoldingsByClientId(clientId);
+        clientMapper.deleteOrdersByClientId(clientId);
+        clientMapper.deleteById(clientId);
+    }
+
+    private ClientEntity requireClient(Long clientId) {
+        return clientMapper.findById(clientId)
+                .orElseThrow(() -> new java.util.NoSuchElementException("Client not found"));
     }
 
     public boolean isUniqueEmail(String email) throws InvalidEmailFormatException {

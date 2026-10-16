@@ -93,6 +93,20 @@
     WHERE Client_ID = #{id}
   </update>
 
+  <update id="updateStatus">
+    UPDATE Clients
+    SET ClientStatus_ID = #{statusId}
+    WHERE Client_ID = #{id}
+  </update>
+
+  <delete id="deleteHoldingsByClientId" parameterType="Long">
+    DELETE FROM Holdings WHERE Client_ID = #{clientId}
+  </delete>
+
+  <delete id="deleteOrdersByClientId" parameterType="Long">
+    DELETE FROM Orders WHERE Client_ID = #{clientId}
+  </delete>
+
   <!-- Delete client by ID -->
   <delete id="deleteById" parameterType="Long">
     DELETE FROM Clients WHERE Client_ID = #{id}
