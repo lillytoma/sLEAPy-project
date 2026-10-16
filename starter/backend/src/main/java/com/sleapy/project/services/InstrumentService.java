@@ -42,18 +42,19 @@ public class InstrumentService {
     }
 
     /**
-     * Search instruments by symbol or name (case-insensitive, partial match).
+     * Search instruments by ticker or company name (case-insensitive, partial match).
      * @param query search term (symbol or company name)
      * @return List of matching InstrumentWithPriceDTO objects
      */
-    public List<InstrumentWithPriceDTO> searchInstruments(String query) {
+    public List<InstrumentWithPriceDTO> searchInstruments(String query, String field) {
         List<InstrumentEntity> allInstruments = instrumentMapper.findAll();
         String lowerQuery = query.toLowerCase().trim();
 
         List<InstrumentWithPriceDTO> localResults = allInstruments.stream()
                 .filter(instrument ->
-                        instrument.getSymbol().toLowerCase().contains(lowerQuery) ||
-                        instrument.getSymbolName().toLowerCase().contains(lowerQuery)
+                        field.equals("ticker")
+                                ? instrument.getSymbol().toLowerCase().contains(lowerQuery)
+                                : instrument.getSymbolName().toLowerCase().contains(lowerQuery)
                 )
                 .map(instrument -> {
                     Optional<MarketPriceEntity> price = marketPriceMapper.findBySymbol(instrument.getSymbol());
@@ -65,6 +66,11 @@ public class InstrumentService {
                     .map(InstrumentWithPriceDTO::getSymbol)
                     .collect(Collectors.toSet());
                 var yahooResults = priceService.search(query);
+                yahooResults = yahooResults.stream()
+                    .filter(result -> field.equals("ticker")
+                        ? result.getSymbol() != null && result.getSymbol().toLowerCase().contains(lowerQuery)
+                        : result.getSymbolName() != null && result.getSymbolName().toLowerCase().contains(lowerQuery))
+                    .collect(Collectors.toList());
                 var yahooSymbols = yahooResults.stream()
                     .filter(result -> result.getSymbol() != null)
                         .map(result -> result.getSymbol().toUpperCase())

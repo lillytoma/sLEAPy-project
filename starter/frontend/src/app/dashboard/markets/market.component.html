@@ -4,7 +4,21 @@
         <h1 class="text-2xl font-semibold" style="color:var(--foreground)">Markets</h1>
       </div>
       <!-- Search bar with auto-suggest -->
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="flex rounded-md border p-0.5" style="border-color:var(--border);background-color:var(--background)">
+          <button (click)="setSearchMode('ticker')"
+            class="px-3 py-1.5 rounded text-sm font-medium transition-colors"
+            [style.background-color]="searchMode() === 'ticker' ? 'var(--primary)' : 'transparent'"
+            [style.color]="searchMode() === 'ticker' ? '#fff' : 'var(--muted-foreground)'">
+            Ticker
+          </button>
+          <button (click)="setSearchMode('company')"
+            class="px-3 py-1.5 rounded text-sm font-medium transition-colors"
+            [style.background-color]="searchMode() === 'company' ? 'var(--primary)' : 'transparent'"
+            [style.color]="searchMode() === 'company' ? '#fff' : 'var(--muted-foreground)'">
+            Company name
+          </button>
+        </div>
         <div class="relative flex-1 max-w-md">
           <svg class="absolute left-3 top-1/2 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--muted-foreground)">
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
@@ -13,7 +27,7 @@
             [ngModel]="searchQuery()" 
             (ngModelChange)="onSearch($event)"
             (blur)="closeSuggestions()"
-            placeholder="Search by symbol or name"
+            [placeholder]="searchMode() === 'ticker' ? 'Search by ticker' : 'Search by company name'"
             class="w-full pl-9 pr-4 py-2.5 rounded-md text-sm border outline-none"
             style="background-color:var(--card);color:var(--foreground);border-color:var(--border)" />
           
