@@ -1,4 +1,5 @@
 export interface MarketStock {
+  instrumentId?: number;
   symbol: string;
   name: string;
   chg: number;

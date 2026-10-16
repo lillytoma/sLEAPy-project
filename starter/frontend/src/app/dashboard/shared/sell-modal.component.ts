@@ -36,10 +36,10 @@ export class SellModalComponent {
 
   calculatedShares = computed(() => {
     if (this.inputMode() === 'shares') {
-      return Math.min(this.sharesToSell() || 0, this.sharesOwned);
+      return Number(Math.min(this.sharesToSell() || 0, this.sharesOwned).toFixed(3));
     } else {
-      const shares = Math.floor((this.moneyAmount() || 0) / this.effectivePrice());
-      return Math.min(shares, this.sharesOwned);
+      const shares = (this.moneyAmount() || 0) / this.effectivePrice();
+      return Number(Math.min(shares, this.sharesOwned).toFixed(3));
     }
   });
 
@@ -48,12 +48,15 @@ export class SellModalComponent {
   moneyEarned = computed(() => this.estimatedProceeds());
 
   setSharesByPct(pct: number): void {
-    this.sharesToSell.set(Math.floor(this.sharesOwned * pct / 100));
+    const shares = pct === 100
+      ? this.sharesOwned
+      : Math.round(this.sharesOwned * pct / 100 * 1000) / 1000;
+    this.sharesToSell.set(shares);
     this.inputMode.set('shares');
   }
 
   executeSell(): void {
-    if (this.calculatedShares() < 1 || this.calculatedShares() > this.sharesOwned) return;
+    if (this.calculatedShares() < 0.001 || this.calculatedShares() > this.sharesOwned) return;
 
     this.loading.set(true);
     this.error.set(null);
