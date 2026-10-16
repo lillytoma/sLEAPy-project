@@ -34,6 +34,8 @@ server:
 # that wraps yfinance for live stock quotes.
 price-service:
   base-url: ${PRICE_SERVICE_URL:http://localhost:8000}
+analyst:
+  refresh-ms: ${ANALYST_REFRESH_MS:10000}
 # spring:
 #   datasource:
 #     url: jdbc:h2:mem:mydb

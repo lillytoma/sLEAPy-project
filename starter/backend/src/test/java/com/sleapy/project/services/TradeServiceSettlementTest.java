@@ -21,7 +21,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.sleapy.project.exceptions.InsufficientCashException;
+import com.sleapy.project.exceptions.OrderValidationException;
 import com.sleapy.project.mappers.ClientMapper;
 import com.sleapy.project.mappers.HoldingMapper;
 import com.sleapy.project.mappers.InstrumentMapper;
@@ -63,6 +63,9 @@ class TradeServiceSettlementTest {
     @Mock
     private PriceService priceService;
 
+    @Mock
+    private OrderBusinessRuleValidationService orderValidationService;
+
     @InjectMocks
     private TradeService tradeService;
 
@@ -89,15 +92,15 @@ class TradeServiceSettlementTest {
     }
 
     private void stubQuoteAndSettlementDependencies() {
-        when(clientMapper.findById(1L)).thenReturn(Optional.of(client));
-        when(instrumentMapper.findById(2L)).thenReturn(Optional.of(instrument));
-        when(orderStatusMapper.findById(2L)).thenReturn(Optional.of(filledStatus));
-        when(priceService.getCurrentPrice("AAPL")).thenReturn(new BigDecimal("100.00"));
+        when(orderValidationService.validateBuy(1L, 2L, new BigDecimal("2")))
+                .thenReturn(new OrderBusinessRuleValidationService.BuyValidation(
+                        client, instrument, new BigDecimal("2"), new BigDecimal("100.00"), new BigDecimal("200.00")));
     }
 
     @Test
     void buySettlesCashHoldingAndPermanentHistoryAtExecutionPrice() {
         stubQuoteAndSettlementDependencies();
+        when(orderStatusMapper.findById(2L)).thenReturn(Optional.of(filledStatus));
         when(holdingMapper.findByClientIdAndInstrumentId(1L, 2L)).thenReturn(Optional.empty());
         doAnswer(invocation -> {
             invocation.getArgument(0, OrderEntity.class).setId(10L);
@@ -129,10 +132,13 @@ class TradeServiceSettlementTest {
 
     @Test
     void sellSettlesCashHoldingAndPermanentHistoryAtExecutionPrice() {
-        stubQuoteAndSettlementDependencies();
+        when(orderStatusMapper.findById(2L)).thenReturn(Optional.of(filledStatus));
         client.setCashBalance(500.00);
         HoldingEntity holding = new HoldingEntity(9L, client, instrument, new BigDecimal("5"), new BigDecimal("80.00"));
-        when(holdingMapper.findByClientIdAndInstrumentId(1L, 2L)).thenReturn(Optional.of(holding));
+        when(orderValidationService.validateSell(1L, 2L, new BigDecimal("2")))
+                .thenReturn(new OrderBusinessRuleValidationService.SellValidation(
+                        client, instrument, holding, new BigDecimal("2"),
+                        new BigDecimal("100.00"), new BigDecimal("200.00")));
         doAnswer(invocation -> {
             invocation.getArgument(0, OrderEntity.class).setId(11L);
             return null;
@@ -155,14 +161,15 @@ class TradeServiceSettlementTest {
 
     @Test
     void insufficientCashRejectsBeforeSettlementMutation() {
-        when(clientMapper.findById(1L)).thenReturn(Optional.of(client));
-        when(instrumentMapper.findById(2L)).thenReturn(Optional.of(instrument));
-        when(priceService.getCurrentPrice("AAPL")).thenReturn(new BigDecimal("100.00"));
         client.setCashBalance(50.00);
+        when(orderValidationService.validateBuy(1L, 2L, new BigDecimal("2")))
+                .thenThrow(new OrderValidationException(
+                        "INSUFFICIENT_CASH", "Insufficient cash balance"));
 
-        assertThrows(InsufficientCashException.class,
+        OrderValidationException exception = assertThrows(OrderValidationException.class,
                 () -> tradeService.buyStock(new BuyOrderRequestDTO(1L, 2L, new BigDecimal("2"))));
 
+        assertEquals("INSUFFICIENT_CASH", exception.getRule());
         verify(clientMapper, never()).update(any(ClientEntity.class));
         verify(holdingMapper, never()).save(any(HoldingEntity.class));
         verify(holdingMapper, never()).update(any(HoldingEntity.class));

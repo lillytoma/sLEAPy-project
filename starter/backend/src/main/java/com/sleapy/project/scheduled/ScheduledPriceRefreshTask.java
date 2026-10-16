@@ -4,6 +4,7 @@ import com.sleapy.project.websocket.PriceWebSocketController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
@@ -11,6 +12,10 @@ import org.springframework.stereotype.Component;
  * Runs every 5 seconds to fetch latest prices and push to connected clients.
  */
 @Component
+@ConditionalOnProperty(
+        name = "spring.task.scheduling.enabled",
+        havingValue = "true",
+        matchIfMissing = true)
 @RequiredArgsConstructor
 @Slf4j
 public class ScheduledPriceRefreshTask {

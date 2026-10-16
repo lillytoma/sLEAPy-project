@@ -1,0 +1,103 @@
+<div class="analyst-page">
+  <div class="analyst-intro">
+    <div>
+      <div class="analyst-title-row">
+        <p class="eyebrow">Internal analytics</p>
+        <span class="analytics-live"><span></span> Live analytics stream</span>
+      </div>
+      <h1>Activity at a glance<span class="intro-accent">.</span></h1>
+      <p class="page-subtitle">Understand client activity, order flow, and market momentum in one place.</p>
+    </div>
+    <div class="analyst-refresh">
+      <span class="refresh-dot"></span>
+      <span>{{ summary()?.updatedAt ? ('Updated ' + (summary()!.updatedAt | date:'shortTime')) : 'Waiting for analytics data' }}</span>
+      <button type="button" aria-label="Refresh analytics" (click)="analystService.connect()">↻</button>
+    </div>
+  </div>
+
+  @if (dataError()) {
+    <div class="analytics-error" role="alert">{{ dataError() }}</div>
+  }
+
+  <div class="analytics-toolbar">
+    <div class="filter-group">
+      <span class="filter-label">View</span>
+      @for (period of periods; track period) {
+        <button type="button" class="filter-button" [class.is-selected]="selectedPeriod() === period" (click)="setPeriod(period)">{{ period }}</button>
+      }
+    </div>
+    <label class="select-filter">
+      <span>Instrument</span>
+      <select [value]="selectedInstrument()" (change)="setInstrument($any($event.target).value)">
+        @for (instrument of instruments; track instrument) { <option [value]="instrument">{{ instrument }}</option> }
+      </select>
+    </label>
+  </div>
+
+  <div class="analyst-stat-grid">
+    @for (kpi of kpis(); track kpi.label) {
+      <div class="analyst-stat-card">
+        <div class="analyst-stat-top"><span>{{ kpi.label }}</span><b>{{ kpi.icon }}</b></div>
+        <strong>{{ kpi.value }}</strong>
+        <p>{{ kpi.detail }}</p>
+      </div>
+    }
+  </div>
+
+  <div class="analyst-grid analyst-grid-main">
+    <section class="panel analyst-chart-panel">
+      <div class="panel-heading">
+        <div><p class="eyebrow">Order activity</p><h2>Aggregate trading activity</h2></div>
+        <span class="chart-summary">Live snapshot</span>
+      </div>
+      <div class="analytics-coverage">
+        <span class="coverage-icon">⌁</span>
+        <div>
+          <strong>Live aggregate metrics are available</strong>
+          <p>The current analyst view provides total trade volume, total trades, and activity by instrument. It does not expose time buckets for an intraday line chart.</p>
+        </div>
+      </div>
+      <div class="chart-footnote"><span class="trend-up">● Live</span> refreshed from the analytics view every 10 seconds</div>
+    </section>
+
+    <section class="panel instrument-panel">
+      <div class="panel-heading"><div><p class="eyebrow">Instrument mix</p><h2>Most active types</h2></div><span class="period-pill">{{ selectedPeriod() }}</span></div>
+      <div class="donut-layout">
+        <div class="donut-chart" [style.background]="donutStyle()" aria-label="Pie chart of most active instruments" role="img">
+          <div class="donut-hole"><strong>{{ totalTrades().toLocaleString() }}</strong><span>trades</span></div>
+        </div>
+        <div class="donut-legend">
+          @for (item of instrumentActivity(); track item.type) {
+            <div class="legend-item"><span class="legend-key" [style.background]="item.color"></span><span>{{ item.type }}</span><strong>{{ item.share }}%</strong></div>
+          }
+        </div>
+      </div>
+      <div class="insight-callout"><span>✦</span><p><strong>Equities lead activity</strong><br>Nearly half of all trades today.</p></div>
+    </section>
+  </div>
+
+  <div class="analyst-grid analyst-grid-secondary">
+    <section class="panel top-stocks-panel">
+      <div class="panel-heading"><div><p class="eyebrow">By symbol</p><h2>Top 5 most active stocks</h2></div><span class="chart-summary">By trades</span></div>
+      <div class="stock-list">
+        @for (stock of topStocks(); track stock.symbol; let i = $index) {
+          <div class="stock-row">
+            <span class="stock-rank">0{{ i + 1 }}</span>
+            <span class="stock-avatar">{{ stock.symbol.slice(0, 1) }}</span>
+            <div class="stock-name"><strong>{{ stock.symbol }}</strong><span>{{ stock.name }}</span></div>
+            <div class="stock-metric"><strong>{{ stock.trades.toLocaleString() }}</strong><span>trades</span></div>
+            <div class="stock-metric stock-volume"><strong>{{ stock.volume }}</strong><span>volume</span></div>
+            @if (stock.trend !== null) {
+              <span class="stock-trend" [class.is-negative]="stock.trend < 0">{{ stock.trend >= 0 ? '+' : '' }}{{ stock.trend }}%</span>
+            } @else {
+              <span class="stock-trend">—</span>
+            }
+          </div>
+        }
+      </div>
+    </section>
+
+  </div>
+
+  <div class="analytics-note"><span>i</span><p>Analytics are isolated from live trading workloads. This workspace is designed for monitoring and decision support, not order entry.</p></div>
+</div>
