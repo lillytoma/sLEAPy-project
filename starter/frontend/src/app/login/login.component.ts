@@ -43,13 +43,24 @@ export class LoginComponent {
         localStorage.setItem('user_email', this.email);
         localStorage.setItem('account_frozen', String(response.frozen === true));
         
+        const userId = response?.userID ?? response?.userId;
+        const token = response?.token;
+
+        if (userId !== undefined && userId !== null) {
+          localStorage.setItem('userId', String(userId));
+        }
+
+        if (token) {
+          localStorage.setItem('jwt', token);
+        }
+
         this.authService.isLoggedIn.set(true);
         this.isLoading.set(false);
         this.authService.userName.set(response.userName || this.email);
         const initials = response.userInitials || this.email.slice(0, 2).toUpperCase();
         this.authService.userInitials.set(initials);
 
-        this.router.navigate(['/dashboard']);
+        void this.router.navigateByUrl('/dashboard/home');
       },
       error: (err) => {
         this.isLoading.set(false);

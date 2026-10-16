@@ -4,7 +4,9 @@ import com.sleapy.project.mappers.InstrumentMapper;
 import com.sleapy.project.mappers.MarketPriceMapper;
 import com.sleapy.project.models.dtos.InstrumentWithPriceDTO;
 import com.sleapy.project.models.dtos.PriceUpdateDTO;
+import com.sleapy.project.models.dtos.YahooSearchResultDTO;
 import com.sleapy.project.models.entities.InstrumentEntity;
+import com.sleapy.project.models.entities.InstrumentType;
 import com.sleapy.project.models.entities.MarketPriceEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -48,7 +50,7 @@ public class InstrumentService {
         List<InstrumentEntity> allInstruments = instrumentMapper.findAll();
         String lowerQuery = query.toLowerCase().trim();
 
-        return allInstruments.stream()
+        List<InstrumentWithPriceDTO> localResults = allInstruments.stream()
                 .filter(instrument ->
                         instrument.getSymbol().toLowerCase().contains(lowerQuery) ||
                         instrument.getSymbolName().toLowerCase().contains(lowerQuery)
@@ -58,6 +60,31 @@ public class InstrumentService {
                     return new InstrumentWithPriceDTO(instrument, price.orElse(null));
                 })
                 .collect(Collectors.toList());
+
+                var localSymbols = localResults.stream()
+                    .map(InstrumentWithPriceDTO::getSymbol)
+                    .collect(Collectors.toSet());
+                var yahooResults = priceService.search(query);
+                var yahooSymbols = yahooResults.stream()
+                    .filter(result -> result.getSymbol() != null)
+                        .map(result -> result.getSymbol().toUpperCase())
+                        .collect(Collectors.toList());
+                var liveQuotes = priceService.getQuotes(yahooSymbols);
+                yahooResults.forEach(result -> {
+                    if (result.getCurrentPrice() == null) {
+                        PriceUpdateDTO quote = liveQuotes.get(result.getSymbol().toUpperCase());
+                        if (quote != null) {
+                            result.setCurrentPrice(quote.getCurrentPrice());
+                        }
+                    }
+                });
+                yahooResults.stream()
+                    .filter(result -> result.getSymbol() != null)
+                    .filter(result -> !localSymbols.contains(result.getSymbol().toUpperCase()))
+                    .map(InstrumentWithPriceDTO::new)
+                    .forEach(localResults::add);
+
+                return localResults;
     }
 
     /**
@@ -73,6 +100,49 @@ public class InstrumentService {
 
         Optional<MarketPriceEntity> price = marketPriceMapper.findBySymbol(symbol);
         return Optional.of(new InstrumentWithPriceDTO(instrument.get(), price.orElse(null)));
+    }
+
+    public InstrumentWithPriceDTO importFromYahoo(YahooSearchResultDTO request) {
+        if (request == null || request.getSymbol() == null || request.getSymbol().isBlank()) {
+            throw new IllegalArgumentException("A Yahoo Finance symbol is required");
+        }
+
+        String symbol = request.getSymbol().trim().toUpperCase();
+        Optional<InstrumentEntity> existing = instrumentMapper.findBySymbol(symbol);
+        if (existing.isPresent()) {
+            refreshImportedPrice(symbol);
+            return getInstrumentBySymbol(symbol).orElseThrow();
+        }
+
+        PriceUpdateDTO quote = priceService.getQuotes(List.of(symbol)).get(symbol);
+        InstrumentEntity instrument = new InstrumentEntity();
+        instrument.setSymbol(symbol);
+        instrument.setSymbolName(request.getSymbolName() == null || request.getSymbolName().isBlank()
+                ? symbol : request.getSymbolName());
+        instrument.setCurrentPrice(quote != null ? quote.getCurrentPrice() : request.getCurrentPrice());
+
+        InstrumentType stockType = new InstrumentType();
+        stockType.setInstrumentType_id(1L);
+        stockType.setName("Stock");
+        instrument.setInstrumentType(stockType);
+        instrumentMapper.save(instrument);
+
+        if (quote != null) {
+            updateMarketPrice(quote.getSymbol(), new MarketPriceEntity(
+                    quote.getSymbol(), quote.getCurrentPrice(), quote.getHighPrice(),
+                    quote.getLowPrice(), quote.getLastUpdated()));
+        }
+        return new InstrumentWithPriceDTO(instrument, quote == null ? null : new MarketPriceEntity(
+                symbol, quote.getCurrentPrice(), quote.getHighPrice(), quote.getLowPrice(), quote.getLastUpdated()));
+    }
+
+    private void refreshImportedPrice(String symbol) {
+        PriceUpdateDTO quote = priceService.getQuotes(List.of(symbol)).get(symbol);
+        if (quote != null) {
+            updateMarketPrice(symbol, new MarketPriceEntity(
+                    symbol, quote.getCurrentPrice(), quote.getHighPrice(),
+                    quote.getLowPrice(), quote.getLastUpdated()));
+        }
     }
 
     /**

@@ -21,5 +21,6 @@ public class TradeResponseDTO {
     private BigDecimal pricePerShare;   // Price at execution (from y-finance)
     private BigDecimal totalAmount;     // quantity * pricePerShare
     private LocalDate timestamp;        // When trade was executed
+    private String status;              // Final order status
     private String message;             // Success message
 }

@@ -66,6 +66,14 @@ export class MarketDataService {
     });
   }
 
+  importInstrument(instrument: any): Observable<any> {
+    return this.http.post<any>(`${this.apiBaseUrl}/import`, {
+      symbol: instrument.symbol,
+      symbolName: instrument.name,
+      currentPrice: instrument.price
+    });
+  }
+
   /**
    * Connect to the STOMP/WebSocket broker for real-time price updates.
    * Connection endpoint: {apiUrl}/ws/prices (SockJS, matches WebSocketConfig's withSockJS())

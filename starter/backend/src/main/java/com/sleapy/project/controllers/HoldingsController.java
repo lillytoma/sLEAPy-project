@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import java.util.List;
@@ -19,6 +20,7 @@ import com.sleapy.project.models.dtos.HoldingDTO;
 import com.sleapy.project.models.dtos.CreateHoldingRequestDTO;
 import com.sleapy.project.models.dtos.UpdateHoldingRequestDTO;
 import com.sleapy.project.services.HoldingsService;
+import com.sleapy.project.services.JwtService;
 
 
 
@@ -27,13 +29,22 @@ import com.sleapy.project.services.HoldingsService;
 @CrossOrigin(origins = "http://localhost:4200")
 public class HoldingsController {
     private final HoldingsService holdingsService;
+    private final JwtService jwtService;
 
-    HoldingsController(HoldingsService holdingsService) {
+    HoldingsController(HoldingsService holdingsService, JwtService jwtService) {
         this.holdingsService = holdingsService;
+        this.jwtService = jwtService;
     }
 
     @GetMapping("/{clientId}")
-    public ResponseEntity<List<HoldingDTO>> getClientHoldings(@PathVariable Long clientId) {
+    public ResponseEntity<?> getClientHoldings(
+            @PathVariable Long clientId,
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader) {
+        ResponseEntity<?> unauthorized = verifyAuthorization(authorizationHeader);
+        if (unauthorized != null) {
+            return unauthorized;
+        }
+
         List<HoldingDTO> holdings = holdingsService.getClientHoldings(clientId);
         return ResponseEntity.ok(holdings);
     }
@@ -47,7 +58,14 @@ public class HoldingsController {
      * @return ResponseEntity with net worth breakdown or error message
      */
     @GetMapping("/{clientId}/networth")
-    public ResponseEntity<?> getNetWorth(@PathVariable Long clientId) {
+    public ResponseEntity<?> getNetWorth(
+            @PathVariable Long clientId,
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader) {
+        ResponseEntity<?> unauthorized = verifyAuthorization(authorizationHeader);
+        if (unauthorized != null) {
+            return unauthorized;
+        }
+
         try {
             Map<String, Object> netWorth = holdingsService.getClientNetWorth(clientId);
             return ResponseEntity.ok(netWorth);
@@ -70,7 +88,14 @@ public class HoldingsController {
      * @return ResponseEntity with created HoldingDTO or error message
      */
     @PostMapping("")
-    public ResponseEntity<?> createHolding(@RequestBody CreateHoldingRequestDTO request) {
+    public ResponseEntity<?> createHolding(
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+            @RequestBody CreateHoldingRequestDTO request) {
+        ResponseEntity<?> unauthorized = verifyAuthorization(authorizationHeader);
+        if (unauthorized != null) {
+            return unauthorized;
+        }
+
         try {
             HoldingDTO holding = holdingsService.createHolding(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(holding);
@@ -94,7 +119,15 @@ public class HoldingsController {
      * @return ResponseEntity with updated HoldingDTO or error message
      */
     @PutMapping("/{holdingId}")
-    public ResponseEntity<?> updateHolding(@PathVariable Long holdingId, @RequestBody UpdateHoldingRequestDTO request) {
+    public ResponseEntity<?> updateHolding(
+            @PathVariable Long holdingId,
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+            @RequestBody UpdateHoldingRequestDTO request) {
+        ResponseEntity<?> unauthorized = verifyAuthorization(authorizationHeader);
+        if (unauthorized != null) {
+            return unauthorized;
+        }
+
         try {
             HoldingDTO holding = holdingsService.updateHolding(holdingId, request);
             return ResponseEntity.ok(holding);
@@ -117,7 +150,14 @@ public class HoldingsController {
      * @return ResponseEntity with success message or error
      */
     @DeleteMapping("/{holdingId}")
-    public ResponseEntity<?> deleteHolding(@PathVariable Long holdingId) {
+    public ResponseEntity<?> deleteHolding(
+            @PathVariable Long holdingId,
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader) {
+        ResponseEntity<?> unauthorized = verifyAuthorization(authorizationHeader);
+        if (unauthorized != null) {
+            return unauthorized;
+        }
+
         try {
             holdingsService.deleteHolding(holdingId);
             return ResponseEntity.ok(Map.of("message", "Holding deleted successfully"));
@@ -130,5 +170,14 @@ public class HoldingsController {
                     .status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", e.getMessage()));
         }
+    }
+
+    private ResponseEntity<?> verifyAuthorization(String authorizationHeader) {
+        if (jwtService.verifyAuthorizationHeader(authorizationHeader)) {
+            return null;
+        }
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("error", "Invalid or missing JWT token"));
     }
 }
