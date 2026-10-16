@@ -43,8 +43,68 @@
       <div class="px-6 py-5 space-y-5">
         <!-- Current price -->
         <div class="flex items-center justify-between p-3 rounded-lg" style="background-color:var(--muted)">
-          <span class="text-sm" style="color:var(--muted-foreground)">Current Price</span>
-          <span class="font-mono font-semibold" style="color:var(--foreground)">{{ '$' }}{{ stock.price.toFixed(3) }}</span>
+          <div>
+            <span class="text-sm block" style="color:var(--muted-foreground)">Current Price</span>
+          </div>
+          <span class="font-mono font-semibold" style="color:var(--foreground)">{{ '$' }}{{ effectivePrice().toFixed(3) }}</span>
+        </div>
+
+        <!-- Live price chart -->
+        <div class="rounded-lg border p-2" style="border-color:var(--border);background-color:var(--background)">
+          <svg #orderChart [attr.viewBox]="'0 0 ' + stockChart().width + ' ' + stockChart().height"
+            preserveAspectRatio="none" style="width:100%;height:132px;display:block"
+            (mousemove)="onChartHover($event, orderChart)" (mouseleave)="onChartLeave()">
+            <defs>
+              <linearGradient id="orderPriceFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" [attr.stop-color]="stockChart().direction === 'up' ? 'var(--success)' : 'var(--error)'"
+                  stop-opacity="0.2"/>
+                <stop offset="100%" [attr.stop-color]="stockChart().direction === 'up' ? 'var(--success)' : 'var(--error)'"
+                  stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            @for (label of stockChart().yLabels; track label.y) {
+              <text [attr.x]="stockChart().plot.left - 6" [attr.y]="label.y + 3" text-anchor="end"
+                font-size="9" fill="var(--muted-foreground)" font-family="DM Mono,monospace">{{ label.value }}</text>
+              <line [attr.x1]="stockChart().plot.left" [attr.y1]="label.y"
+                [attr.x2]="stockChart().width - stockChart().plot.right" [attr.y2]="label.y"
+                stroke="var(--border)" stroke-dasharray="2 3"/>
+            }
+            <line [attr.x1]="stockChart().plot.left" [attr.y1]="stockChart().plot.top + stockChart().plotHeight"
+              [attr.x2]="stockChart().width - stockChart().plot.right" [attr.y2]="stockChart().plot.top + stockChart().plotHeight"
+              stroke="var(--border)"/>
+            <path [attr.d]="stockChart().area" fill="url(#orderPriceFill)"/>
+            <path [attr.d]="stockChart().line" fill="none"
+              [attr.stroke]="stockChart().direction === 'up' ? 'var(--success)' : 'var(--error)'"
+              stroke-width="2.5" vector-effect="non-scaling-stroke"/>
+            @for (label of stockChart().xLabels; track label.x) {
+              <text [attr.x]="label.x" [attr.y]="stockChart().height - 5" text-anchor="middle"
+                font-size="9" fill="var(--muted-foreground)" font-family="DM Mono,monospace">{{ label.label }}</text>
+            }
+            @if (stockChart().hovered; as hovered) {
+              <line [attr.x1]="hovered.x" [attr.y1]="stockChart().plot.top"
+                [attr.x2]="hovered.x" [attr.y2]="stockChart().plot.top + stockChart().plotHeight"
+                stroke="var(--muted-foreground)" stroke-dasharray="3 2"/>
+              <circle [attr.cx]="hovered.x" [attr.cy]="hovered.y" r="4"
+                [attr.fill]="stockChart().direction === 'up' ? 'var(--success)' : 'var(--error)'"
+                stroke="var(--card)" stroke-width="2"/>
+              <rect [attr.x]="chartTooltipX(hovered.x)" [attr.y]="chartTooltipY(hovered.y)"
+                width="70" height="20" rx="4" fill="var(--card)" stroke="var(--border)"/>
+              <text [attr.x]="chartTooltipTextX(hovered.x)" [attr.y]="chartTooltipTextY(hovered.y)"
+                text-anchor="middle" font-size="9" fill="var(--foreground)" font-family="DM Mono,monospace">
+                ${{ hovered.value.toFixed(3) }}
+              </text>
+            }
+          </svg>
+        </div>
+        <div class="flex gap-1" aria-label="Chart range">
+          @for (range of chartRanges; track range.value) {
+            <button type="button" (click)="selectChartRange(range.value)"
+              class="flex-1 py-1 rounded text-xs font-mono font-semibold"
+              [style.background-color]="selectedChartRange() === range.value ? 'var(--primary)' : 'var(--muted)'"
+              [style.color]="selectedChartRange() === range.value ? 'var(--primary-foreground)' : 'var(--muted-foreground)'">
+              {{ range.label }}
+            </button>
+          }
         </div>
 
         <!-- Quick sell buttons (only for sell mode) -->

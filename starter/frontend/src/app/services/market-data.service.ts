@@ -52,6 +52,13 @@ export class MarketDataService {
     return this.http.get<any>(`${this.apiBaseUrl}/${symbol.toUpperCase()}`);
   }
 
+  getPriceHistory(symbol: string, period: string): Observable<{ date: string; close: number }[]> {
+    return this.http.get<{ date: string; close: number }[]>(
+      `${this.apiBaseUrl}/${symbol.toUpperCase()}/history`,
+      { params: { period } }
+    );
+  }
+
   /**
    * Search instruments by symbol or name.
    * REST call: GET /api/instruments/search?q=query

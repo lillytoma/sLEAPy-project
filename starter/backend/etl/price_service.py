@@ -10,6 +10,7 @@ Endpoints:
     GET /quotes?symbols=A,B,C  -> {"A": {...}, "B": {...}, ...} (symbols with no
                                    price are omitted rather than erroring the batch)
     GET /search?query=apple     -> matching Yahoo Finance symbols
+    GET /history/{symbol}?period=6mo -> historical closing prices
 """
 
 import logging
@@ -105,3 +106,25 @@ def search(query: str):
     except Exception as e:
         logger.error(f"Failed to search Yahoo Finance for {query}: {e}")
         raise HTTPException(status_code=502, detail="Yahoo Finance search failed") from e
+
+
+@app.get("/history/{symbol}")
+def get_history(symbol: str, period: str = "1mo"):
+    allowed_periods = {"6mo", "1mo", "2wk", "1wk", "3d"}
+    if period not in allowed_periods:
+        raise HTTPException(status_code=400, detail="Unsupported history period")
+    try:
+        interval = "5m" if period == "3d" else "1d"
+        history = yf.Ticker(symbol.strip().upper()).history(period=period, interval=interval, auto_adjust=False)
+        if history.empty:
+            raise HTTPException(status_code=404, detail=f"No history available for {symbol}")
+        return [
+            {"date": index.isoformat(), "close": float(row["Close"])}
+            for index, row in history.iterrows()
+            if row["Close"] is not None
+        ]
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to fetch history for {symbol}: {e}")
+        raise HTTPException(status_code=502, detail=f"Failed to fetch history for {symbol}") from e

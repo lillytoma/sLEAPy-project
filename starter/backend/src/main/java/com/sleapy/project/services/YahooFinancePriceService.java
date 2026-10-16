@@ -2,6 +2,7 @@ package com.sleapy.project.services;
 
 import com.sleapy.project.models.dtos.PriceUpdateDTO;
 import com.sleapy.project.models.dtos.YahooSearchResultDTO;
+import com.sleapy.project.models.dtos.PriceHistoryPointDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -82,6 +83,7 @@ public class YahooFinancePriceService implements PriceService {
         if (query == null || query.isBlank()) {
             return List.of();
         }
+
         try {
             List<YahooSearchResultDTO> results = restClient.get()
                     .uri(uriBuilder -> uriBuilder.path("/search")
@@ -93,6 +95,28 @@ public class YahooFinancePriceService implements PriceService {
         } catch (RestClientException e) {
             log.error("Failed to search Yahoo Finance for [{}]: {}", query, e.getMessage());
             return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public List<PriceHistoryPointDTO> getPriceHistory(String symbol, String period) {
+        try {
+            List<Map<String, Object>> history = restClient.get()
+                    .uri(uriBuilder -> uriBuilder.path("/history/{symbol}")
+                            .queryParam("period", period)
+                            .build(symbol.trim().toUpperCase()))
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<List<Map<String, Object>>>() {});
+            if (history == null) return List.of();
+            return history.stream()
+                    .filter(point -> point.get("date") != null && point.get("close") != null)
+                    .map(point -> new PriceHistoryPointDTO(
+                            point.get("date").toString(),
+                            new BigDecimal(point.get("close").toString())))
+                    .toList();
+        } catch (RestClientException | NumberFormatException e) {
+            log.error("Failed to fetch price history for {} [{}]: {}", symbol, period, e.getMessage());
+            return List.of();
         }
     }
 

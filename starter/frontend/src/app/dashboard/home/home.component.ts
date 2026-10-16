@@ -120,21 +120,27 @@ export class HomeComponent implements OnInit, OnDestroy {
     const values = points.map((p) => p.value);
     const max = Math.max(...values);
     const min = Math.min(...values);
-    const span = max - min || Math.max(max, 1);
+    const valueSpan = max - min || Math.max(Math.abs(max), 1);
+    // Keep the series away from the SVG edges so the stroke and smoothed control
+    // points remain visible when the series reaches its minimum or maximum.
+    const chartPadding = valueSpan * 0.08;
+    const chartMin = min - chartPadding;
+    const chartMax = max + chartPadding;
+    const chartSpan = chartMax - chartMin;
     const width = 600;
     const height = 220;
     const stepX = points.length > 1 ? width / (points.length - 1) : width;
 
     const coords = points.map((p, i) => ({
       x: i * stepX,
-      y: height - ((p.value - min) / span) * height
+      y: height - ((p.value - chartMin) / chartSpan) * height
     }));
     const linePath = this.smoothPath(coords);
     const areaPath = `${linePath} L ${width} ${height} L 0 ${height} Z`;
 
     const gridlineSteps = 4;
     const yGridlines = Array.from({ length: gridlineSteps + 1 }, (_, i) => {
-      const value = min + (span * i) / gridlineSteps;
+      const value = chartMin + (chartSpan * i) / gridlineSteps;
       return { value, y: height - (i / gridlineSteps) * height, label: this.formatCompactDollar(value) };
     });
 
