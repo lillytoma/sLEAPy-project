@@ -1,3 +1,12 @@
+# Core ETL Pipeline Dependencies
+kafka-python==2.0.2
+SQLAlchemy==1.4.54
+psycopg2-binary==2.9.12
+pandas==2.3.3
+PyYAML==5.4.1
+
+# Additional utilities
+python-dotenv==1.2.1
 a2wsgi==1.10.10
 aiosqlite==0.22.1
 alembic==1.16.5

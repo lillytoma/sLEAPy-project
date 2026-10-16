@@ -6,12 +6,20 @@ spring:
     username: ${POSTGRES_USER:postgres}
     password: ${POSTGRES_PASSWORD:sleapy_neueda}
     driver-class-name: org.postgresql.Driver
-# spring:
-#   datasource:
-#     url: jdbc:postgresql://localhost:8101/sleapy_analyst
-#     username: ${POSTGRES_USER:postgres}
-#     password: ${POSTGRES_PASSWORD:postgres}
-#     driver-class-name: org.postgresql.Driver
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      bootstrap-servers: localhost:9092
+      group-id: sleapy-app-consumer
+      auto-offset-reset: earliest
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    topics:
+      client-activity: client_activity
+      orders: order_placement
+
 # MyBatis configuration
 mybatis:
   mapper-locations: classpath*:mappers/*.xml
