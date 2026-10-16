@@ -1,11 +1,13 @@
 package com.sleapy.project.services;
 
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Service 
@@ -24,14 +26,41 @@ public class JwtService {
      * @return JWT token as string
      */
     public String generateToken(String email, Long userId) {
-        SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
-
         return Jwts.builder()
             .subject(email)
             .claim("userId", userId)
             .issuedAt(new Date())
             .expiration(new Date(System.currentTimeMillis() + JWT_EXPIRATION))
-            .signWith(key)
+            .signWith(getSigningKey())
             .compact();
+    }
+
+    public boolean verifyAuthorizationHeader(String authorizationHeader) {
+        if (authorizationHeader == null || authorizationHeader.isBlank()) {
+            return false;
+        }
+
+        String token = authorizationHeader;
+        if (authorizationHeader.regionMatches(true, 0, "Bearer ", 0, 7)) {
+            token = authorizationHeader.substring(7).trim();
+        }
+
+        if (token.isEmpty()) {
+            return false;
+        }
+
+        try {
+            Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException ex) {
+            return false;
+        }
+    }
+
+    private SecretKey getSigningKey() {
+        return Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
     }
 }
