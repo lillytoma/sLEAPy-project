@@ -64,7 +64,8 @@ public class AuthController {
             SignUpResponseDTO response = new SignUpResponseDTO(
                 "Login successful",
                 user.getId(),
-                jwtToken
+                jwtToken,
+                clientService.isFrozen(user)
             );
 
             //6. return the 200 status OK
@@ -105,7 +106,8 @@ public class AuthController {
             SignUpResponseDTO response = new SignUpResponseDTO(
                 "Signup successful. Welcome!",
                 newClient.getId(),
-                jwtToken
+                jwtToken,
+                false
             );
             
             // Step 6: Return 201 CREATED (RESTful standard)
