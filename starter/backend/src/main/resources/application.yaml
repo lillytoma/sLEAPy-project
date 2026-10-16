@@ -17,9 +17,8 @@ spring:
       auto-offset-reset: earliest
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
     topics:
-      client-activity: client-activity
-      orders: orders
-      trades: trades
+      client-activity: client_activity
+      orders: order_placement
 
 # MyBatis configuration
 mybatis:

@@ -2,14 +2,11 @@ package com.sleapy.project.kafka;
 
 import com.sleapy.project.events.ClientActivityEvent;
 import com.sleapy.project.events.OrderEvent;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.List;
 
 /**
  * Example controller demonstrating Kafka event publishing.
@@ -26,42 +23,29 @@ import java.util.UUID;
 @Slf4j
 @RestController
 @RequestMapping("/api/kafka")
-@RequiredArgsConstructor
 @ConditionalOnProperty(name = "spring.kafka.enabled", havingValue = "true", matchIfMissing = true)
 public class KafkaEventController {
     
     private final KafkaProducerService kafkaProducerService;
+
+    public KafkaEventController(KafkaProducerService kafkaProducerService) {
+        this.kafkaProducerService = kafkaProducerService;
+    }
     
     /**
-     * Test endpoint: Publish a client activity event
+    * Publish at least ten sign-in/sign-out activity events.
      * 
      * Example request:
-     * POST /api/kafka/client-activity
-     * {
-     *   "clientId": 123,
-     *   "activityType": "LOGIN",
-     *   "details": "{\"ip\": \"192.168.1.1\"}"
-     * }
+    * POST /api/kafka/client-activity/batch
+    * [{"clientId":123,"activityType":"LOGIN"}, ...]
      */
-    @PostMapping("/client-activity")
-    public String publishClientActivity(
-            @RequestParam Long clientId,
-            @RequestParam String activityType,
-            @RequestParam(required = false) String details) {
+    @PostMapping("/client-activity/batch")
+    public String publishClientActivity(@RequestBody List<ClientActivityEvent> events) {
         
         try {
-            ClientActivityEvent event = ClientActivityEvent.builder()
-                .eventId(UUID.randomUUID().toString())
-                .clientId(clientId)
-                .activityType(activityType)
-                .timestamp(LocalDateTime.now())
-                .details(details != null ? details : "{}")
-                .sourceSystem("trading-app")
-                .build();
+            kafkaProducerService.publishClientActivityBatch(events);
             
-            kafkaProducerService.publishClientActivityEvent(event);
-            
-            return String.format("Client activity event published: %s", event.getEventId());
+            return String.format("Published %d client activity events", events.size());
         } catch (Exception e) {
             log.error("Failed to publish client activity event", e);
             return "Error: " + e.getMessage();
@@ -69,47 +53,19 @@ public class KafkaEventController {
     }
     
     /**
-     * Test endpoint: Publish an order event
+    * Publish at least ten client buy/sell order events.
      * 
      * Example request:
-     * POST /api/kafka/order
-     * {
-     *   "orderId": 456,
-     *   "clientId": 123,
-     *   "instrumentId": 789,
-     *   "orderType": "BUY",
-     *   "quantity": 100.00,
-     *   "price": 150.50,
-     *   "status": "PENDING"
-     * }
+    * POST /api/kafka/orders/batch
+    * [{"orderId":456,"clientId":123,"orderType":"BUY"}, ...]
      */
-    @PostMapping("/order")
-    public String publishOrder(
-            @RequestParam Long orderId,
-            @RequestParam Long clientId,
-            @RequestParam Long instrumentId,
-            @RequestParam String orderType,
-            @RequestParam BigDecimal quantity,
-            @RequestParam BigDecimal price,
-            @RequestParam String status) {
+    @PostMapping("/orders/batch")
+    public String publishOrders(@RequestBody List<OrderEvent> events) {
         
         try {
-            OrderEvent event = OrderEvent.builder()
-                .eventId(UUID.randomUUID().toString())
-                .orderId(orderId)
-                .clientId(clientId)
-                .instrumentId(instrumentId)
-                .orderType(orderType)
-                .quantity(quantity)
-                .price(price)
-                .status(status)
-                .timestamp(LocalDateTime.now())
-                .sourceSystem("trading-app")
-                .build();
+            kafkaProducerService.publishOrderBatch(events);
             
-            kafkaProducerService.publishOrderEvent(event);
-            
-            return String.format("Order event published: %s", event.getEventId());
+            return String.format("Published %d order events", events.size());
         } catch (Exception e) {
             log.error("Failed to publish order event", e);
             return "Error: " + e.getMessage();

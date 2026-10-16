@@ -8,6 +8,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.Locale;
+import java.util.List;
+
 /**
  * Kafka Producer service for publishing events from the trading application.
  * 
@@ -20,6 +23,8 @@ import org.springframework.stereotype.Service;
 @Service
 @ConditionalOnBean(KafkaTemplate.class)
 public class KafkaProducerService {
+
+    private static final int MIN_BATCH_SIZE = 10;
     
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
@@ -27,18 +32,18 @@ public class KafkaProducerService {
         this.kafkaTemplate = kafkaTemplate;
     }
     
-    @Value("${spring.kafka.topics.client-activity:client-activity}")
+    @Value("${spring.kafka.topics.client-activity:client_activity}")
     private String clientActivityTopic;
     
-    @Value("${spring.kafka.topics.orders:orders}")
-    private String ordersTopic;
+    @Value("${spring.kafka.topics.orders:order_placement}")
+    private String orderPlacementTopic;
     
     /**
      * Publish a client activity event to Kafka.
      * 
      * @param event The client activity event to publish
      */
-    public void publishClientActivityEvent(ClientActivityEvent event) {
+    private void publishClientActivityEvent(ClientActivityEvent event) {
         try {
             log.info("Publishing client activity event: {}", event.getEventId());
             kafkaTemplate.send(clientActivityTopic, event.getClientId().toString(), event);
@@ -54,34 +59,58 @@ public class KafkaProducerService {
      * 
      * @param event The order event to publish
      */
-    public void publishOrderEvent(OrderEvent event) {
+    private void publishOrderEvent(OrderEvent event) {
         try {
             log.info("Publishing order event: {}", event.getEventId());
-            kafkaTemplate.send(ordersTopic, event.getOrderId().toString(), event);
-            log.debug("Successfully published order event to topic: {}", ordersTopic);
+            kafkaTemplate.send(orderPlacementTopic, event.getOrderId().toString(), event);
+            log.debug("Successfully published order event to topic: {}", orderPlacementTopic);
         } catch (Exception e) {
             log.error("Error publishing order event: {}", event.getEventId(), e);
             throw new RuntimeException("Failed to publish order event", e);
         }
     }
-    
-    /**
-     * Publish a generic message to a specified topic.
-     * Useful for custom event types.
-     * 
-     * @param topic The Kafka topic to publish to
-     * @param key The message key
-     * @param message The message payload
-     */
-    public void publishMessage(String topic, String key, Object message) {
-        try {
-            log.info("Publishing message to topic: {}", topic);
-            kafkaTemplate.send(topic, key, message);
-            log.debug("Successfully published message to topic: {}", topic);
-        } catch (Exception e) {
-            log.error("Error publishing message to topic: {}", topic, e);
-            throw new RuntimeException("Failed to publish message", e);
+
+    public void publishClientActivityBatch(List<ClientActivityEvent> events) {
+        requireMinimumBatch(events, "client activity");
+        events.forEach(this::validateClientActivity);
+        events.forEach(this::publishClientActivityEvent);
+    }
+
+    public void publishOrderBatch(List<OrderEvent> events) {
+        requireMinimumBatch(events, "orders");
+        events.forEach(this::validateOrder);
+        events.forEach(this::publishOrderEvent);
+    }
+
+    private void validateClientActivity(ClientActivityEvent event) {
+        if (event == null || event.getActivityType() == null) {
+            throw new IllegalArgumentException("Client activity events must specify LOGIN or LOGOUT");
+        }
+
+        String activityType = event.getActivityType().toUpperCase(Locale.ROOT);
+        if (!activityType.equals("LOGIN") && !activityType.equals("LOGOUT")) {
+            throw new IllegalArgumentException("Only LOGIN and LOGOUT events may be published");
         }
     }
+
+    private void validateOrder(OrderEvent event) {
+        if (event == null || event.getOrderType() == null) {
+            throw new IllegalArgumentException("Order events must specify BUY or SELL");
+        }
+
+        String orderType = event.getOrderType().toUpperCase(Locale.ROOT);
+        if (!orderType.equals("BUY") && !orderType.equals("SELL")) {
+            throw new IllegalArgumentException("Only BUY and SELL orders may be published");
+        }
+    }
+
+    private void requireMinimumBatch(List<?> events, String eventType) {
+        if (events == null || events.size() < MIN_BATCH_SIZE) {
+            throw new IllegalArgumentException(
+                String.format("At least %d %s events are required", MIN_BATCH_SIZE, eventType)
+            );
+        }
+    }
+
 }
 

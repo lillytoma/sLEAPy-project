@@ -63,27 +63,19 @@ public class KafkaConfig {
     }
     
     /**
-     * Create the client-activity topic
+     * Create the client authentication activity topic
      */
     @Bean
     public NewTopic clientActivityTopic() {
-        return new NewTopic("client-activity", 3, (short) 1);
+        return new NewTopic("client_activity", 3, (short) 1);
     }
     
     /**
-     * Create the orders topic
+     * Create the client order placement topic
      */
     @Bean
-    public NewTopic ordersTopic() {
-        return new NewTopic("orders", 3, (short) 1);
-    }
-    
-    /**
-     * Create the trades topic
-     */
-    @Bean
-    public NewTopic tradesTopic() {
-        return new NewTopic("trades", 3, (short) 1);
+    public NewTopic orderPlacementTopic() {
+        return new NewTopic("order_placement", 3, (short) 1);
     }
     
     /**

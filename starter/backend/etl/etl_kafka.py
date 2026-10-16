@@ -19,7 +19,7 @@ class KafkaETLPipeline:
     ETL pipeline that consumes events from Kafka and processes them.
     
     This pipeline:
-    1. Consumes events from the active client-activity and orders topics
+    1. Consumes events from the active client_activity and order_placement topics
     2. Transforms events into analytics-ready data
     3. Loads data into the analytics warehouse schema
     """
@@ -64,9 +64,9 @@ class KafkaETLPipeline:
             logger.info(f"Processing event from topic: {topic}")
             
             # Process different event types
-            if topic == "client-activity":
+            if topic == "client_activity":
                 self._process_client_activity_event(event)
-            elif topic == "orders":
+            elif topic == "order_placement":
                 self._process_order_event(event)
             else:
                 logger.warning(f"Unknown topic: {topic}")
@@ -183,7 +183,7 @@ class KafkaETLPipeline:
             max_events: Maximum number of events to process (None for unlimited)
         """
         if topics is None:
-            topics = ["client-activity", "orders"]
+            topics = ["client_activity", "order_placement"]
         
         try:
             print("Starting Kafka ETL Pipeline")
