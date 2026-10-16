@@ -22,9 +22,6 @@ export class AuthService {
       const email = localStorage.getItem('user_email');
       if (email) {
         this.userName.set(email);
-        if (!this.userInitials()) {
-          this.userInitials.set(email.slice(0, 2).toUpperCase());
-        }
       }
     }
   }
@@ -91,26 +88,4 @@ export class AuthService {
   getUserId(): string | null {
     return localStorage.getItem('user_id');
   }
-
-  // Account freeze/unfreeze/delete — backend endpoints for these don't exist yet
-  // (checked AuthController and every branch); these calls will error until that's built.
-  getAccountStatus(clientId: number): Observable<AccountStatus> {
-    return this.http.get<AccountStatus>(`${this.apiURL}/account/${clientId}/status`);
-  }
-
-  freezeAccount(clientId: number): Observable<AccountStatus> {
-    return this.http.post<AccountStatus>(`${this.apiURL}/account/${clientId}/freeze`, {});
-  }
-
-  unfreezeAccount(clientId: number): Observable<AccountStatus> {
-    return this.http.post<AccountStatus>(`${this.apiURL}/account/${clientId}/unfreeze`, {});
-  }
-
-  deleteAccount(clientId: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiURL}/account/${clientId}`);
-  }
-}
-
-export interface AccountStatus {
-  frozen: boolean;
 }
