@@ -11,5 +11,6 @@ public class SignUpResponseDTO{
     private String message;    // Success/status message
     private Long id;           // User unique ID
     private String jwtToken;   // JWT token
+    private boolean frozen;    // Whether the account is currently frozen
 
 }

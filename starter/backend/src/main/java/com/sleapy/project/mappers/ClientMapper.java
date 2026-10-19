@@ -49,6 +49,13 @@ public interface ClientMapper {
 
     void addCash(@org.apache.ibatis.annotations.Param("id") Long id,
                  @org.apache.ibatis.annotations.Param("amount") BigDecimal amount);
+
+    void updateStatus(@org.apache.ibatis.annotations.Param("id") Long id,
+                      @org.apache.ibatis.annotations.Param("statusId") Long statusId);
+
+    void deleteHoldingsByClientId(Long clientId);
+
+    void deleteOrdersByClientId(Long clientId);
     
     /**
      * Delete a client by ID.
