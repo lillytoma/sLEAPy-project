@@ -1,7 +1,7 @@
 import { Component, computed, OnDestroy, OnInit, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Subscription } from 'rxjs';
-import { AnalystService, AnalystSummary } from '../../services/analyst.service';
+import { AnalystClient, AnalystService, AnalystSummary } from '../../services/analyst.service';
 
 interface InstrumentActivity {
   type: string;
@@ -37,9 +37,12 @@ interface CustomerActivityPoint {
 export class AnalystComponent implements OnInit, OnDestroy {
   readonly selectedPeriod = signal('Current snapshot');
   readonly selectedInstrument = signal('All instruments');
+  readonly selectedActivityInstrument = signal('All instruments');
+  readonly clientSearch = signal('');
+  readonly clientResults = signal<AnalystClient[]>([]);
+  readonly selectedClient = signal<AnalystClient | null>(null);
 
   readonly periods = ['Current snapshot'];
-  readonly instruments = ['All instruments'];
 
   readonly summary = signal<AnalystSummary | null>(null);
   readonly dataError = signal<string | null>(null);
@@ -51,14 +54,36 @@ export class AnalystComponent implements OnInit, OnDestroy {
   private subscriptions = new Subscription();
   private activityTimer?: ReturnType<typeof setInterval>;
 
+  readonly instrumentOptions = ['All instruments', 'Stock', 'Crypto', 'ETF', 'Bond'];
+
+  readonly filteredInstruments = computed(() => {
+    const instruments = this.summary()?.mostActiveInstruments ?? [];
+    const selected = this.selectedInstrument();
+    return selected === 'All instruments'
+      ? instruments
+      : instruments.filter((item) => this.formatInstrumentType(item.instrumentType || 'Other') === selected);
+  });
+
+  readonly filteredTradeVolume = computed(() =>
+    this.filteredInstruments().reduce((sum, instrument) => sum + instrument.tradeVolume, 0));
+
+  readonly filteredTotalTrades = computed(() =>
+    this.filteredInstruments().reduce((sum, instrument) => sum + instrument.totalTrades, 0));
+
   readonly kpis = computed(() => {
     const data = this.summary();
-    const instruments = data?.mostActiveInstruments ?? [];
-    const average = data && data.totalTrades > 0 ? data.tradeVolume / data.totalTrades : 0;
+    const tradeVolume = this.selectedInstrument() === 'All instruments'
+      ? Number(data?.tradeVolume ?? 0)
+      : this.filteredTradeVolume();
+    const totalTrades = this.selectedInstrument() === 'All instruments'
+      ? (data?.totalTrades ?? 0)
+      : this.filteredTotalTrades();
+    const instrumentsTracked = this.filteredInstruments().length;
+    const average = totalTrades > 0 ? tradeVolume / totalTrades : 0;
     return [
-      { label: 'Trade volume', value: this.formatCurrency(data?.tradeVolume ?? 0), detail: 'from analyst view', icon: '↗' },
-      { label: 'Total trades', value: (data?.totalTrades ?? 0).toLocaleString(), detail: 'from analyst view', icon: '⌁' },
-      { label: 'Instruments tracked', value: instruments.length.toString(), detail: 'with observed trades', icon: '◎' },
+      { label: 'Trade volume', value: this.formatCurrency(tradeVolume), detail: 'from analyst view', icon: '↗' },
+      { label: 'Total trades', value: totalTrades.toLocaleString(), detail: 'from analyst view', icon: '⌁' },
+      { label: 'Instruments tracked', value: instrumentsTracked.toString(), detail: 'with observed trades', icon: '◎' },
       { label: 'Average trade value', value: this.formatCurrency(average), detail: 'volume divided by trades', icon: '◌' }
     ];
   });
@@ -149,14 +174,15 @@ export class AnalystComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.subscriptions.add(this.analystService.summary$.subscribe((summary) => {
+      if (this.selectedClient()) return;
       this.summary.set(summary);
-      if (summary && this.activityPoints().length === 0) this.recordActivityPoint(summary.tradeVolume);
+      if (summary && this.activityPoints().length === 0) this.recordActivityPoint(this.activityValue());
     }));
     this.subscriptions.add(this.analystService.error$.subscribe((error) => this.dataError.set(error)));
     this.analystService.connect();
     this.activityTimer = setInterval(() => {
       const summary = this.summary();
-      if (summary) this.recordActivityPoint(summary.tradeVolume);
+      if (summary) this.recordActivityPoint(this.activityValue());
     }, 5 * 60 * 1000);
   }
 
@@ -192,6 +218,65 @@ export class AnalystComponent implements OnInit, OnDestroy {
     this.selectedInstrument.set(instrument);
   }
 
+  setActivityInstrument(instrument: string): void {
+    this.selectedActivityInstrument.set(instrument);
+    this.activityPoints.set([]);
+    if (this.summary()) this.recordActivityPoint(this.activityValue());
+  }
+
+  searchForClient(): void {
+    const search = this.clientSearch().trim();
+    if (!search) {
+      this.clientResults.set([]);
+      this.dataError.set(null);
+      return;
+    }
+    this.analystService.searchClients(search).subscribe({
+      next: (clients) => {
+        this.clientResults.set(clients);
+        this.dataError.set(clients.length === 0 ? 'Client not found.' : null);
+      },
+      error: (error) => {
+        console.error('Unable to search analyst clients:', error);
+        this.dataError.set('Client search is unavailable.');
+      }
+    });
+  }
+
+  selectClient(client: AnalystClient): void {
+    this.selectedClient.set(client);
+    this.clientResults.set([]);
+    this.analystService.getSummary(client.id).subscribe({
+      next: (summary) => {
+        this.summary.set(summary);
+        this.activityPoints.set([]);
+        this.recordActivityPoint(this.activityValue());
+        this.dataError.set(null);
+      },
+      error: (error) => {
+        console.error('Unable to load client analyst summary:', error);
+        this.dataError.set('The selected client analytics could not be loaded.');
+      }
+    });
+  }
+
+  clearClient(): void {
+    this.selectedClient.set(null);
+    this.clientSearch.set('');
+    this.clientResults.set([]);
+    this.analystService.getSummary().subscribe({
+      next: (summary) => {
+        this.summary.set(summary);
+        this.activityPoints.set([]);
+        this.recordActivityPoint(this.activityValue());
+      },
+      error: (error) => {
+        console.error('Unable to restore analyst summary:', error);
+        this.dataError.set('The overall analyst summary could not be restored.');
+      }
+    });
+  }
+
   selectInstrumentType(type: string): void {
     this.selectedType.set(type);
     this.symbolPage.set(0);
@@ -207,6 +292,15 @@ export class AnalystComponent implements OnInit, OnDestroy {
 
   private recordActivityPoint(value: number): void {
     this.activityPoints.update((points) => [...points, { timestamp: new Date(), value, x: 0, y: 0 }].slice(-24));
+  }
+
+  private activityValue(): number {
+    if (this.selectedActivityInstrument() === 'All instruments') {
+      return Number(this.summary()?.tradeVolume ?? 0);
+    }
+    return (this.summary()?.mostActiveInstruments ?? [])
+      .filter((item) => this.formatInstrumentType(item.instrumentType || 'Other') === this.selectedActivityInstrument())
+      .reduce((sum, item) => sum + item.tradeVolume, 0);
   }
 
   private formatInstrumentType(value: string): string {

@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.validation.FieldError;
 
 import com.sleapy.project.records.ErrorResponse;
@@ -46,6 +47,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(404).body(
             ErrorResponse.of(404, "Not Found", e.getMessage(), request.getRequestURI())
         );     
+    }
+
+    /**
+     * Handles requests for resources that are not mapped to an endpoint.
+     * Returns 404 Not Found while preserving the stack trace for diagnostics.
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    ResponseEntity<ErrorResponse> handleMissingResource(NoResourceFoundException e, HttpServletRequest request) {
+        e.printStackTrace();
+
+        return ResponseEntity.status(404).body(
+            ErrorResponse.of(404, "Not Found", e.getMessage(), request.getRequestURI())
+        );
     }
 
     /**

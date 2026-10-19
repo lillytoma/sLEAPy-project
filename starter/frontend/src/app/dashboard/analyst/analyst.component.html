@@ -29,9 +29,32 @@
     <label class="select-filter">
       <span>Instrument</span>
       <select [value]="selectedInstrument()" (change)="setInstrument($any($event.target).value)">
-        @for (instrument of instruments; track instrument) { <option [value]="instrument">{{ instrument }}</option> }
+        @for (instrument of instrumentOptions; track instrument) { <option [value]="instrument">{{ instrument }}</option> }
       </select>
     </label>
+    <div class="client-filter">
+      <label class="select-filter">
+        <span>Client</span>
+        <input type="search" [value]="clientSearch()" placeholder="Email or username"
+          (input)="clientSearch.set($any($event.target).value)"
+          (keyup.enter)="searchForClient()">
+      </label>
+      <button type="button" class="filter-button" (click)="searchForClient()">Search</button>
+      @if (selectedClient(); as client) {
+        <button type="button" class="filter-button is-selected" (click)="clearClient()">
+          {{ client.username }} · Clear
+        </button>
+      }
+      @if (clientResults().length) {
+        <div class="client-results">
+          @for (client of clientResults(); track client.id) {
+            <button type="button" (click)="selectClient(client)">
+              <strong>{{ client.username }}</strong><span>{{ client.email }}</span>
+            </button>
+          }
+        </div>
+      }
+    </div>
   </div>
 
   <div class="analyst-stat-grid">
@@ -48,7 +71,12 @@
     <section class="panel analyst-chart-panel">
       <div class="panel-heading">
         <div><p class="eyebrow">Order activity</p><h2>Aggregate trading activity</h2></div>
-        <span class="chart-summary">Live snapshot</span>
+        <label class="select-filter">
+          <span>Instrument</span>
+          <select [value]="selectedActivityInstrument()" (change)="setActivityInstrument($any($event.target).value)">
+            @for (instrument of instrumentOptions; track instrument) { <option [value]="instrument">{{ instrument }}</option> }
+          </select>
+        </label>
       </div>
       <div class="customer-activity-heading">
         <div>
@@ -90,7 +118,7 @@
 
   <div class="analyst-grid analyst-grid-secondary">
     <section class="panel instrument-panel">
-      <div class="panel-heading"><div><p class="eyebrow">Instrument mix</p><h2>Most active types</h2></div><span class="period-pill">{{ selectedPeriod() }}</span></div>
+      <div class="panel-heading"><div><p class="eyebrow">Instrument mix</p><h2>Most active types</h2></div></div>
       <div class="donut-layout">
         <div class="donut-legend">
           @for (item of instrumentActivity(); track item.type) {

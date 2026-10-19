@@ -20,6 +20,12 @@ export interface AnalystSummary {
   updatedAt: string;
 }
 
+export interface AnalystClient {
+  id: number;
+  username: string;
+  email: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AnalystService {
   private readonly apiUrl = `${environment.apiUrl}/api/analyst`;
@@ -33,8 +39,13 @@ export class AnalystService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getSummary(): Observable<AnalystSummary> {
-    return this.http.get<AnalystSummary>(`${this.apiUrl}/summary`);
+  getSummary(clientId?: number): Observable<AnalystSummary> {
+    const url = clientId ? `${this.apiUrl}/summary?clientId=${clientId}` : `${this.apiUrl}/summary`;
+    return this.http.get<AnalystSummary>(url);
+  }
+
+  searchClients(search: string): Observable<AnalystClient[]> {
+    return this.http.get<AnalystClient[]>(`${this.apiUrl}/clients`, { params: { search } });
   }
 
   connect(): void {
