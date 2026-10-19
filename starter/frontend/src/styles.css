@@ -191,6 +191,7 @@ body {
 .filter-button.is-selected { color: var(--primary); background: #e7f0eb; }
 .select-filter { display: flex; align-items: center; gap: 4px; }
 .select-filter select { border: 0; outline: 0; color: var(--foreground); background: transparent; font: 600 11px 'DM Sans', sans-serif; cursor: pointer; }
+
 .client-filter { position: relative; display: flex; align-items: center; gap: 4px; margin-left: auto; }
 .select-filter input { width: 150px; border: 0; outline: 0; color: var(--foreground); background: transparent; font: 600 11px 'DM Sans', sans-serif; }
 .select-filter input::placeholder { color: var(--muted-foreground); font-weight: 400; }
