@@ -50,53 +50,111 @@
         <div><p class="eyebrow">Order activity</p><h2>Aggregate trading activity</h2></div>
         <span class="chart-summary">Live snapshot</span>
       </div>
-      <div class="analytics-coverage">
-        <span class="coverage-icon">⌁</span>
+      <div class="customer-activity-heading">
         <div>
-          <strong>Live aggregate metrics are available</strong>
-          <p>The current analyst view provides total trade volume, total trades, and activity by instrument. It does not expose time buckets for an intraday line chart.</p>
+          <strong>Customer activity throughout the day</strong>
+          <p class="panel-helper">Live trade value sampled every 5 minutes.</p>
         </div>
+        <span class="chart-summary">5-minute updates</span>
+      </div>
+      <div class="line-chart-wrap customer-activity-chart">
+        <svg class="volume-chart" viewBox="0 0 800 220" role="img" aria-label="Customer trade value over time">
+          <g class="chart-grid-lines">
+            <line x1="0" y1="20" x2="800" y2="20"></line>
+            <line x1="0" y1="75" x2="800" y2="75"></line>
+            <line x1="0" y1="130" x2="800" y2="130"></line>
+            <line x1="0" y1="185" x2="800" y2="185"></line>
+          </g>
+          <polyline class="customer-activity-area" [attr.points]="chartArea()"></polyline>
+          <polyline class="customer-activity-line" [attr.points]="chartLine()"></polyline>
+          <g class="customer-activity-points">
+            @for (point of chartPoints(); track point.timestamp.toISOString()) {
+              <circle [attr.cx]="point.x" [attr.cy]="point.y" r="4"
+                (mouseenter)="hoveredActivityPoint.set(point)"
+                (mouseleave)="hoveredActivityPoint.set(null)"></circle>
+            }
+          </g>
+        </svg>
+        @if (hoveredActivityPoint(); as point) {
+          <div class="activity-tooltip">
+            <strong>{{ point.timestamp | date:'short' }}</strong>
+            <span>{{ formatCurrency(point.value) }}</span>
+          </div>
+        }
+        <div class="chart-x-labels"><span>9 AM</span><span>11 AM</span><span>1 PM</span><span>3 PM</span><span>Close</span></div>
       </div>
       <div class="chart-footnote"><span class="trend-up">● Live</span> refreshed from the analytics view every 10 seconds</div>
     </section>
 
+  </div>
+
+  <div class="analyst-grid analyst-grid-secondary">
     <section class="panel instrument-panel">
       <div class="panel-heading"><div><p class="eyebrow">Instrument mix</p><h2>Most active types</h2></div><span class="period-pill">{{ selectedPeriod() }}</span></div>
       <div class="donut-layout">
-        <div class="donut-chart" [style.background]="donutStyle()" aria-label="Pie chart of most active instruments" role="img">
-          <div class="donut-hole"><strong>{{ totalTrades().toLocaleString() }}</strong><span>trades</span></div>
-        </div>
         <div class="donut-legend">
           @for (item of instrumentActivity(); track item.type) {
-            <div class="legend-item"><span class="legend-key" [style.background]="item.color"></span><span>{{ item.type }}</span><strong>{{ item.share }}%</strong></div>
+            <div class="legend-item" (click)="selectInstrumentType(item.type)">
+              <span class="legend-key" [style.background]="item.color"></span>
+              <span>{{ item.type }}</span>
+              <strong>{{ item.share | number:'1.0-0' }}%</strong>
+            </div>
+          }
+        </div>
+        <div class="donut-chart" aria-label="Pie chart of most active instrument types" role="img"
+          (mouseleave)="hoveredType.set(null)">
+          <svg class="donut-svg" viewBox="0 0 42 42" aria-hidden="true">
+            <circle class="donut-track" cx="21" cy="21" r="15.9155"></circle>
+            @for (item of instrumentActivity(); track item.type) {
+              <circle class="donut-segment" cx="21" cy="21" r="15.9155"
+                pathLength="100"
+                [attr.stroke]="item.color"
+                [attr.stroke-dasharray]="item.share + ' ' + (100 - item.share)"
+                [attr.stroke-dashoffset]="-item.start"
+                (mouseenter)="hoveredType.set(item.type)"
+                (click)="selectInstrumentType(item.type)"></circle>
+            }
+          </svg>
+          <div class="donut-hole"><strong>{{ totalTrades().toLocaleString() }}</strong><span>trades</span></div>
+          @if (hoveredInstrumentType(); as hovered) {
+            <div class="donut-tooltip">
+              <strong>{{ hovered.type }}</strong>
+              <span>{{ hovered.share | number:'1.0-0' }}% of trades</span>
+            </div>
           }
         </div>
       </div>
       <div class="insight-callout"><span>✦</span><p><strong>Equities lead activity</strong><br>Nearly half of all trades today.</p></div>
     </section>
-  </div>
-
-  <div class="analyst-grid analyst-grid-secondary">
     <section class="panel top-stocks-panel">
-      <div class="panel-heading"><div><p class="eyebrow">By symbol</p><h2>Top 5 most active stocks</h2></div><span class="chart-summary">By trades</span></div>
+      <div class="panel-heading">
+        <div><p class="eyebrow">By symbol</p><h2>{{ selectedInstrumentHeading() }}</h2></div>
+        <span class="chart-summary">Page {{ symbolPage() + 1 }} of {{ totalSymbolPages() }}</span>
+      </div>
+      <div class="stock-header">
+        <span>Rank</span>
+        <span>symbol</span>
+        <span>name</span>
+        <span>trades</span>
+        <span>volume</span>
+      </div>
       <div class="stock-list">
         @for (stock of topStocks(); track stock.symbol; let i = $index) {
           <div class="stock-row">
-            <span class="stock-rank">0{{ i + 1 }}</span>
+            <span class="stock-rank">{{ (symbolPage() * 5 + i + 1).toString().padStart(2, '0') }}</span>
             <span class="stock-avatar">{{ stock.symbol.slice(0, 1) }}</span>
-            <div class="stock-name"><strong>{{ stock.symbol }}</strong><span>{{ stock.name }}</span></div>
-            <div class="stock-metric"><strong>{{ stock.trades.toLocaleString() }}</strong><span>trades</span></div>
-            <div class="stock-metric stock-volume"><strong>{{ stock.volume }}</strong><span>volume</span></div>
-            @if (stock.trend !== null) {
-              <span class="stock-trend" [class.is-negative]="stock.trend < 0">{{ stock.trend >= 0 ? '+' : '' }}{{ stock.trend }}%</span>
-            } @else {
-              <span class="stock-trend">—</span>
-            }
+            <div class="stock-name"><strong>{{ stock.symbol }}</strong></div>
+            <div class="stock-instrument-name">{{ stock.name }}</div>
+            <div class="stock-metric"><strong>{{ stock.trades.toLocaleString() }}</strong></div>
+            <div class="stock-metric stock-volume"><strong>{{ stock.volume }}</strong></div>
           </div>
         }
       </div>
+      <div class="symbol-pagination">
+        <button type="button" [disabled]="symbolPage() === 0" (click)="previousSymbolPage()">Previous</button>
+        <button type="button" [disabled]="symbolPage() >= totalSymbolPages() - 1" (click)="nextSymbolPage()">Next</button>
+      </div>
     </section>
-
   </div>
 
   <div class="analytics-note"><span>i</span><p>Analytics are isolated from live trading workloads. This workspace is designed for monitoring and decision support, not order entry.</p></div>

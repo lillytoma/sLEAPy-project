@@ -8,6 +8,7 @@ import { environment } from '../../environments/environment';
 export interface AnalystInstrumentActivity {
   symbol: string;
   symbolName: string;
+  instrumentType: string;
   totalTrades: number;
   tradeVolume: number;
 }
