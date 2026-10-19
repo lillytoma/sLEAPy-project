@@ -56,6 +56,7 @@ export class LoginComponent {
         }
 
         this.authService.isLoggedIn.set(true);
+        this.authService.isAdmin.set(response.admin === true);
         this.isLoading.set(false);
         this.authService.userName.set(response.userName || this.email);
         const initials = response.userInitials || this.email.slice(0, 2).toUpperCase();

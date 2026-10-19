@@ -8,6 +8,7 @@ import { environment } from '../../environments/environment';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   isLoggedIn = signal<boolean>(this.hasValidToken());
+  isAdmin = signal<boolean>(this.readAdminFlag());
   userName = signal<string>('');
   userInitials = signal<string>('');
   private apiURL = `${environment.apiUrl}/api/auth`;
@@ -23,6 +24,7 @@ export class AuthService {
       if (email) {
         this.userName.set(email);
       }
+      this.isAdmin.set(this.readAdminFlag());
     }
   }
 
@@ -77,6 +79,7 @@ export class AuthService {
     localStorage.removeItem('account_frozen');
     localStorage.removeItem('is_admin');
     this.isLoggedIn.set(false);
+    this.isAdmin.set(false);
     this.userName.set('');
     this.userInitials.set('');
     this.router.navigate(['/']);
@@ -88,5 +91,9 @@ export class AuthService {
 
   getUserId(): string | null {
     return localStorage.getItem('user_id');
+  }
+
+  private readAdminFlag(): boolean {
+    return localStorage.getItem('is_admin') === 'true';
   }
 }
