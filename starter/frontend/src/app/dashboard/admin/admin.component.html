@@ -45,12 +45,36 @@
       <section class="panel admin-panel" aria-labelledby="detail-heading">
         @if (selectedUser(); as detail) {
           <div class="admin-detail">
-            <div class="admin-detail-identity">
-              <span class="admin-avatar">{{ initials(detail.summary) }}</span>
-              <div>
-                <p class="eyebrow">User #{{ detail.summary.id }}</p>
-                <h2 id="detail-heading">{{ detail.summary.fullName }}</h2>
-                <p class="admin-muted">{{ detail.summary.email }}</p>
+            <div class="admin-detail-header">
+              <div class="admin-detail-identity">
+                <span class="admin-avatar">{{ initials(detail.summary) }}</span>
+                <div>
+                  <p class="eyebrow">User #{{ detail.summary.id }}</p>
+                  <h2 id="detail-heading">{{ detail.summary.fullName }}</h2>
+                  <p class="admin-muted">{{ detail.summary.email }}</p>
+                </div>
+              </div>
+              <div class="admin-actions" (click)="$event.stopPropagation()">
+                <button type="button" class="admin-action-trigger" [attr.aria-expanded]="actionMenuOpen()"
+                  aria-haspopup="menu" [disabled]="actionLoading()" (click)="toggleActionMenu()">
+                  {{ actionLoading() ? 'Working...' : 'Account actions' }} <span aria-hidden="true">⌄</span>
+                </button>
+                @if (actionMenuOpen()) {
+                  <div class="admin-action-menu" role="menu">
+                    @if (detail.summary.status.toLowerCase() === 'suspended') {
+                      <button type="button" class="admin-action-option" role="menuitem"
+                        [disabled]="actionLoading()" (click)="reactivateUser()">Re-activate account</button>
+                    } @else {
+                      <button type="button" class="admin-action-option" role="menuitem"
+                        [disabled]="actionLoading()" (click)="suspendUser()">Suspend account</button>
+                    }
+                    <button type="button" class="admin-action-option admin-danger" role="menuitem"
+                      [disabled]="actionLoading()" (click)="deleteUser(); closeActionMenu()">Delete account</button>
+                  </div>
+                }
+                @if (actionMessage()) {
+                  <p class="admin-action-message" role="status">{{ actionMessage() }}</p>
+                }
               </div>
             </div>
             <div class="admin-detail-grid">

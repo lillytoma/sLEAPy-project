@@ -61,6 +61,18 @@ export class AdminService {
     return this.http.get<AdminUserDetail>(`${this.apiUrl}/users/${id}`, { headers: this.headers() });
   }
 
+  suspendUser(id: number): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.apiUrl}/users/${id}/suspend`, {}, { headers: this.headers() });
+  }
+
+  reactivateUser(id: number): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.apiUrl}/users/${id}/reactivate`, {}, { headers: this.headers() });
+  }
+
+  deleteUser(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/users/${id}`, { headers: this.headers() });
+  }
+
   private headers(): HttpHeaders {
     const token = localStorage.getItem('auth_token');
     return token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : new HttpHeaders();

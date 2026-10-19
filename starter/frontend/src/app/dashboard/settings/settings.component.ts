@@ -82,6 +82,7 @@ import { AuthService } from '../../services/auth.service';
         </div>
       </section>
 
+      @if (!authService.isAdmin()) {
       <section class="panel settings-panel settings-account-panel" aria-labelledby="account-heading">
         <div class="settings-section-heading">
           <div>
@@ -111,6 +112,7 @@ import { AuthService } from '../../services/auth.service';
           <p class="settings-account-error" role="alert">{{ accountError() }}</p>
         }
       </section>
+      }
     </div>
   `
 })
@@ -121,7 +123,7 @@ export class SettingsComponent {
 
   constructor(
     public themeService: ThemeService,
-    private authService: AuthService,
+    public authService: AuthService,
     private router: Router
   ) {
     const clientId = this.getClientId();
@@ -134,6 +136,7 @@ export class SettingsComponent {
   }
 
   toggleFreeze(): void {
+    if (this.authService.isAdmin()) return;
     const clientId = this.getClientId();
     if (clientId === null) return;
 
@@ -158,6 +161,7 @@ export class SettingsComponent {
   }
 
   deleteAccount(): void {
+    if (this.authService.isAdmin()) return;
     const clientId = this.getClientId();
     if (clientId === null || !window.confirm('Delete your account permanently? This action cannot be undone.')) return;
 
