@@ -43,18 +43,20 @@ public class InstrumentService {
     }
 
     /**
-     * Search instruments by symbol or name (case-insensitive, partial match).
+     * Search instruments by ticker or company name (case-insensitive, partial match).
      * @param query search term (symbol or company name)
+     * @param field either {@code ticker} or {@code company}
      * @return List of matching InstrumentWithPriceDTO objects
      */
-    public List<InstrumentWithPriceDTO> searchInstruments(String query) {
+    public List<InstrumentWithPriceDTO> searchInstruments(String query, String field) {
         List<InstrumentEntity> allInstruments = instrumentMapper.findAll();
         String lowerQuery = query.toLowerCase().trim();
 
         List<InstrumentWithPriceDTO> localResults = allInstruments.stream()
                 .filter(instrument ->
-                        instrument.getSymbol().toLowerCase().contains(lowerQuery) ||
-                        instrument.getSymbolName().toLowerCase().contains(lowerQuery)
+                        field.equals("ticker")
+                                ? instrument.getSymbol().toLowerCase().contains(lowerQuery)
+                                : instrument.getSymbolName().toLowerCase().contains(lowerQuery)
                 )
                 .map(instrument -> {
                     Optional<MarketPriceEntity> price = marketPriceMapper.findBySymbol(instrument.getSymbol());
@@ -62,30 +64,28 @@ public class InstrumentService {
                 })
                 .collect(Collectors.toList());
 
-                var localSymbols = localResults.stream()
-                    .map(InstrumentWithPriceDTO::getSymbol)
-                    .collect(Collectors.toSet());
-                var yahooResults = priceService.search(query);
-                var yahooSymbols = yahooResults.stream()
-                    .filter(result -> result.getSymbol() != null)
-                        .map(result -> result.getSymbol().toUpperCase())
-                        .collect(Collectors.toList());
-                var liveQuotes = priceService.getQuotes(yahooSymbols);
-                yahooResults.forEach(result -> {
-                    if (result.getCurrentPrice() == null) {
-                        PriceUpdateDTO quote = liveQuotes.get(result.getSymbol().toUpperCase());
-                        if (quote != null) {
-                            result.setCurrentPrice(quote.getCurrentPrice());
-                        }
-                    }
-                });
-                yahooResults.stream()
-                    .filter(result -> result.getSymbol() != null)
-                    .filter(result -> !localSymbols.contains(result.getSymbol().toUpperCase()))
-                    .map(InstrumentWithPriceDTO::new)
-                    .forEach(localResults::add);
+        // Use the local catalog first. Only query Yahoo when the database has no
+        // matches, avoiding an external request for every search of known symbols.
+        if (!localResults.isEmpty()) {
+            return localResults;
+        }
 
-                return localResults;
+        var yahooResults = priceService.search(query);
+        yahooResults = yahooResults.stream()
+                .filter(result -> field.equals("ticker")
+                        ? result.getSymbol() != null && result.getSymbol().toLowerCase().contains(lowerQuery)
+                        : result.getSymbolName() != null && result.getSymbolName().toLowerCase().contains(lowerQuery))
+                .collect(Collectors.toList());
+
+        // Yahoo's search response already contains regularMarketPrice when
+        // available. Do not fetch every search result again through /quotes:
+        // that creates a request fan-out and quickly triggers Yahoo throttling.
+        yahooResults.stream()
+                .filter(result -> result.getSymbol() != null)
+                .map(InstrumentWithPriceDTO::new)
+                .forEach(localResults::add);
+
+        return localResults;
     }
 
     /**

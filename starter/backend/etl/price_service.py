@@ -14,6 +14,9 @@ Endpoints:
 """
 
 import logging
+import os
+import threading
+import time
 from datetime import datetime
 from typing import Optional
 
@@ -24,22 +27,47 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="sLEAPy Price Service")
+QUOTE_CACHE_TTL_SECONDS = float(os.getenv("QUOTE_CACHE_TTL_SECONDS", "300"))
+FAILURE_CACHE_TTL_SECONDS = float(os.getenv("FAILURE_CACHE_TTL_SECONDS", "300"))
+SEARCH_CACHE_TTL_SECONDS = float(os.getenv("SEARCH_CACHE_TTL_SECONDS", "300"))
+_quote_cache: dict[str, tuple[float, dict]] = {}
+_failure_cache: dict[str, float] = {}
+_search_cache: dict[str, tuple[float, list[dict]]] = {}
+_quote_cache_lock = threading.Lock()
 
 
 def _quote_for(symbol: str) -> Optional[dict]:
     """Fetch a single quote via yfinance's fast_info (cheap, no history download)."""
-    info = yf.Ticker(symbol).fast_info
-    current_price = info.get("lastPrice") if hasattr(info, "get") else info["lastPrice"]
-    if current_price is None:
-        return None
+    now = time.monotonic()
+    with _quote_cache_lock:
+        cached = _quote_cache.get(symbol)
+        if cached and now - cached[0] < QUOTE_CACHE_TTL_SECONDS:
+            return cached[1]
+        failed_at = _failure_cache.get(symbol)
+        if failed_at and now - failed_at < FAILURE_CACHE_TTL_SECONDS:
+            return None
 
-    return {
-        "symbol": symbol,
-        "currentPrice": current_price,
-        "highPrice": info.get("dayHigh"),
-        "lowPrice": info.get("dayLow"),
-        "lastUpdated": datetime.now().isoformat(),
-    }
+    try:
+        info = yf.Ticker(symbol).fast_info
+        current_price = info.get("lastPrice") if hasattr(info, "get") else info["lastPrice"]
+        if current_price is None:
+            return None
+
+        quote = {
+            "symbol": symbol,
+            "currentPrice": current_price,
+            "highPrice": info.get("dayHigh"),
+            "lowPrice": info.get("dayLow"),
+            "lastUpdated": datetime.now().isoformat(),
+        }
+        with _quote_cache_lock:
+            _quote_cache[symbol] = (now, quote)
+            _failure_cache.pop(symbol, None)
+        return quote
+    except Exception:
+        with _quote_cache_lock:
+            _failure_cache[symbol] = now
+        raise
 
 
 @app.get("/health")
@@ -88,6 +116,12 @@ def search(query: str):
     if not query:
         raise HTTPException(status_code=400, detail="query parameter is required")
 
+    now = time.monotonic()
+    with _quote_cache_lock:
+        cached = _search_cache.get(query.lower())
+        if cached and now - cached[0] < SEARCH_CACHE_TTL_SECONDS:
+            return cached[1]
+
     try:
         search = yf.Search(query, max_results=20, news_count=0)
         results = []
@@ -102,6 +136,8 @@ def search(query: str):
                 "quoteType": quote.get("quoteType"),
                 "currentPrice": quote.get("regularMarketPrice"),
             })
+        with _quote_cache_lock:
+            _search_cache[query.lower()] = (now, results)
         return results
     except Exception as e:
         logger.error(f"Failed to search Yahoo Finance for {query}: {e}")

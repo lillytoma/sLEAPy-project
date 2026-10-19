@@ -16,6 +16,7 @@ import { OrderModalComponent } from '../shared/order-modal.component';
 export class MarketsComponent implements OnInit, OnDestroy {
   searchQuery = signal('');
   searchMode = signal<'ticker' | 'company'>('ticker');
+  showSuggestions = signal(false);
   showFavoritesOnly = signal(false);
   pendingRemoval = signal<Set<string>>(new Set());
   importingSymbols = signal<Set<string>>(new Set());
@@ -27,8 +28,8 @@ export class MarketsComponent implements OnInit, OnDestroy {
   private livePrices = signal<Map<string, any>>(new Map());
   private priceSubscription?: Subscription;
   private searchSubscription?: Subscription;
-  private searchSubject = new Subject<string>();
-  private searchResults = signal<MarketStock[]>([]);
+  private searchSubject = new Subject<{ query: string; mode: 'ticker' | 'company' }>();
+  private searchResults = signal<MarketStock[] | null>(null);
 
   constructor(public portfolioService: PortfolioService, private marketDataService: MarketDataService) {}
 
@@ -38,9 +39,11 @@ export class MarketsComponent implements OnInit, OnDestroy {
       this.livePrices.set(new Map(updates));
     });
     this.searchSubscription = this.searchSubject.pipe(
-      debounceTime(250),
-      distinctUntilChanged(),
-      switchMap((query) => query ? this.marketDataService.searchInstruments(query) : of([]))
+      debounceTime(400),
+      distinctUntilChanged((previous, current) => previous.query === current.query && previous.mode === current.mode),
+      switchMap(({ query, mode }) => query.length >= 3
+        ? this.marketDataService.searchInstruments(query, mode)
+        : of([]))
     ).subscribe({
       next: (results) => this.searchResults.set(results.map((result) => this.toMarketStock(result))),
       error: (error) => {
@@ -58,10 +61,19 @@ export class MarketsComponent implements OnInit, OnDestroy {
   onSearch(query: string): void {
     const normalized = query.trim();
     this.searchQuery.set(query);
-    // Clear the previous Y-Finance response immediately so it cannot remain
-    // visible while the new search request is debounced or in flight.
-    this.searchResults.set([]);
-    this.searchSubject.next(normalized.toLowerCase());
+    this.showSuggestions.set(normalized.length > 0);
+    this.searchResults.set(null);
+    this.searchSubject.next({ query: normalized.toLowerCase(), mode: this.searchMode() });
+  }
+
+  setSearchMode(mode: 'ticker' | 'company'): void {
+    if (this.searchMode() === mode) return;
+    this.searchMode.set(mode);
+    this.searchResults.set(null);
+    const query = this.searchQuery().trim().toLowerCase();
+    if (query) {
+      this.searchSubject.next({ query, mode });
+    }
   }
 
   private toMarketStock(result: any): MarketStock {
@@ -96,16 +108,17 @@ export class MarketsComponent implements OnInit, OnDestroy {
     return { ...stock, price: live.currentPrice, chg };
   }
 
+  suggestions = computed(() => {
+    const q = this.searchQuery().toLowerCase();
+    if (!q || q.length < 1) return [];
+    return this.searchStocks(q).slice(0, 8).map((stock) => this.withLivePrice(stock));
+  });
+
   filteredStocks = computed(() => {
-    const backendResults = this.searchResults();
     const q = this.searchQuery().toLowerCase();
     let stocks = q
-      ? backendResults
-        .filter((stock) => this.searchMode() === 'ticker'
-          ? stock.symbol.toLowerCase().includes(q)
-          : stock.name.toLowerCase().includes(q))
-        .map((s) => this.withLivePrice(s))
-      : [];
+      ? this.searchStocks(q).map((s) => this.withLivePrice(s))
+      : this.allStocks().map((s) => this.withLivePrice(s));
 
     // Filter by favorites if toggled
     if (this.showFavoritesOnly()) {
@@ -114,6 +127,23 @@ export class MarketsComponent implements OnInit, OnDestroy {
 
     return stocks;
   });
+
+  private searchStocks(query: string): MarketStock[] {
+    const localMatches = this.allStocks().filter((stock) => this.matchesSearchMode(stock, query));
+    const remoteMatches = this.searchResults() ?? [];
+    const localSymbols = new Set(localMatches.map((stock) => stock.symbol.toUpperCase()));
+
+    return [
+      ...localMatches,
+      ...remoteMatches.filter((stock) => !localSymbols.has(stock.symbol.toUpperCase()))
+    ];
+  }
+
+  private matchesSearchMode(stock: MarketStock, query: string): boolean {
+    return this.searchMode() === 'ticker'
+      ? stock.symbol.toLowerCase().startsWith(query)
+      : stock.name.toLowerCase().startsWith(query);
+  }
 
   toggleWatchlist(symbol: string): void {
     // Check if this item is pending removal
@@ -184,7 +214,7 @@ export class MarketsComponent implements OnInit, OnDestroy {
   private searchInstrumentsAgain(): void {
     const query = this.searchQuery().trim();
     if (!query) return;
-    this.marketDataService.searchInstruments(query).subscribe((results) => {
+    this.marketDataService.searchInstruments(query, this.searchMode()).subscribe((results) => {
       this.searchResults.set(results.map((result) => this.toMarketStock(result)));
     });
   }
