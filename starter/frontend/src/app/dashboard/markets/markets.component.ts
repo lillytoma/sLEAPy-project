@@ -28,7 +28,7 @@ export class MarketsComponent implements OnInit, OnDestroy {
   private priceSubscription?: Subscription;
   private searchSubscription?: Subscription;
   private searchSubject = new Subject<string>();
-  private searchResults = signal<MarketStock[] | null>(null);
+  private searchResults = signal<MarketStock[]>([]);
 
   constructor(public portfolioService: PortfolioService, private marketDataService: MarketDataService) {}
 
@@ -59,7 +59,9 @@ export class MarketsComponent implements OnInit, OnDestroy {
     const normalized = query.trim();
     this.searchQuery.set(query);
     this.showSuggestions.set(normalized.length > 0);
-    this.searchResults.set(null);
+    // Clear the previous Y-Finance response immediately so it cannot remain
+    // visible while the new search request is debounced or in flight.
+    this.searchResults.set([]);
     this.searchSubject.next(normalized.toLowerCase());
   }
 
@@ -99,24 +101,13 @@ export class MarketsComponent implements OnInit, OnDestroy {
     const q = this.searchQuery().toLowerCase();
     if (!q || q.length < 1) return [];
     const results = this.searchResults();
-    if (results !== null) return results.slice(0, 8).map((stock) => this.withLivePrice(stock));
-    return this.allStocks().filter(
-      (s) => s.symbol.toLowerCase().startsWith(q) || s.name.toLowerCase().startsWith(q)
-    ).slice(0, 8).map((s) => this.withLivePrice(s));
+    return results.slice(0, 8).map((stock) => this.withLivePrice(stock));
   });
 
   filteredStocks = computed(() => {
     const backendResults = this.searchResults();
-    let stocks = backendResults === null
-      ? this.allStocks().map((s) => this.withLivePrice(s))
-      : backendResults.map((s) => this.withLivePrice(s));
     const q = this.searchQuery().toLowerCase();
-
-    if (q && backendResults === null) {
-      stocks = stocks.filter(
-        (s) => s.symbol.toLowerCase().startsWith(q) || s.name.toLowerCase().startsWith(q)
-      );
-    }
+    let stocks = q ? backendResults.map((s) => this.withLivePrice(s)) : [];
 
     // Filter by favorites if toggled
     if (this.showFavoritesOnly()) {
@@ -203,6 +194,7 @@ export class MarketsComponent implements OnInit, OnDestroy {
   selectSuggestion(stock: MarketStock): void {
     this.searchQuery.set(stock.symbol);
     this.showSuggestions.set(false);
+    this.openTrade(stock);
   }
 
   closeSuggestions(): void {

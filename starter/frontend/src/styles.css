@@ -39,13 +39,13 @@
 
 /* "Night show" — a dim theatre: dark sepia stage, cream ink. */
 .dark {
-  --background: #1c140e;
+  --background: #101b36;
   --foreground: #f2e6c8;
-  --card: #2a1f16;
+  --card: #202b48;
   --primary: #7fb35a;
-  --primary-foreground: #1c140e;
-  --muted: #3a2c1f;
-  --muted-foreground: #bba684;
+  --primary-foreground: #101b36;
+  --muted: #2c3855;
+  --muted-foreground: #c2c4c7;
   --accent: #f0b73c;
   --accent-blue: #7fb0cf;
   --accent-red: #e0574a;
@@ -58,7 +58,7 @@
   --success-tint: rgba(127, 179, 90, 0.2);
   --accent-blue-tint: rgba(127, 176, 207, 0.2);
   --frog-ink: #f2e6c8;
-  --frog-belly: #3a2c1f;
+  --frog-belly: #2c3855;
   --card-shadow: 4px 4px 0 rgba(0, 0, 0, 0.65);
   --film-vignette: rgba(0, 0, 0, 0.55);
 }
@@ -82,6 +82,29 @@ body {
   color: var(--foreground);
   min-height: 100vh;
   transition: background-color 0.2s, color 0.2s;
+}
+
+/* Dark mode: an inked night sky with scattered stars and soft, hand-painted
+   cloud banks behind the existing Cuphead-inspired panels. */
+.dark body {
+  background-color: #101b36;
+  background-image:
+    radial-gradient(circle at 8% 18%, rgba(255, 241, 181, .9) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 18% 72%, rgba(255, 241, 181, .75) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 31% 28%, rgba(255, 255, 235, .8) 0 1.2px, transparent 1.9px),
+    radial-gradient(circle at 46% 12%, rgba(255, 241, 181, .8) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 61% 36%, rgba(255, 255, 235, .75) 0 1.2px, transparent 1.9px),
+    radial-gradient(circle at 77% 16%, rgba(255, 241, 181, .85) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 91% 48%, rgba(255, 255, 235, .8) 0 1.2px, transparent 1.9px),
+    radial-gradient(ellipse at 12% 93%, rgba(87, 105, 139, .42) 0 9%, transparent 25%),
+    radial-gradient(ellipse at 43% 88%, rgba(72, 91, 126, .35) 0 11%, transparent 29%),
+    radial-gradient(ellipse at 78% 96%, rgba(88, 104, 137, .4) 0 12%, transparent 30%),
+    linear-gradient(180deg, #0c1730 0%, #172747 58%, #283654 100%);
+  background-attachment: fixed;
+}
+
+.dark .dashboard-shell {
+  background: transparent;
 }
 
 /* Dashboard */
@@ -141,6 +164,9 @@ body {
 .panel-heading h2 { margin-top: 3px; font-family: var(--font-display); font-size: 16px; font-weight: 700; }
 .period-pill { padding: 5px 10px; border-radius: 999px; color: var(--primary); background: var(--muted); font: 700 10px var(--font-mono); }
 .period-pill.is-active { background: var(--primary); color: var(--primary-foreground); }
+.order-chart-range, .order-option-button { cursor: pointer; transition: background-color .15s ease, border-color .15s ease, color .15s ease, transform .15s ease; }
+.order-chart-range:hover, .order-option-button:hover { background-color: var(--primary) !important; border-color: var(--primary) !important; color: var(--primary-foreground) !important; transform: translateY(-1px); }
+.order-option-button:hover { background-color: var(--error) !important; border-color: var(--error) !important; color: #fff !important; }
 
 /* Chart hover tooltip (Performance chart) */
 .chart-tooltip { position: absolute; transform: translate(-50%, -115%); background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; padding: 8px 12px; box-shadow: var(--card-shadow); pointer-events: none; white-space: nowrap; z-index: 5; }

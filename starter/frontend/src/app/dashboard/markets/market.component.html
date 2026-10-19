@@ -43,27 +43,6 @@
         <span class="text-sm" style="color:var(--muted-foreground)">{{ filteredStocks().length }} stocks</span>
       </div>
 
-      <!-- Favorites toggle -->
-      <div class="flex gap-2">
-        <button (click)="showFavoritesOnly.set(false); confirmRemoval()"
-          class="px-4 py-2 rounded-full text-sm font-semibold transition-colors border"
-          [style.background-color]="!showFavoritesOnly() ? 'var(--primary)' : 'var(--card)'"
-          [style.color]="!showFavoritesOnly() ? 'var(--primary-foreground)' : 'var(--foreground)'"
-          [style.border-color]="!showFavoritesOnly() ? 'var(--primary)' : 'var(--border)'">
-          All Stocks
-        </button>
-        <button (click)="showFavoritesOnly.set(true)"
-          class="px-4 py-2 rounded-full text-sm font-semibold transition-colors border inline-flex items-center gap-1.5"
-          [style.background-color]="showFavoritesOnly() ? 'var(--primary)' : 'var(--card)'"
-          [style.color]="showFavoritesOnly() ? 'var(--primary-foreground)' : 'var(--foreground)'"
-          [style.border-color]="showFavoritesOnly() ? 'var(--primary)' : 'var(--border)'">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-          </svg>
-          Favorites
-        </button>
-      </div>
-
       <!-- Table -->
       <div class="rounded-xl border overflow-hidden" style="background-color:var(--card);border-color:var(--border)">
         <div class="overflow-x-auto">
@@ -73,7 +52,6 @@
                 <th class="px-3 py-3 text-center font-medium w-10" style="color:var(--muted-foreground)"></th>
                 <th class="px-4 py-3 text-left font-medium" style="color:var(--muted-foreground)">Stock</th>
                 <th class="px-4 py-3 text-right font-medium" style="color:var(--muted-foreground)">Price</th>
-                <th class="px-4 py-3 text-right font-medium" style="color:var(--muted-foreground)">Today</th>
                 <th class="px-4 py-3"></th>
               </tr>
             </thead>
@@ -109,13 +87,6 @@
                     </div>
                   </td>
                   <td class="px-4 py-3 text-right font-mono" style="color:var(--foreground)">${{ stock.price.toFixed(2) }}</td>
-                  <td class="px-4 py-3 text-right">
-                    <span class="px-2 py-0.5 rounded-full text-xs font-mono font-semibold"
-                      [style.background-color]="stock.chg >= 0 ? 'var(--success-tint)' : 'var(--error-tint)'"
-                      [style.color]="stock.chg >= 0 ? 'var(--success)' : 'var(--error)'">
-                      {{ stock.chg >= 0 ? '+' : '' }}{{ stock.chg.toFixed(2) }}%
-                    </span>
-                  </td>
                   <td class="px-4 py-3 text-right">
                     <!-- One button for every row; the order popup has its own Buy/Sell switch. -->
                     <button (click)="openTrade(stock)"
