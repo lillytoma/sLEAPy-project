@@ -15,7 +15,7 @@ import { OrderModalComponent } from '../shared/order-modal.component';
 })
 export class MarketsComponent implements OnInit, OnDestroy {
   searchQuery = signal('');
-  showSuggestions = signal(false);
+  searchMode = signal<'ticker' | 'company'>('ticker');
   showFavoritesOnly = signal(false);
   pendingRemoval = signal<Set<string>>(new Set());
   importingSymbols = signal<Set<string>>(new Set());
@@ -58,7 +58,6 @@ export class MarketsComponent implements OnInit, OnDestroy {
   onSearch(query: string): void {
     const normalized = query.trim();
     this.searchQuery.set(query);
-    this.showSuggestions.set(normalized.length > 0);
     // Clear the previous Y-Finance response immediately so it cannot remain
     // visible while the new search request is debounced or in flight.
     this.searchResults.set([]);
@@ -97,17 +96,16 @@ export class MarketsComponent implements OnInit, OnDestroy {
     return { ...stock, price: live.currentPrice, chg };
   }
 
-  suggestions = computed(() => {
-    const q = this.searchQuery().toLowerCase();
-    if (!q || q.length < 1) return [];
-    const results = this.searchResults();
-    return results.slice(0, 8).map((stock) => this.withLivePrice(stock));
-  });
-
   filteredStocks = computed(() => {
     const backendResults = this.searchResults();
     const q = this.searchQuery().toLowerCase();
-    let stocks = q ? backendResults.map((s) => this.withLivePrice(s)) : [];
+    let stocks = q
+      ? backendResults
+        .filter((stock) => this.searchMode() === 'ticker'
+          ? stock.symbol.toLowerCase().includes(q)
+          : stock.name.toLowerCase().includes(q))
+        .map((s) => this.withLivePrice(s))
+      : [];
 
     // Filter by favorites if toggled
     if (this.showFavoritesOnly()) {
@@ -191,13 +189,4 @@ export class MarketsComponent implements OnInit, OnDestroy {
     });
   }
 
-  selectSuggestion(stock: MarketStock): void {
-    this.searchQuery.set(stock.symbol);
-    this.showSuggestions.set(false);
-    this.openTrade(stock);
-  }
-
-  closeSuggestions(): void {
-    this.showSuggestions.set(false);
-  }
 }

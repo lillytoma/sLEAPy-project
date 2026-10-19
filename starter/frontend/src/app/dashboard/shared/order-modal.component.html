@@ -26,8 +26,8 @@
         <button (click)="switchMode('buy')" 
           [disabled]="mode() === 'buy'"
           class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all" 
-          [style.background-color]="mode() === 'buy' ? 'var(--primary)' : 'var(--accent-blue-tint)'"
-          [style.color]="mode() === 'buy' ? '#fff' : 'var(--accent-blue)'">
+          [style.background-color]="mode() === 'buy' ? 'var(--primary)' : 'var(--success-tint)'"
+          [style.color]="mode() === 'buy' ? '#fff' : 'var(--success)'">
           Buy
         </button>
         <button (click)="switchMode('sell')" 
