@@ -28,10 +28,10 @@
                     </td>
                     <td class="px-5 py-4 font-semibold" style="color:var(--foreground)">{{ tx.symbol }}</td>
                     <td class="px-5 py-4 font-mono text-sm" style="color:var(--foreground)">{{ tx.shares }}</td>
-                    <td class="px-5 py-4 font-mono text-sm" style="color:var(--foreground)">\${{ tx.price.toFixed(2) }}</td>
+                    <td class="px-5 py-4 font-mono text-sm" style="color:var(--foreground)">${{ tx.price.toFixed(2) }}</td>
                     <td class="px-5 py-4 font-mono text-sm font-medium"
                       [style.color]="tx.type === 'BUY' ? 'var(--error)' : 'var(--success)'">
-                      {{ tx.type === 'BUY' ? '-' : '+' }}\${{ tx.total.toFixed(2) }}
+                      {{ tx.type === 'BUY' ? '-' : '+' }}${{ tx.total.toFixed(2) }}
                     </td>
                   </tr>
                 }

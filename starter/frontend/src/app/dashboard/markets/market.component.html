@@ -5,7 +5,7 @@
       </div>
       <!-- Search bar with auto-suggest -->
       <div class="flex items-center gap-3">
-        <div class="relative flex-1 max-w-md">
+        <div class="relative flex-1">
           <svg class="absolute left-3 top-1/2 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--muted-foreground)">
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
           </svg>
@@ -99,6 +99,12 @@
                       <div>
                         <p class="font-semibold" style="color:var(--foreground)">{{ stock.symbol }}</p>
                         <p class="text-xs" style="color:var(--muted-foreground)">{{ stock.name }}</p>
+                        @if (portfolioService.getHolding(stock.symbol); as holding) {
+                          <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
+                            style="background-color:var(--success-tint);color:var(--success)">
+                            You own {{ holding.shares | number:'1.0-3' }}
+                          </span>
+                        }
                       </div>
                     </div>
                   </td>
@@ -111,22 +117,14 @@
                     </span>
                   </td>
                   <td class="px-4 py-3 text-right">
-                    <div class="flex items-center gap-2 justify-end">
-                      <button (click)="openBuy(stock)"
-                        [disabled]="importingSymbols().has(stock.symbol)"
-                        [title]="'Buy this stock'"
-                        class="button button-primary"
-                        style="padding:8px 16px;font-size:12px;">
-                        {{ importingSymbols().has(stock.symbol) ? 'Preparing...' : 'Buy' }}
-                      </button>
-                      @if (portfolioService.getHolding(stock.symbol)) {
-                        <button (click)="openSell(stock)"
-                          class="px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap"
-                          style="background-color:var(--error-tint);color:var(--error)">
-                          Sell
-                        </button>
-                      }
-                    </div>
+                    <!-- One button for every row; the order popup has its own Buy/Sell switch. -->
+                    <button (click)="openTrade(stock)"
+                      [disabled]="importingSymbols().has(stock.symbol)"
+                      [title]="'Buy or sell ' + stock.symbol"
+                      class="button button-primary"
+                      style="padding:8px 16px;font-size:12px;min-width:96px;">
+                      {{ importingSymbols().has(stock.symbol) ? 'Preparing...' : 'Trade' }}
+                    </button>
                   </td>
                 </tr>
               }
@@ -140,6 +138,7 @@
     @if (orderModal()) {
       <app-order-modal 
         [stock]="orderModal()!.stock"
+        [initialMode]="orderModal()!.mode"
         [availableCash]="portfolioService.availableCash()" 
         [sharesOwned]="portfolioService.getHolding(orderModal()!.stock.symbol)?.shares ?? 0"
         (close)="orderModal.set(null)">

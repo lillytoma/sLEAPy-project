@@ -18,6 +18,8 @@ export class OrderModalComponent implements OnInit, OnDestroy {
   @Input() stock!: MarketStock;
   @Input() availableCash = 0;
   @Input() sharesOwned = 0;
+  /** Which side the popup opens on. Falls back to 'buy' if there's nothing to sell. */
+  @Input() initialMode: 'buy' | 'sell' = 'buy';
   @Output() close = new EventEmitter<void>();
   @Output() orderCompleted = new EventEmitter<void>();
 
@@ -60,6 +62,7 @@ export class OrderModalComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.mode.set(this.initialMode === 'sell' && this.sharesOwned > 0 ? 'sell' : 'buy');
     const initialPrice = this.stock?.price ?? 0;
     this.livePrice.set(initialPrice);
     this.priceHistory.set(Array.from({ length: 12 }, (_, index) => ({

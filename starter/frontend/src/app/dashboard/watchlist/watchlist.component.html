@@ -79,6 +79,7 @@
     @if (orderModal()) {
       <app-order-modal 
         [stock]="orderModal()!.stock"
+        [initialMode]="orderModal()!.mode"
         [availableCash]="portfolioService.availableCash()" 
         [sharesOwned]="portfolioService.getHolding(orderModal()!.stock.symbol)?.shares ?? 0"
         (close)="orderModal.set(null)">
