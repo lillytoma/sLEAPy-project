@@ -89,7 +89,6 @@ body {
 .dashboard-header { background: var(--card); border-bottom: 1px solid var(--border); }
 .dashboard-header-inner { max-width: 1440px; min-height: 72px; margin: 0 auto; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .dashboard-brand { display: flex; align-items: center; gap: 10px; color: var(--foreground); font-family: var(--font-display); font-size: 18px; font-weight: 700; letter-spacing: -.02em; flex-shrink: 0; }
-.brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--primary); border: 2px solid var(--frog-ink); }
 .frog-drawing { display: block; object-fit: contain; object-position: center; }
 .eyebrow { color: var(--muted-foreground); font-size: 10px; font-weight: 700; letter-spacing: .12em; line-height: 1.4; text-transform: uppercase; }
 .button { border: 2px solid var(--frog-ink); border-radius: 999px; padding: 10px 18px; font: 800 12px var(--font-body); cursor: pointer; box-shadow: var(--card-shadow); }
@@ -359,7 +358,7 @@ html[data-font-size='large'] .dashboard-shell { zoom: 1.1; }
 /* Thick hand-inked outlines + hard offset "cel" shadows on every surface. */
 .stat-card, .panel { border: 2.5px solid var(--frog-ink); border-radius: var(--radius); }
 .account-menu, .chart-tooltip { border: 2px solid var(--frog-ink); }
-.brand-mark { border-width: 2.5px; }
+
 
 /* Display lettering: chunky cartoon caps. */
 .font-serif, .dashboard-brand, .page-intro h1, .panel-heading h2, .account-menu-name, .settings-section-heading h2 {
@@ -422,4 +421,12 @@ body::after {
 @media (prefers-reduced-motion: reduce) {
   body::before, body::after { animation: none; }
   .button { transition: none; }
+}
+
+/* Hand-drawn mascot. In dark mode, a thin cream outline keeps the dark ink lines
+   (the Zs, the dream-bubble edge) from vanishing into the dark stage. */
+.frog-mascot { display: block; width: auto; max-width: 100%; user-select: none; }
+.dark .frog-mascot {
+  filter: drop-shadow(1px 0 0 var(--frog-ink)) drop-shadow(-1px 0 0 var(--frog-ink))
+          drop-shadow(0 1px 0 var(--frog-ink)) drop-shadow(0 -1px 0 var(--frog-ink));
 }

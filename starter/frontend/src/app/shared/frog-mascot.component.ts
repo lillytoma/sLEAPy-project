@@ -1,29 +1,29 @@
 import { Component, Input } from '@angular/core';
 
-/** The supplied sleepy-frog drawing, reused at every mascot location in the app. */
+/**
+ * sLEAPy's sleepy-frog mascot (hand-drawn — see scripts/make_mascot.py for how the
+ * transparent PNGs are generated from src/assets/frog-drawing.png).
+ *
+ * - variant="scene": the whole drawing (frog in its sleeping bag dreaming of a rising chart).
+ *   Use for big spots: hero, empty states.
+ * - variant="head": just the head + nightcap, square. Use for small spots: navbars, logos.
+ */
 @Component({
   selector: 'app-frog-mascot',
   standalone: true,
   template: `
     <img
-      src="assets/frog-drawing.png"
-      class="frog-drawing"
-      [style.width.px]="size"
+      class="frog-mascot"
+      [src]="variant === 'scene' ? 'assets/mascot-scene.png' : 'assets/mascot-head.png'"
       [style.height.px]="size"
       alt=""
       aria-hidden="true"
+      draggable="false"
     />
   `
 })
 export class FrogMascotComponent {
-  /** Rendered container width/height in px; the drawing keeps its original aspect ratio. */
+  /** Rendered height in px (width follows the drawing's shape). */
   @Input() size = 40;
-  /** Retained for compatibility with existing mascot usages. */
-  @Input() color = 'var(--primary)';
-  /** Retained for compatibility with existing mascot usages. */
-  @Input() ink = 'var(--frog-ink)';
-  /** Retained for compatibility with existing mascot usages. */
-  @Input() sleepy = true;
-  /** Retained for compatibility with existing mascot usages. */
-  @Input() detailed = true;
+  @Input() variant: 'scene' | 'head' = 'head';
 }
