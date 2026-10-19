@@ -5,46 +5,62 @@
 /* stylelint-disable-next-line at-rule-no-unknown */
 @tailwind utilities;
 
-/* CSS Variables — sLEAPy "sleepy frog" theme: warm sketchbook palette, doodle ink outlines. */
+/* CSS Variables — sLEAPy "sleepy frog" in a 1930s rubber-hose cartoon style (Cuphead-inspired):
+   aged paper, sepia ink outlines, hard offset shadows, mustard + cartoon-red accents. */
 :root {
-  --background: #fbf3df;
-  --foreground: #1f2a20;
-  --card: #fffef8;
-  --primary: #2f9e52;
-  --primary-foreground: #fffef8;
-  --muted: #f3eedd;
-  --muted-foreground: #6b7260;
-  --accent: #f4b942;
-  --accent-blue: #3da5f5;
-  --border: #e6dcc0;
-  --error: #c4453a;
-  --success: #34a853;
-  --error-tint: rgba(196, 69, 58, 0.1);
-  --success-tint: rgba(52, 168, 83, 0.14);
-  --accent-blue-tint: rgba(61, 165, 245, 0.16);
-  --frog-ink: #1f2a20;
-  --card-shadow: 3px 3px 0 rgba(31, 42, 32, 0.12);
-  --radius: 16px;
+  --font-display: 'Luckiest Guy', 'Bitter', serif;
+  --font-body: 'Bitter', Georgia, serif;
+  --font-mono: 'Courier Prime', 'Courier New', monospace;
+
+  --background: #efe2c0;
+  --foreground: #2a1d14;
+  --card: #f8eed4;
+  --primary: #3f7a30;
+  --primary-foreground: #f8eed4;
+  --muted: #e6d5ab;
+  --muted-foreground: #6e5a42;
+  --accent: #d99a1e;
+  --accent-blue: #3e6f8e;
+  --accent-red: #c8312c;
+  --accent-plum: #7a4a6e;
+  --accent-teal: #3f7f73;
+  --border: #c2a77a;
+  --error: #b8322a;
+  --success: #3f7a30;
+  --error-tint: rgba(184, 50, 42, 0.12);
+  --success-tint: rgba(63, 122, 48, 0.15);
+  --accent-blue-tint: rgba(62, 111, 142, 0.16);
+  --frog-ink: #2a1d14;
+  --frog-belly: #f6ecd0;
+  --card-shadow: 4px 4px 0 #2a1d14;
+  --radius: 14px;
+  --film-vignette: rgba(60, 38, 18, 0.32);
 }
 
+/* "Night show" — a dim theatre: dark sepia stage, cream ink. */
 .dark {
-  --background: #10170f;
-  --foreground: #f3eedd;
-  --card: #1a2619;
-  --primary: #4fc274;
-  --primary-foreground: #10170f;
-  --muted: #203022;
-  --muted-foreground: #9db09a;
-  --accent: #f4b942;
-  --accent-blue: #6fc0ff;
-  --border: rgba(243, 238, 221, 0.16);
-  --error: #e2695c;
-  --success: #4fc274;
-  --error-tint: rgba(226, 105, 92, 0.18);
-  --success-tint: rgba(79, 194, 116, 0.2);
-  --accent-blue-tint: rgba(111, 192, 255, 0.2);
-  --frog-ink: #f3eedd;
-  --card-shadow: 0 0 0 1px rgba(243, 238, 221, 0.08);
+  --background: #1c140e;
+  --foreground: #f2e6c8;
+  --card: #2a1f16;
+  --primary: #7fb35a;
+  --primary-foreground: #1c140e;
+  --muted: #3a2c1f;
+  --muted-foreground: #bba684;
+  --accent: #f0b73c;
+  --accent-blue: #7fb0cf;
+  --accent-red: #e0574a;
+  --accent-plum: #c08ab3;
+  --accent-teal: #79bfb1;
+  --border: rgba(242, 230, 200, 0.22);
+  --error: #e0574a;
+  --success: #7fb35a;
+  --error-tint: rgba(224, 87, 74, 0.18);
+  --success-tint: rgba(127, 179, 90, 0.2);
+  --accent-blue-tint: rgba(127, 176, 207, 0.2);
+  --frog-ink: #f2e6c8;
+  --frog-belly: #3a2c1f;
+  --card-shadow: 4px 4px 0 rgba(0, 0, 0, 0.65);
+  --film-vignette: rgba(0, 0, 0, 0.55);
 }
 
 /* Base styles */
@@ -56,10 +72,12 @@
 
 html {
   scroll-behavior: smooth;
+  /* Luckiest Guy only ships one weight — stop browsers smearing a fake bold over it. */
+  font-synthesis: none;
 }
 
 body {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-body);
   background-color: var(--background);
   color: var(--foreground);
   min-height: 100vh;
@@ -70,10 +88,10 @@ body {
 .dashboard-shell { min-height: 100vh; background: var(--background); color: var(--foreground); }
 .dashboard-header { background: var(--card); border-bottom: 1px solid var(--border); }
 .dashboard-header-inner { max-width: 1440px; min-height: 72px; margin: 0 auto; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-.dashboard-brand { display: flex; align-items: center; gap: 10px; color: var(--foreground); font-family: 'Baloo 2', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: -.02em; flex-shrink: 0; }
+.dashboard-brand { display: flex; align-items: center; gap: 10px; color: var(--foreground); font-family: var(--font-display); font-size: 18px; font-weight: 700; letter-spacing: -.02em; flex-shrink: 0; }
 .brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--primary); border: 2px solid var(--frog-ink); }
 .eyebrow { color: var(--muted-foreground); font-size: 10px; font-weight: 700; letter-spacing: .12em; line-height: 1.4; text-transform: uppercase; }
-.button { border: 2px solid var(--frog-ink); border-radius: 999px; padding: 10px 18px; font: 800 12px 'Nunito', sans-serif; cursor: pointer; box-shadow: var(--card-shadow); }
+.button { border: 2px solid var(--frog-ink); border-radius: 999px; padding: 10px 18px; font: 800 12px var(--font-body); cursor: pointer; box-shadow: var(--card-shadow); }
 .button-primary { color: var(--primary-foreground); background: var(--primary); }
 .button-primary span { margin-right: 5px; font-size: 16px; line-height: 0; }
 .text-link { color: var(--primary); font-size: 12px; font-weight: 600; white-space: nowrap; }
@@ -90,13 +108,13 @@ body {
 
 /* Account avatar + dropdown */
 .account-menu-wrap { position: relative; }
-.avatar-badge { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--frog-ink); background: var(--primary); color: var(--primary-foreground); font: 800 12px 'Nunito', sans-serif; cursor: pointer; }
+.avatar-badge { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--frog-ink); background: var(--primary); color: var(--primary-foreground); font: 800 12px var(--font-body); cursor: pointer; }
 .account-menu { position: absolute; top: calc(100% + 10px); right: 0; min-width: 220px; padding: 6px; border: 1.5px solid var(--border); border-radius: 14px; background: var(--card); box-shadow: var(--card-shadow); z-index: 20; }
 .account-menu-header { padding: 10px 12px 12px; }
-.account-menu-name { margin: 0; font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 14px; color: var(--foreground); }
+.account-menu-name { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 14px; color: var(--foreground); }
 .account-menu-email { margin: 2px 0 0; font-size: 12px; color: var(--muted-foreground); }
 .account-menu-divider { height: 1px; margin: 6px 4px; background: var(--border); }
-.account-menu a, .account-menu-row-button { display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px 12px; border: 0; border-radius: 9px; background: none; color: var(--foreground); font: 600 13px 'Nunito', sans-serif; cursor: pointer; text-align: left; }
+.account-menu a, .account-menu-row-button { display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px 12px; border: 0; border-radius: 9px; background: none; color: var(--foreground); font: 600 13px var(--font-body); cursor: pointer; text-align: left; }
 .account-menu a:hover, .account-menu a.is-active, .account-menu-row-button:hover { background: var(--muted); color: var(--primary); }
 .account-menu-value { margin-left: auto; color: var(--muted-foreground); font-size: 12px; font-weight: 600; }
 .account-menu-danger { color: var(--error); }
@@ -105,7 +123,7 @@ body {
 .dashboard-content-full { max-width: 1440px; margin: 0 auto; padding: 32px 40px 56px; min-width: 0; }
 .dashboard-home { display: flex; flex-direction: column; gap: 26px; }
 .page-intro { display: flex; align-items: end; justify-content: space-between; gap: 24px; }
-.page-intro h1 { margin: 5px 0 4px; font-family: 'Baloo 2', sans-serif; font-size: clamp(32px, 4vw, 46px); font-weight: 700; letter-spacing: -.02em; line-height: 1; }
+.page-intro h1 { margin: 5px 0 4px; font-family: var(--font-display); font-size: clamp(32px, 4vw, 46px); font-weight: 700; letter-spacing: -.02em; line-height: 1; }
 .intro-accent { color: var(--accent); }
 .page-subtitle { color: var(--muted-foreground); font-size: 13px; }
 .stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
@@ -113,21 +131,21 @@ body {
 .stat-card { min-height: 122px; padding: 18px 20px; }
 .stat-card-top { display: flex; align-items: center; justify-content: space-between; color: var(--muted-foreground); font-size: 12px; }
 .stat-card-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
-.stat-value { margin-top: 16px; font: 700 23px 'DM Mono', monospace; letter-spacing: -.04em; }
-.stat-sub { margin-top: 6px; font: 11px 'DM Mono', monospace; }
-.stat-sub span { color: var(--muted-foreground); font-family: 'Nunito', sans-serif; }
+.stat-value { margin-top: 16px; font: 700 23px var(--font-mono); letter-spacing: -.04em; }
+.stat-sub { margin-top: 6px; font: 11px var(--font-mono); }
+.stat-sub span { color: var(--muted-foreground); font-family: var(--font-body); }
 .panel { overflow: hidden; }
 .chart-panel { padding: 22px; }
 .chart-panel svg text { letter-spacing: 0; }
 .panel-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
-.panel-heading h2 { margin-top: 3px; font-family: 'Baloo 2', sans-serif; font-size: 16px; font-weight: 700; }
-.period-pill { padding: 5px 10px; border-radius: 999px; color: var(--primary); background: var(--muted); font: 700 10px 'DM Mono', monospace; }
+.panel-heading h2 { margin-top: 3px; font-family: var(--font-display); font-size: 16px; font-weight: 700; }
+.period-pill { padding: 5px 10px; border-radius: 999px; color: var(--primary); background: var(--muted); font: 700 10px var(--font-mono); }
 .period-pill.is-active { background: var(--primary); color: var(--primary-foreground); }
 
 /* Chart hover tooltip (Performance chart) */
 .chart-tooltip { position: absolute; transform: translate(-50%, -115%); background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; padding: 8px 12px; box-shadow: var(--card-shadow); pointer-events: none; white-space: nowrap; z-index: 5; }
 .chart-tooltip-label { margin: 0; font-size: 11px; font-weight: 700; color: var(--muted-foreground); }
-.chart-tooltip-value { margin: 2px 0 0; font-size: 12px; font-weight: 700; color: var(--success); font-family: 'DM Mono', monospace; }
+.chart-tooltip-value { margin: 2px 0 0; font-size: 12px; font-weight: 700; color: var(--success); font-family: var(--font-mono); }
 .table-heading { padding: 20px 22px 16px; margin: 0; border-bottom: 1px solid var(--border); }
 .table-panel table { min-width: 500px; }
 .table-panel th, .table-panel td { padding: 13px 16px; }
@@ -224,17 +242,17 @@ body {
 
 /* Input base */
 input, select, textarea {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-body);
 }
 
 /* Number font */
 .font-mono {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono);
 }
 
 /* Display / logo font */
 .font-serif {
-  font-family: 'Baloo 2', sans-serif;
+  font-family: var(--font-display);
 }
 
 /* Settings */
@@ -256,14 +274,14 @@ input, select, textarea {
 .settings-option h3 { font-size: 14px; font-weight: 700; }
 .settings-option p, .settings-help { margin-top: 5px; color: var(--muted-foreground); font-size: 12px; line-height: 1.5; }
 .settings-help { margin: 17px 0 0; }
-.settings-toggle { display: flex; align-items: center; gap: 9px; min-width: 72px; border: 0; color: var(--muted-foreground); background: transparent; font: 700 12px 'DM Sans', sans-serif; cursor: pointer; }
+.settings-toggle { display: flex; align-items: center; gap: 9px; min-width: 72px; border: 0; color: var(--muted-foreground); background: transparent; font: 700 12px var(--font-body); cursor: pointer; }
 .settings-toggle-track { position: relative; display: block; width: 36px; height: 20px; padding: 3px; border-radius: 12px; background: var(--muted-foreground); transition: background .2s; }
 .settings-toggle-thumb { display: block; width: 14px; height: 14px; border-radius: 50%; background: var(--card); transition: transform .2s; }
 .settings-toggle.is-on { color: var(--primary); }
 .settings-toggle.is-on .settings-toggle-track { background: var(--primary); }
 .settings-toggle.is-on .settings-toggle-thumb { transform: translateX(16px); }
 .settings-segmented { display: flex; overflow: hidden; border: 1px solid var(--border); border-radius: 7px; }
-.settings-segmented button, .settings-color-option { border: 0; color: var(--muted-foreground); background: var(--card); font: 700 11px 'DM Sans', sans-serif; cursor: pointer; transition: color .2s, background .2s; }
+.settings-segmented button, .settings-color-option { border: 0; color: var(--muted-foreground); background: var(--card); font: 700 11px var(--font-body); cursor: pointer; transition: color .2s, background .2s; }
 .settings-segmented button { padding: 9px 12px; border-right: 1px solid var(--border); }
 .settings-segmented button:last-child { border-right: 0; }
 .settings-segmented button.is-selected, .settings-color-option.is-selected { color: var(--primary-foreground); background: var(--primary); }
@@ -271,7 +289,7 @@ input, select, textarea {
 .settings-color-option { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 10px; border: 1px solid var(--border); border-radius: 7px; }
 .settings-color-option:not(.is-selected):hover { border-color: var(--primary); color: var(--primary); }
 .color-swatch { width: 16px; height: 16px; border: 2px solid currentColor; border-radius: 50%; background: var(--primary); }
-.color-swatch-default { background: linear-gradient(135deg, #176b55 50%, #d59a43 50%); }
+.color-swatch-default { background: linear-gradient(135deg, #3f7a30 50%, #d99a1e 50%); }
 .color-swatch-protanopia { background: linear-gradient(135deg, #2457d6 50%, #f0a202 50%); }
 .color-swatch-deuteranopia { background: linear-gradient(135deg, #005f73 50%, #ee9b00 50%); }
 .color-swatch-tritanopia { background: linear-gradient(135deg, #c51b8a 50%, #0077b6 50%); }
@@ -333,4 +351,74 @@ html[data-font-size='large'] .dashboard-shell { zoom: 1.1; }
   .settings-panel { padding: 18px; }
   .settings-option { align-items: start; flex-direction: column; gap: 14px; }
   .settings-color-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ───────────── Cuphead / 1930s cartoon layer ───────────── */
+
+/* Thick hand-inked outlines + hard offset "cel" shadows on every surface. */
+.stat-card, .panel { border: 2.5px solid var(--frog-ink); border-radius: var(--radius); }
+.account-menu, .chart-tooltip { border: 2px solid var(--frog-ink); }
+.brand-mark { border-width: 2.5px; }
+
+/* Display lettering: chunky cartoon caps. */
+.font-serif, .dashboard-brand, .page-intro h1, .panel-heading h2, .account-menu-name, .settings-section-heading h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: .03em;
+}
+.page-intro h1 { text-shadow: 3px 3px 0 var(--accent); line-height: 1.05; }
+.page-intro h1 .intro-accent { color: var(--accent-red); text-shadow: 3px 3px 0 var(--frog-ink); }
+.eyebrow { font-family: var(--font-mono); letter-spacing: .16em; }
+
+/* Buttons bounce like rubber-hose props: lift on hover, squash on press. */
+.button { transition: transform .12s ease-out, box-shadow .12s ease-out; }
+.button:hover:not(:disabled) { transform: translate(-1px, -2px); box-shadow: 5px 6px 0 var(--frog-ink); }
+.button:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--frog-ink); }
+.dark .button:hover:not(:disabled) { box-shadow: 5px 6px 0 rgba(0, 0, 0, .65); }
+.dark .button:active:not(:disabled) { box-shadow: 1px 1px 0 rgba(0, 0, 0, .65); }
+
+::-webkit-scrollbar-thumb { background: var(--frog-ink); }
+
+/* Old-film overlay: vignette (::before) + jittering grain (::after).
+   Both ignore the mouse, so nothing underneath is blocked. */
+body::before, body::after {
+  content: '';
+  position: fixed;
+  pointer-events: none;
+  z-index: 2147483000;
+}
+body::before {
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 55%, var(--film-vignette) 100%);
+  animation: film-flicker 5s steps(1) infinite;
+}
+body::after {
+  inset: -50%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.13 0 0 0 0 0.07 0 0 0 1.6 -0.55'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: .32;
+  mix-blend-mode: multiply;
+  animation: film-grain .8s steps(1) infinite;
+}
+.dark body::after { mix-blend-mode: screen; opacity: .1; }
+
+@keyframes film-grain {
+  0%   { transform: translate(0, 0); }
+  12%  { transform: translate(-3%, 2%); }
+  25%  { transform: translate(2%, -4%); }
+  37%  { transform: translate(-5%, -1%); }
+  50%  { transform: translate(4%, 3%); }
+  62%  { transform: translate(-1%, 5%); }
+  75%  { transform: translate(3%, -2%); }
+  87%  { transform: translate(-4%, 4%); }
+}
+@keyframes film-flicker {
+  0%, 100% { opacity: 1; }
+  41% { opacity: .9; }
+  43% { opacity: 1; }
+  77% { opacity: .94; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before, body::after { animation: none; }
+  .button { transition: none; }
 }

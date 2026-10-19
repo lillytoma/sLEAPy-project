@@ -20,13 +20,13 @@ import { Component, Input } from '@angular/core';
         <circle cx="44" cy="46" r="1.8" [attr.fill]="ink"/>
         <circle cx="56" cy="46" r="1.8" [attr.fill]="ink"/>
         <path d="M 40 54 Q 50 60 60 54" [attr.stroke]="ink" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-        <ellipse cx="50" cy="70" rx="18" ry="9" fill="#DFF5E1" opacity="0.55"/>
+        <ellipse cx="50" cy="70" rx="18" ry="9" fill="var(--frog-belly)" opacity="0.7"/>
         <ellipse cx="28" cy="86" rx="10" ry="6" [attr.fill]="color" [attr.stroke]="ink" stroke-width="3"/>
         <ellipse cx="72" cy="86" rx="10" ry="6" [attr.fill]="color" [attr.stroke]="ink" stroke-width="3"/>
       }
       @if (sleepy) {
-        <text x="76" y="14" font-size="15" [attr.fill]="ink" transform="rotate(-12 76 14)" font-family="'Baloo 2', sans-serif">Z</text>
-        <text x="86" y="26" font-size="10" [attr.fill]="ink" transform="rotate(-10 86 26)" font-family="'Baloo 2', sans-serif">z</text>
+        <text x="76" y="14" font-size="15" [attr.fill]="ink" transform="rotate(-12 76 14)" style="font-family:var(--font-display)">Z</text>
+        <text x="86" y="26" font-size="10" [attr.fill]="ink" transform="rotate(-10 86 26)" style="font-family:var(--font-display)">z</text>
       }
     </svg>
   `

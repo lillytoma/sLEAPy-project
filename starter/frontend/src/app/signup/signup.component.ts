@@ -86,8 +86,8 @@ export class SignupComponent {
   pwStrengthColor = computed(() => {
     const s = this.pwStrength();
     if (s <= 1) return 'var(--error)';
-    if (s === 2) return '#F59E0B';
-    if (s === 3) return '#3B82F6';
+    if (s === 2) return 'var(--accent)';
+    if (s === 3) return 'var(--accent-blue)';
     return 'var(--success)';
   });
 

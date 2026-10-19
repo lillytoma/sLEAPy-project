@@ -42,8 +42,8 @@ export class PortfolioComponent implements OnInit {
       sectorMap[holding.sector] = (sectorMap[holding.sector] ?? 0) + holding.shares * holding.current;
     }
     const total = Object.values(sectorMap).reduce((a, b) => a + b, 0);
-    // Warm, muted categorical palette — avoids stock Tailwind blues/pinks that clash with the sketchbook theme.
-    const colors = ['var(--primary)', 'var(--accent)', 'var(--accent-blue)', '#D1477A', '#8B6FD1', '#4FA89B'];
+    // Warm, muted categorical palette — vintage cartoon inks that follow the theme.
+    const colors = ['var(--primary)', 'var(--accent)', 'var(--accent-blue)', 'var(--accent-red)', 'var(--accent-plum)', 'var(--accent-teal)'];
     const circumference = 2 * Math.PI * 60;
     let cumulative = 0;
     return Object.entries(sectorMap).map(([label, value], i) => {
