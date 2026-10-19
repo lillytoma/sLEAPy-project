@@ -40,7 +40,7 @@ export class MarketsComponent implements OnInit, OnDestroy {
     this.searchSubscription = this.searchSubject.pipe(
       debounceTime(400),
       distinctUntilChanged((previous, current) => previous.query === current.query && previous.mode === current.mode),
-      switchMap(({ query, mode }) => query.length >= 2
+      switchMap(({ query, mode }) => query.length >= 3
         ? this.marketDataService.searchInstruments(query, mode)
         : of([]))
     ).subscribe({
@@ -110,21 +110,14 @@ export class MarketsComponent implements OnInit, OnDestroy {
   suggestions = computed(() => {
     const q = this.searchQuery().toLowerCase();
     if (!q || q.length < 1) return [];
-    const results = this.searchResults();
-    if (results !== null) return results.slice(0, 8).map((stock) => this.withLivePrice(stock));
-    return this.allStocks().filter((s) => this.matchesSearchMode(s, q)).slice(0, 8).map((s) => this.withLivePrice(s));
+    return this.searchStocks(q).slice(0, 8).map((stock) => this.withLivePrice(stock));
   });
 
   filteredStocks = computed(() => {
-    const backendResults = this.searchResults();
-    let stocks = backendResults === null
-      ? this.allStocks().map((s) => this.withLivePrice(s))
-      : backendResults.map((s) => this.withLivePrice(s));
     const q = this.searchQuery().toLowerCase();
-
-    if (q && backendResults === null) {
-      stocks = stocks.filter((s) => this.matchesSearchMode(s, q));
-    }
+    let stocks = q
+      ? this.searchStocks(q).map((s) => this.withLivePrice(s))
+      : this.allStocks().map((s) => this.withLivePrice(s));
 
     // Filter by favorites if toggled
     if (this.showFavoritesOnly()) {
@@ -133,6 +126,17 @@ export class MarketsComponent implements OnInit, OnDestroy {
 
     return stocks;
   });
+
+  private searchStocks(query: string): MarketStock[] {
+    const localMatches = this.allStocks().filter((stock) => this.matchesSearchMode(stock, query));
+    const remoteMatches = this.searchResults() ?? [];
+    const localSymbols = new Set(localMatches.map((stock) => stock.symbol.toUpperCase()));
+
+    return [
+      ...localMatches,
+      ...remoteMatches.filter((stock) => !localSymbols.has(stock.symbol.toUpperCase()))
+    ];
+  }
 
   private matchesSearchMode(stock: MarketStock, query: string): boolean {
     return this.searchMode() === 'ticker'
