@@ -65,24 +65,38 @@
               <div class="col-span-2"><div class="admin-detail-label">Address</div><div class="admin-detail-value">{{ detail.streetAddress || '—' }}, {{ detail.city || '' }} {{ detail.state || '' }} {{ detail.zipCode || '' }}</div></div>
             </div>
 
-            <h3 class="admin-section-title">Holdings ({{ detail.holdings.length }})</h3>
+            <div class="admin-section-heading">
+              <h3 class="admin-section-title">Holdings ({{ detail.holdings.length }})</h3>
+              @if (detail.holdings.length > 5) {
+                <button type="button" class="admin-see-more" (click)="toggleHoldings()">
+                  {{ showAllHoldings() ? 'Show less' : 'See more' }}
+                </button>
+              }
+            </div>
             <div class="admin-table-wrap">
               <table class="admin-table">
                 <thead><tr><th>Symbol</th><th>Shares</th><th>Cost basis</th><th>Market price</th></tr></thead>
                 <tbody>
-                  @for (holding of detail.holdings; track holding.id) {
+                  @for (holding of (showAllHoldings() ? detail.holdings : detail.holdings.slice(0, 5)); track holding.id) {
                     <tr><td>{{ holding.symbol }}</td><td>{{ holding.shares }}</td><td>{{ formatMoney(holding.purchasePrice) }}</td><td>{{ formatMoney(holding.currentPrice) }}</td></tr>
                   } @empty { <tr><td colspan="4" class="admin-muted">No holdings.</td></tr> }
                 </tbody>
               </table>
             </div>
 
-            <h3 class="admin-section-title">Activity ({{ detail.activity.length }})</h3>
+            <div class="admin-section-heading">
+              <h3 class="admin-section-title">Activity ({{ detail.activity.length }})</h3>
+              @if (detail.activity.length > 5) {
+                <button type="button" class="admin-see-more" (click)="toggleActivity()">
+                  {{ showAllActivity() ? 'Show less' : 'See more' }}
+                </button>
+              }
+            </div>
             <div class="admin-table-wrap">
               <table class="admin-table">
                 <thead><tr><th>Date</th><th>Action</th><th>Symbol</th><th>Qty</th><th>Total</th></tr></thead>
                 <tbody>
-                  @for (activity of detail.activity; track activity.id) {
+                  @for (activity of (showAllActivity() ? detail.activity : detail.activity.slice(0, 5)); track activity.id) {
                     <tr><td>{{ activity.date }}</td><td>{{ activity.type }} · {{ activity.status }}</td><td>{{ activity.symbol }}</td><td>{{ activity.quantity }}</td><td>{{ formatMoney(activity.total) }}</td></tr>
                   } @empty { <tr><td colspan="5" class="admin-muted">No activity.</td></tr> }
                 </tbody>

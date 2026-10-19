@@ -31,6 +31,10 @@ import { AdminService, AdminUser, AdminUserDetail } from '../../services/admin.s
     .admin-detail-label { color: var(--muted-foreground); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; }
     .admin-detail-value { margin-top: 4px; color: var(--foreground); font-size: .9rem; word-break: break-word; }
     .admin-section-title { margin: 20px 0 8px; font-size: .95rem; }
+    .admin-section-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .admin-section-heading .admin-section-title { margin-bottom: 8px; }
+    .admin-see-more { border: 0; padding: 4px 0; background: transparent; color: var(--primary); font-size: .8rem; font-weight: 650; cursor: pointer; }
+    .admin-see-more:hover { text-decoration: underline; }
     .admin-table-wrap { overflow-x: auto; }
     .admin-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
     .admin-table th, .admin-table td { padding: 10px 8px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
@@ -47,6 +51,8 @@ export class AdminComponent implements OnInit {
   status = signal('all');
   loading = signal(true);
   error = signal('');
+  showAllHoldings = signal(false);
+  showAllActivity = signal(false);
 
   filteredUsers = computed(() => {
     const query = this.query().trim().toLowerCase();
@@ -75,10 +81,20 @@ export class AdminComponent implements OnInit {
 
   selectUser(user: AdminUser): void {
     this.selectedUser.set(null);
+    this.showAllHoldings.set(false);
+    this.showAllActivity.set(false);
     this.adminService.getUser(user.id).subscribe({
       next: detail => this.selectedUser.set(detail),
       error: () => this.error.set('The selected user could not be loaded.')
     });
+  }
+
+  toggleHoldings(): void {
+    this.showAllHoldings.update(value => !value);
+  }
+
+  toggleActivity(): void {
+    this.showAllActivity.update(value => !value);
   }
 
   initials(user: AdminUser): string {
