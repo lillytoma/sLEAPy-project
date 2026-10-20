@@ -32,7 +32,7 @@
   --accent-blue-tint: rgba(62, 111, 142, 0.16);
   --frog-ink: #2a1d14;
   --frog-belly: #f6ecd0;
-  --card-shadow: 3px 3px 0 rgba(42, 29, 20, 0.35);
+  --card-shadow: 3px 3px 0 #2a1d14;
   --radius: 14px;
   --film-vignette: rgba(60, 38, 18, 0.32);
 }
@@ -59,7 +59,7 @@
   --accent-blue-tint: rgba(127, 176, 207, 0.2);
   --frog-ink: #f2e6c8;
   --frog-belly: #2c3855;
-  --card-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
+  --card-shadow: 3px 3px 0 rgba(0, 0, 0, 0.65);
   --film-vignette: rgba(0, 0, 0, 0.55);
 }
 

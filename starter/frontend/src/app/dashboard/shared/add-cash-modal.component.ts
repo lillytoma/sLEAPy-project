@@ -9,8 +9,7 @@ import { PortfolioService } from '../../services/portfolio.service';
   template: `
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
       style="background-color:rgba(0,0,0,0.6)" (click)="onBackdropClick($event)">
-      <div class="w-full max-w-md rounded-xl border shadow-2xl"
-        style="background-color:var(--card);border-color:var(--border)"
+      <div class="w-full max-w-md panel"
         (click)="$event.stopPropagation()">
         <div class="flex items-center justify-between px-6 py-4 border-b" style="border-color:var(--border)">
           <h2 class="text-lg font-semibold" style="color:var(--foreground)">Add Cash</h2>

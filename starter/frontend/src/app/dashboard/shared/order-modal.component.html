@@ -1,8 +1,7 @@
 <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
   style="background-color:rgba(0,0,0,0.6)"
   (click)="onBackdropClick($event)">
-  <div class="w-full max-w-md max-h-[calc(100vh-2rem)] rounded-xl border shadow-2xl fade-in transition-all duration-300 flex flex-col overflow-hidden"
-    style="background-color:var(--card);border-color:var(--border)"
+  <div class="w-full max-w-md max-h-[calc(100vh-2rem)] panel fade-in transition-all duration-300 flex flex-col overflow-hidden"
     (click)="$event.stopPropagation()">
 
     @if (!success()) {
