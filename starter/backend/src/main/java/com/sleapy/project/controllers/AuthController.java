@@ -65,7 +65,9 @@ public class AuthController {
                 "Login successful",
                 user.getId(),
                 jwtToken,
-                clientService.isFrozen(user)
+                clientService.isFrozen(user),
+                user.getFirstName(),
+                user.getLastName()
             );
 
             //6. return the 200 status OK
@@ -107,7 +109,9 @@ public class AuthController {
                 "Signup successful. Welcome!",
                 newClient.getId(),
                 jwtToken,
-                false
+                false,
+                newClient.getFirstName(),
+                newClient.getLastName()
             );
             
             // Step 6: Return 201 CREATED (RESTful standard)

@@ -171,7 +171,7 @@ body {
 .order-chart-range:hover, .order-option-button:hover { background-color: var(--primary) !important; border-color: var(--primary) !important; color: var(--primary-foreground) !important; transform: translateY(-1px); }
 .order-option-button:hover { background-color: var(--error) !important; border-color: var(--error) !important; color: #fff !important; }
 /* Portfolio "Return by Position" chart — horizontal bars diverging from 0%. */
-.rbp-summary { margin: 6px 0 16px; color: var(--muted-foreground); font-size: 13px; }
+.rbp-summary { display: flex; flex-wrap: wrap; gap: 4px 28px; margin: 6px 0 16px; color: var(--muted-foreground); font-size: 13px; }
 .rbp-summary strong { font-family: var(--font-mono); }
 .rbp-rows { max-height: 288px; overflow-y: auto; }
 .rbp-row { display: grid; grid-template-columns: 56px minmax(0, 1fr) 96px; align-items: center; gap: 10px; height: 40px; border-radius: 8px; }

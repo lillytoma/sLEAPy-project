@@ -62,8 +62,8 @@
           } @else {
             <p class="rbp-summary">
               @if (chart.bars.length > 1) {
-                Best <strong [style.color]="chart.best.positive ? 'var(--success)' : 'var(--error)'">{{ chart.best.symbol }} {{ formatSignedPct(chart.best.pct) }}</strong>
-                · Worst <strong [style.color]="chart.worst.positive ? 'var(--success)' : 'var(--error)'">{{ chart.worst.symbol }} {{ formatSignedPct(chart.worst.pct) }}</strong>
+                <span>Best <strong [style.color]="chart.best.positive ? 'var(--success)' : 'var(--error)'">{{ chart.best.symbol }} {{ formatSignedPct(chart.best.pct) }}</strong></span>
+                <span>Worst <strong [style.color]="chart.worst.positive ? 'var(--success)' : 'var(--error)'">{{ chart.worst.symbol }} {{ formatSignedPct(chart.worst.pct) }}</strong></span>
               } @else {
                 <strong [style.color]="chart.best.positive ? 'var(--success)' : 'var(--error)'">{{ chart.best.symbol }} {{ formatSignedPct(chart.best.pct) }}</strong>
               }
