@@ -60,28 +60,6 @@ public class JwtService {
         }
     }
 
-    public String getSubject(String authorizationHeader) {
-        if (authorizationHeader == null || authorizationHeader.isBlank()) {
-            return null;
-        }
-
-        String token = authorizationHeader;
-        if (authorizationHeader.regionMatches(true, 0, "Bearer ", 0, 7)) {
-            token = authorizationHeader.substring(7).trim();
-        }
-
-        try {
-            return Jwts.parser()
-                    .verifyWith(getSigningKey())
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload()
-                    .getSubject();
-        } catch (JwtException | IllegalArgumentException ex) {
-            return null;
-        }
-    }
-
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
     }

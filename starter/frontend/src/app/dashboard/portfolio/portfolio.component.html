@@ -86,23 +86,6 @@
         <div class="px-6 py-4 border-b" style="border-color:var(--border)">
           <h3 class="font-semibold" style="color:var(--foreground)">All Holdings</h3>
         </div>
-
-        @if (pendingOrders().length > 0) {
-          <div class="rounded-xl border overflow-hidden" style="background-color:var(--card);border-color:var(--border)">
-            <div class="px-6 py-4 border-b" style="border-color:var(--border)">
-              <h3 class="font-semibold" style="color:var(--foreground)">Pending orders</h3>
-            </div>
-            @for (order of pendingOrders(); track $index) {
-              <div class="flex items-center justify-between px-6 py-4 border-b last:border-b-0" style="border-color:var(--border)">
-                <div>
-                  <p class="font-semibold" style="color:var(--foreground)">{{ order.instrument.symbol }} · {{ order.tradeType }}</p>
-                  <p class="text-xs" style="color:var(--muted-foreground)">{{ order.quantity }} shares · submitted {{ order.timeOfPurchase }}</p>
-                </div>
-                <span class="text-xs font-semibold" style="color:var(--primary)">{{ order.status }}</span>
-              </div>
-            }
-          </div>
-        }
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>

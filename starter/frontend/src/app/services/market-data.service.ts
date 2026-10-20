@@ -22,8 +22,6 @@ export class MarketDataService {
   // WebSocket-related subjects for price updates
   private priceUpdatesSubject = new BehaviorSubject<Map<string, any>>(new Map());
   public priceUpdates$ = this.priceUpdatesSubject.asObservable();
-  private orderStatusSubject = new BehaviorSubject<OrderStatusUpdate | null>(null);
-  public orderStatusUpdates$ = this.orderStatusSubject.asObservable();
   public instruments = signal<any[]>([]);
 
   private webSocketConnectedSubject = new BehaviorSubject<boolean>(false);
@@ -113,16 +111,6 @@ export class MarketDataService {
             console.error('Error parsing price update:', e);
           }
         });
-        const clientId = Number(localStorage.getItem('user_id'));
-        if (Number.isFinite(clientId) && clientId > 0) {
-          this.stompClient!.subscribe(`/topic/orders/${clientId}`, (message: IMessage) => {
-            try {
-              this.orderStatusSubject.next(JSON.parse(message.body) as OrderStatusUpdate);
-            } catch (error) {
-              console.error('Error parsing order status update:', error);
-            }
-          });
-        }
       },
       onDisconnect: () => {
         console.log('WebSocket disconnected');
@@ -155,7 +143,6 @@ export class MarketDataService {
               lastUpdated: instrument.lastUpdated
             });
           }
-
         });
         this.priceUpdatesSubject.next(merged);
       },
@@ -192,15 +179,4 @@ export class MarketDataService {
   isWebSocketConnected(): boolean {
     return this.webSocketConnectedSubject.value;
   }
-
-}
-
-export interface OrderStatusUpdate {
-  orderId: number | null;
-  clientId: number;
-  symbol: string | null;
-  tradeType: 'BUY' | 'SELL';
-  status: 'PENDING' | 'ACCEPTED' | 'FILLED' | 'REJECTED';
-  message: string;
-  timestamp: string;
 }
