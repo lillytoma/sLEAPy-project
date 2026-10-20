@@ -156,8 +156,8 @@ body {
 .stat-card-top { display: flex; align-items: center; justify-content: space-between; color: var(--muted-foreground); font-size: 12px; }
 .stat-card-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 .stat-value { margin-top: 16px; font: 700 23px var(--font-mono); letter-spacing: -.04em; }
-.stat-sub { margin-top: 6px; font: 11px var(--font-mono); }
-.stat-sub span { color: var(--muted-foreground); font-family: var(--font-body); }
+.stat-sub { margin-top: 8px; font: 700 15px var(--font-mono); }
+.stat-sub span { color: var(--muted-foreground); font-family: var(--font-body); font-size: 12px; font-weight: 500; }
 .panel { overflow: hidden; }
 .chart-panel { padding: 22px; }
 .chart-panel svg text { letter-spacing: 0; }
