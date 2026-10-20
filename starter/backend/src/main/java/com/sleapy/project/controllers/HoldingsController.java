@@ -72,11 +72,11 @@ public class HoldingsController {
         } catch (NoSuchElementException e) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "The requested portfolio information was not found."));
+                    .body(Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "We could not calculate the portfolio value."));
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -102,11 +102,11 @@ public class HoldingsController {
         } catch (NoSuchElementException e) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "The requested holding was not found."));
+                    .body(Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "We could not create that holding."));
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -134,11 +134,11 @@ public class HoldingsController {
         } catch (NoSuchElementException e) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "The requested holding was not found."));
+                    .body(Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "We could not update that holding."));
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -164,11 +164,11 @@ public class HoldingsController {
         } catch (NoSuchElementException e) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "The requested holding was not found."));
+                    .body(Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "We could not delete that holding."));
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 

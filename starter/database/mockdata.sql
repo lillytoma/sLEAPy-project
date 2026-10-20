@@ -50,9 +50,10 @@ INSERT INTO Order_Status (OrderStatus_Name)
 VALUES
 
  ('Pending'),
+
  ('Filled'),
- ('Rejected'),
- ('Accepted');
+
+ ('Cancelled');
 
 -- =====================================================
 
@@ -175,18 +176,6 @@ VALUES
  (3, 'kanderson', 'kanderson@email.com', 'hash009', '555-1009', '111-11-1009', 0.00, 'Karen', 'Anderson', '1993-12-27', '100 River Dr', 'Lubbock', 'TX', '79401', 'West Texas'),
 
  (1, 'gmartin', 'gmartin@email.com', 'hash010', '555-1010', '111-11-1010', 12880.44, 'George', 'Martin', '1991-06-14', '212 Elm St', 'Denton', 'TX', '76201', 'North Texas');
-
--- Development-only account used by the frontend login hint.
-INSERT INTO Clients (
- ClientStatus_ID, username, email, password_hash, phone_number, ssn, cash_balance,
- first_name, last_name, dob, street_address, city, state_name, zip_code, region
-)
-VALUES (
- 1, 'demo', 'demo@sleapystocks.com',
- '2a$10$p6OX4MPVdAT3CWA6DDiYv.depOK19HEy6i3zb2471aubdq8iYYY1K',
- '555-0000', '111-11-0000', 10000.00, 'Demo', 'User', '1990-01-01',
- '1 Demo Way', 'Dallas', 'TX', '75001', 'North Texas'
-);
 
 -- =====================================================
 

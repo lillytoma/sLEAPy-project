@@ -71,17 +71,6 @@ export class AuthService {
   }
 
   logout(): void {
-    const email = localStorage.getItem('user_email');
-    this.http.post(`${this.apiURL}/logout`, { email }).subscribe({
-      next: () => this.clearSession(),
-      error: (error) => {
-        console.error('Unable to record logout event:', error);
-        this.clearSession();
-      }
-    });
-  }
-
-  private clearSession(): void {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_id');
     localStorage.removeItem('user_email');

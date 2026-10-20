@@ -40,7 +40,6 @@ interface TradeResponse {
   pricePerShare: number;
   totalAmount: number;
   timestamp: string;
-  status: OrderResponse['status'];
   message: string;
 }
 
@@ -66,7 +65,6 @@ export class PortfolioService {
     0
   ));
   private apiBaseUrl = `${environment.apiUrl}/api`;
-  private orderStatusOverrides = new Map<number, OrderResponse['status']>();
 
   constructor(private http: HttpClient, private marketDataService: MarketDataService) {
     this.marketDataService.priceUpdates$.subscribe((updates) => {
@@ -75,10 +73,6 @@ export class PortfolioService {
         const live = updates.get(holding.symbol);
         return live?.currentPrice == null ? holding : { ...holding, current: Number(live.currentPrice) };
       }));
-    });
-    this.marketDataService.orderStatusUpdates$.subscribe((update) => {
-      if (update?.orderId == null) return;
-      this.orderStatusOverrides.set(update.orderId, update.status);
     });
     this.refreshCashBalance();
     this.refreshHoldings();
@@ -108,18 +102,7 @@ export class PortfolioService {
   getTransactions(): Observable<TransactionResponse[]> {
     const clientId = this.resolveClientId(false);
     if (clientId === null) return of([]);
-    return this.http.get<TransactionResponse[]>(`${this.apiBaseUrl}/orders/?clientId=${clientId}&page=1&pageSize=5`).pipe(
-      map((orders) => orders.map((order) => ({
-        ...order,
-        status: order.orderId == null
-          ? order.status
-          : this.orderStatusOverrides.get(order.orderId) ?? order.status
-      })))
-    );
-  }
-
-  getOrderStatusUpdates(): Observable<import('./market-data.service').OrderStatusUpdate | null> {
-    return this.marketDataService.orderStatusUpdates$;
+    return this.http.get<TransactionResponse[]>(`${this.apiBaseUrl}/orders/?clientId=${clientId}&page=1&pageSize=5`);
   }
 
   refreshHoldings(): void {
@@ -168,18 +151,16 @@ export class PortfolioService {
       }),
       switchMap((tradeRequest) => this.http.post<TradeResponse>(`${this.apiBaseUrl}/trades/${side}`, tradeRequest)),
       tap((response) => {
-        if (response.status === 'FILLED') {
-          this.availableCash.update((cash) => side === 'buy'
-            ? cash - response.totalAmount
-            : cash + response.totalAmount);
-          this.refreshHoldings();
-        }
+        this.availableCash.update((cash) => side === 'buy'
+          ? cash - response.totalAmount
+          : cash + response.totalAmount);
+        this.refreshHoldings();
       }),
       map((response) => ({
         success: true,
         orderId: response.orderId,
         message: response.message,
-        status: response.status as OrderResponse['status']
+        status: 'FILLED' as const
       }))
     );
   }
@@ -247,7 +228,6 @@ export class PortfolioService {
 }
 
 export interface TransactionResponse {
-  orderId?: number;
   timeOfPurchase: string;
   timeFilled?: string;
   quantity: number;

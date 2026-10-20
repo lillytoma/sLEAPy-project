@@ -7,7 +7,6 @@ import { MarketStock } from '../../data/mock-data';
 import { OrderModalComponent } from '../shared/order-modal.component';
 
 interface DashboardTransaction {
-  orderId: number;
   symbol: string;
   status: string;
   shares: number;
@@ -37,11 +36,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.priceSubscription = this.marketDataService.priceUpdates$.subscribe((updates) => {
       this.livePrices.set(new Map(updates));
     });
-    this.transactionRefreshSubscription = timer(0, 2000).subscribe(() => {
-      this.refreshTransactions();
-      this.portfolioService.refreshHoldings();
-      this.portfolioService.refreshCashBalance();
-    });
+    this.transactionRefreshSubscription = timer(0, 30000).subscribe(() => this.refreshTransactions());
   }
 
   private formatDate(value: string): string {
@@ -57,17 +52,13 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   refreshTransactions(): void {
     this.portfolioService.getTransactions().subscribe({
-      next: (records) => this.transactions.set(records
-        .map((record) => ({
-          orderId: record.orderId ?? 0,
-          symbol: record.instrument.symbol,
-          status: (record.status || 'PENDING').toUpperCase(),
-          shares: Number(record.quantity) || 0,
-          total: (Number(record.quantity) || 0) * (Number(record.purchasePrice) || 0),
-          date: this.formatDate(record.timeOfPurchase)
-        }))
-        .sort((a, b) => b.orderId - a.orderId)
-        .slice(0, 5)),
+      next: (records) => this.transactions.set(records.map((record) => ({
+        symbol: record.instrument.symbol,
+        status: record.status || 'Filled',
+        shares: Number(record.quantity) || 0,
+        total: (Number(record.quantity) || 0) * (Number(record.purchasePrice) || 0),
+        date: this.formatDate(record.timeOfPurchase)
+      }))),
       error: (error) => console.error('Unable to load transaction history:', error)
     });
   }

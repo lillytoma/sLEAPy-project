@@ -76,36 +76,35 @@ public class TradeController {
                         .body(Map.of("error", "Quantity must be positive"));
             }
 
-            TradeResponseDTO response = tradeService.submitBuyOrder(request);
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
+            TradeResponseDTO response = tradeService.buyStock(request);
+            return ResponseEntity.ok(response);
 
         } catch (NoSuchElementException e) {
-            notifyRejected(request.getClientId(), "BUY", "Order could not be completed");
+            notifyRejected(request.getClientId(), "BUY", e.getMessage());
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "The requested trading information was not found."));
+                    .body(Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {
-            notifyRejected(request.getClientId(), "BUY", "Order details are invalid");
+            notifyRejected(request.getClientId(), "BUY", e.getMessage());
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "Please check the order details and try again."));
+                    .body(Map.of("error", e.getMessage()));
         } catch (InsufficientCashException e) {
-            notifyRejected(request.getClientId(), "BUY", "Insufficient cash");
+            notifyRejected(request.getClientId(), "BUY", e.getMessage());
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", "There is not enough available cash to place this order."));
+                .body(Map.of("error", e.getMessage()));
         } catch (OrderValidationException e) {
-            notifyRejected(request.getClientId(), "BUY", "Order validation failed");
+            notifyRejected(request.getClientId(), "BUY", e.getMessage());
             return ResponseEntity
                     .status(HttpStatus.UNPROCESSABLE_ENTITY)
-                .body(Map.of("success", false, "status", "REJECTED", "error", "ORDER_REJECTED",
-                    "message", "The order could not be completed. Please check your account and order details.",
-                    "rule", "ORDER_VALIDATION_FAILED"));
+                .body(Map.of("success", false, "status", "REJECTED", "error", e.getRule(),
+                    "message", e.getMessage(), "rule", e.getRule()));
         } catch (Exception e) {
-            notifyRejected(request.getClientId(), "BUY", "Order could not be completed");
+            notifyRejected(request.getClientId(), "BUY", e.getMessage());
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "We could not complete the order. Please try again."));
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -153,36 +152,35 @@ public class TradeController {
                         .body(Map.of("error", "Quantity must be positive"));
             }
 
-            TradeResponseDTO response = tradeService.submitSellOrder(request);
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
+            TradeResponseDTO response = tradeService.sellStock(request);
+            return ResponseEntity.ok(response);
 
         } catch (NoSuchElementException e) {
-            notifyRejected(request.getClientId(), "SELL", "Order could not be completed");
+            notifyRejected(request.getClientId(), "SELL", e.getMessage());
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "The requested trading information was not found."));
+                    .body(Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {
-            notifyRejected(request.getClientId(), "SELL", "Order details are invalid");
+            notifyRejected(request.getClientId(), "SELL", e.getMessage());
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "Please check the order details and try again."));
+                    .body(Map.of("error", e.getMessage()));
         } catch (InsufficientSharesException e) {
-            notifyRejected(request.getClientId(), "SELL", "Insufficient shares");
+            notifyRejected(request.getClientId(), "SELL", e.getMessage());
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", "There are not enough available shares to place this order."));
+                .body(Map.of("error", e.getMessage()));
         } catch (OrderValidationException e) {
-            notifyRejected(request.getClientId(), "SELL", "Order validation failed");
+            notifyRejected(request.getClientId(), "SELL", e.getMessage());
             return ResponseEntity
                     .status(HttpStatus.UNPROCESSABLE_ENTITY)
-                .body(Map.of("success", false, "status", "REJECTED", "error", "ORDER_REJECTED",
-                    "message", "The order could not be completed. Please check your account and order details.",
-                    "rule", "ORDER_VALIDATION_FAILED"));
+                .body(Map.of("success", false, "status", "REJECTED", "error", e.getRule(),
+                    "message", e.getMessage(), "rule", e.getRule()));
         } catch (Exception e) {
-            notifyRejected(request.getClientId(), "SELL", "Order could not be completed");
+            notifyRejected(request.getClientId(), "SELL", e.getMessage());
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "We could not complete the order. Please try again."));
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 
