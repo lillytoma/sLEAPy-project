@@ -170,6 +170,23 @@ body {
 .order-chart-range, .order-option-button { cursor: pointer; transition: background-color .15s ease, border-color .15s ease, color .15s ease, transform .15s ease; }
 .order-chart-range:hover, .order-option-button:hover { background-color: var(--primary) !important; border-color: var(--primary) !important; color: var(--primary-foreground) !important; transform: translateY(-1px); }
 .order-option-button:hover { background-color: var(--error) !important; border-color: var(--error) !important; color: #fff !important; }
+/* Portfolio "Return by Position" chart — horizontal bars diverging from 0%. */
+.rbp-summary { margin: 6px 0 16px; color: var(--muted-foreground); font-size: 13px; }
+.rbp-summary strong { font-family: var(--font-mono); }
+.rbp-rows { max-height: 288px; overflow-y: auto; }
+.rbp-row { display: grid; grid-template-columns: 56px minmax(0, 1fr) 96px; align-items: center; gap: 10px; height: 40px; border-radius: 8px; }
+.rbp-rows .rbp-row:hover { background: var(--muted); }
+.rbp-symbol { padding-left: 6px; color: var(--foreground); font-size: 13px; font-weight: 700; }
+.rbp-track { position: relative; height: 100%; }
+.rbp-gridline { position: absolute; top: 0; bottom: 0; border-left: 1px dashed var(--border); }
+.rbp-gridline.is-zero { border-left: 1.5px solid var(--muted-foreground); }
+.rbp-bar { position: absolute; top: 50%; height: 18px; min-width: 2px; transform: translateY(-50%); border-radius: 3px; opacity: .9; }
+.rbp-value { display: flex; flex-direction: column; align-items: flex-end; padding-right: 6px; font: 700 13px var(--font-mono); line-height: 1.2; }
+.rbp-dollars { color: var(--muted-foreground); font-size: 11px; font-weight: 400; }
+.rbp-axis { height: 22px; }
+.rbp-tick { position: absolute; top: 4px; transform: translateX(-50%); color: var(--muted-foreground); font: 11px var(--font-mono); white-space: nowrap; }
+.rbp-axis-title { margin-top: 4px; text-align: center; color: var(--muted-foreground); font-size: 11px; }
+
 /* Panel-style outline (same border + offset shadow as .panel) for standalone buttons and button groups. */
 .outlined { border: 1.5px solid var(--border); box-shadow: var(--card-shadow); }
 input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="date"], select { border-width: 1.5px; box-shadow: var(--card-shadow); }

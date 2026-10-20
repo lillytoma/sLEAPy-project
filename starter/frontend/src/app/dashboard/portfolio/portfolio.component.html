@@ -55,27 +55,54 @@
 
         <!-- Bar chart: return by position -->
         <div class="p-6 panel">
-          <h3 class="font-semibold mb-6" style="color:var(--foreground)">Return by Position</h3>
-          <svg width="100%" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid meet" style="height:200px">
-            <!-- Gridlines -->
-            @for (line of barChart().gridlines; track line.value) {
-              <line x1="28" [attr.y1]="line.y" x2="320" [attr.y2]="line.y"
-                stroke="var(--border)"
-                [attr.stroke-dasharray]="line.value === 0 ? 'none' : '3 3'"
-                stroke-width="1"/>
-              <text x="24" [attr.y]="line.y + 3" text-anchor="end" font-size="14" fill="var(--muted-foreground)" style="font-family:var(--font-mono)">{{ line.value }}%</text>
-            }
-            @for (bar of barChart().bars; track bar.symbol; let i = $index) {
-              <rect
-                [attr.x]="i * 48 + 36"
-                [attr.y]="bar.pct >= 0 ? 100 - bar.height : 100"
-                [attr.width]="38"
-                [attr.height]="bar.height"
-                [attr.fill]="bar.pct >= 0 ? 'var(--success)' : 'var(--error)'"
-                rx="3" opacity="0.85"/>
-              <text [attr.x]="i * 48 + 55" y="190" text-anchor="middle" font-size="16" fill="var(--muted-foreground)" style="font-family:var(--font-body)">{{ bar.symbol }}</text>
-            }
-          </svg>
+          <h3 class="font-semibold" style="color:var(--foreground)">Return by Position</h3>
+          @if (barChart(); as chart) {
+          @if (chart.bars.length === 0) {
+            <p class="text-sm mt-6" style="color:var(--muted-foreground)">No open positions yet. Buy a stock to see how each position is performing.</p>
+          } @else {
+            <p class="rbp-summary">
+              Since purchase ·
+              @if (chart.bars.length > 1) {
+                Best <strong [style.color]="chart.best.positive ? 'var(--success)' : 'var(--error)'">{{ chart.best.symbol }} {{ formatSignedPct(chart.best.pct) }}</strong>
+                · Worst <strong [style.color]="chart.worst.positive ? 'var(--success)' : 'var(--error)'">{{ chart.worst.symbol }} {{ formatSignedPct(chart.worst.pct) }}</strong>
+              } @else {
+                <strong [style.color]="chart.best.positive ? 'var(--success)' : 'var(--error)'">{{ chart.best.symbol }} {{ formatSignedPct(chart.best.pct) }}</strong>
+              }
+            </p>
+
+            <div class="rbp-rows">
+              @for (bar of chart.bars; track bar.symbol) {
+                <div class="rbp-row"
+                  [title]="bar.symbol + ' · ' + bar.shares + ' shares · avg $' + bar.avgCost.toFixed(2) + ' → now $' + bar.current.toFixed(2)">
+                  <span class="rbp-symbol">{{ bar.symbol }}</span>
+                  <div class="rbp-track">
+                    @for (tick of chart.ticks; track tick.value) {
+                      <span class="rbp-gridline" [class.is-zero]="tick.value === 0" [style.left.%]="tick.x"></span>
+                    }
+                    <span class="rbp-bar" [style.left.%]="bar.left" [style.width.%]="bar.width"
+                      [style.background-color]="bar.positive ? 'var(--success)' : 'var(--error)'"></span>
+                  </div>
+                  <span class="rbp-value">
+                    <span [style.color]="bar.positive ? 'var(--success)' : 'var(--error)'">{{ formatSignedPct(bar.pct) }}</span>
+                    <span class="rbp-dollars">{{ formatSignedDollar(bar.gain) }}</span>
+                  </span>
+                </div>
+              }
+            </div>
+
+            <!-- X-axis: aligned to the same plot column as the bars -->
+            <div class="rbp-row rbp-axis" aria-hidden="true">
+              <span></span>
+              <div class="rbp-track">
+                @for (tick of chart.ticks; track tick.value) {
+                  <span class="rbp-tick" [style.left.%]="tick.x">{{ tick.label }}</span>
+                }
+              </div>
+              <span></span>
+            </div>
+            <p class="rbp-axis-title">Return since purchase</p>
+          }
+          }
         </div>
       </div>
 
