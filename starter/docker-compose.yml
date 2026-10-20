@@ -17,8 +17,6 @@ services:
       - ./database/analystSchema.sql:/docker-entrypoint-initdb.d/02-analyst-schema.sql
       # Mock data for development/testing
       - ./database/mockdata.sql:/docker-entrypoint-initdb.d/03-mockdata.sql
-      # Safe migration for existing database snapshots
-      - ./database/admin-migration.sql:/docker-entrypoint-initdb.d/04-admin-migration.sql
 
   pgadmin:
     image: dpage/pgadmin4:latest

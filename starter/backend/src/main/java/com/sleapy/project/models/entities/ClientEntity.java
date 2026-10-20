@@ -25,5 +25,4 @@ public class ClientEntity {
     private String phoneNumber; // Contact phone number
     private String ssn; // Social security number (encrypted)
     private ClientStatus clientStatus; // foreign key to ClientStatus entity
-    private boolean admin;
 }

@@ -71,8 +71,7 @@ public class AuthController {
                 "Login successful",
                 user.getId(),
                 jwtToken,
-                clientService.isFrozen(user),
-                user.isAdmin()
+                clientService.isFrozen(user)
             );
 
             authenticationAuditLogService.log("SUCCESS", "SIGN_IN", user.getEmail(), clientIp(httpRequest));
@@ -139,8 +138,7 @@ public class AuthController {
                 "Signup successful. Welcome!",
                 newClient.getId(),
                 jwtToken,
-                false,
-                newClient.isAdmin()
+                false
             );
             
             // Step 6: Return 201 CREATED (RESTful standard)
