@@ -50,21 +50,14 @@
                       </div>
                     </td>
                     <td class="px-4 py-3 text-right font-mono" style="color:var(--foreground)">${{ item.price.toFixed(2) }}</td>
-                    <td class="px-4 py-3">
-                      <div class="flex items-center gap-2 justify-end">
-                        <button (click)="openBuy(item)"
-                          class="button button-primary"
-                          style="padding:8px 16px;font-size:12px;">
-                          Buy
-                        </button>
-                        @if (portfolioService.getHolding(item.symbol)) {
-                          <button (click)="openSell(item)"
-                            class="px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap outlined"
-                            style="background-color:var(--error-tint);color:var(--error)">
-                            Sell
-                          </button>
-                        }
-                      </div>
+                    <td class="px-4 py-3 text-right">
+                      <!-- One button for every row; the order popup has its own Buy/Sell switch. -->
+                      <button (click)="openTrade(item)"
+                        [title]="'Buy or sell ' + item.symbol"
+                        class="button button-primary"
+                        style="padding:8px 16px;font-size:12px;min-width:96px;">
+                        Trade
+                      </button>
                     </td>
                   </tr>
                 }
