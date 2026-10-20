@@ -104,6 +104,7 @@ body {
 .dashboard-nav-top a.is-active { color: var(--primary-foreground); background: var(--primary); }
 .dashboard-actions { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
 .live-badge { display: flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 999px; background: var(--muted); color: var(--primary); font-size: 12px; font-weight: 800; white-space: nowrap; }
+.market-closed-dot { background-color: var(--muted-foreground) !important; }
 .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 3px var(--muted); }
 
 /* Account avatar + dropdown */

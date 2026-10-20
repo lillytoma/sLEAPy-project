@@ -1,7 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, of, switchMap, tap } from 'rxjs';
-import { Holding } from '../data/mock-data';
+import { getSectorForSymbol, Holding } from '../data/mock-data';
 import { environment } from '../../environments/environment';
 import { MarketDataService } from './market-data.service';
 
@@ -119,7 +119,10 @@ export class PortfolioService {
           shares: quantity,
           avgCost: quantity > 0 ? costBasis / quantity : 0,
           current: Number(holding.instrument.currentPrice) || 0,
-          sector: holding.instrument.instrumentType?.name || 'Other'
+          sector: getSectorForSymbol(
+            holding.instrument.symbol,
+            holding.instrument.instrumentType?.name || 'Other'
+          )
         };
       })),
       error: () => this.holdings.set([])
@@ -222,7 +225,14 @@ export class PortfolioService {
           h.symbol === symbol ? { ...h, shares: totalShares, avgCost: newAvg } : h
         );
       }
-      return [...prev, { symbol, name, shares, avgCost: price, current: price, sector }];
+      return [{
+        symbol,
+        name,
+        shares,
+        avgCost: price,
+        current: price,
+        sector: getSectorForSymbol(symbol, sector)
+      }];
     });
   }
 }

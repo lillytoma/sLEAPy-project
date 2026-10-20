@@ -30,7 +30,10 @@
       </nav>
 
       <div class="dashboard-actions">
-        <span class="live-badge"><span class="status-dot"></span><span>Live</span></span>
+        <span class="live-badge">
+          <span class="status-dot" [class.market-closed-dot]="!marketHoursService.isOpen()"></span>
+          <span>{{ marketHoursService.isOpen() ? 'Market open' : 'Market closed' }}</span>
+        </span>
 
         <div class="account-menu-wrap">
           <button type="button" class="avatar-badge" (click)="accountMenuOpen.set(!accountMenuOpen())"
