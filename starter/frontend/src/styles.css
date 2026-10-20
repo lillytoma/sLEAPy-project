@@ -18,7 +18,7 @@
   --primary: #3f7a30;
   --primary-foreground: #f8eed4;
   --muted: #e6d5ab;
-  --muted-foreground: #6e5a42;
+  --muted-foreground: #2a1d14;
   --accent: #d99a1e;
   --accent-blue: #3e6f8e;
   --accent-red: #c8312c;
@@ -45,7 +45,7 @@
   --primary: #7fb35a;
   --primary-foreground: #101b36;
   --muted: #2c3855;
-  --muted-foreground: #c2c4c7;
+  --muted-foreground: #f2e6c8;
   --accent: #f0b73c;
   --accent-blue: #7fb0cf;
   --accent-red: #e0574a;
@@ -174,11 +174,6 @@ body {
 .chart-tooltip-label { margin: 0; font-size: 11px; font-weight: 700; color: var(--muted-foreground); }
 .chart-tooltip-value { margin: 2px 0 0; font-size: 12px; font-weight: 700; color: var(--success); font-family: var(--font-mono); }
 .table-heading { padding: 20px 22px 16px; margin: 0; border-bottom: 1px solid var(--border); }
-.table-panel table { min-width: 500px; }
-.table-panel th, .table-panel td { padding: 13px 16px; }
-.table-panel tbody tr:last-child { border-bottom: 0 !important; }
-.transactions-panel .divide-y > div { padding: 13px 18px; }
-.transactions-panel .w-8 { width: 30px; height: 30px; }
 
 @media (max-width: 900px) {
   .dashboard-header-inner { flex-wrap: wrap; padding: 12px 24px; min-height: 0; }
@@ -334,7 +329,7 @@ html[data-font-size='large'] .dashboard-shell { zoom: 1.1; }
   --card: #ffffff;
   --primary: #2457d6;
   --muted: #e4eaff;
-  --muted-foreground: #35476f;
+  --muted-foreground: #101a35;
   --accent: #f0a202;
   --border: #c8d2ee;
   --success: #0072b2;
@@ -346,7 +341,7 @@ html[data-font-size='large'] .dashboard-shell { zoom: 1.1; }
   --card: #ffffff;
   --primary: #005f73;
   --muted: #d9f1f5;
-  --muted-foreground: #2d5963;
+  --muted-foreground: #092f3a;
   --accent: #ee9b00;
   --border: #b9dce3;
   --success: #0072b2;
@@ -358,7 +353,7 @@ html[data-font-size='large'] .dashboard-shell { zoom: 1.1; }
   --card: #ffffff;
   --primary: #c51b8a;
   --muted: #f7dff0;
-  --muted-foreground: #69445f;
+  --muted-foreground: #32132c;
   --accent: #0077b6;
   --border: #e8bfdc;
   --success: #0072b2;
@@ -370,9 +365,9 @@ html[data-font-size='large'] .dashboard-shell { zoom: 1.1; }
 .color-vision-tritanopia .dashboard-nav a:hover, .color-vision-tritanopia .dashboard-nav a.is-active { color: var(--primary); background: var(--muted); }
 
 /* Dark mode keeps each accessibility palette distinct. */
-.dark.color-vision-protanopia { --background: #0d1730; --foreground: #eef2ff; --card: #18264a; --muted: #253968; --muted-foreground: #b4c4f1; --border: #3c568f; --primary: #7f9cff; --accent: #ffc857; --primary-foreground: #0d1730; }
-.dark.color-vision-deuteranopia { --background: #071f26; --foreground: #e7fbff; --card: #103943; --muted: #174d58; --muted-foreground: #a9dbe3; --border: #32727c; --primary: #52d3e5; --accent: #ffc857; --primary-foreground: #071f26; }
-.dark.color-vision-tritanopia { --background: #2a1025; --foreground: #fff0fb; --card: #45183d; --muted: #632255; --muted-foreground: #ecc1e1; --border: #8e3f78; --primary: #ff77c8; --accent: #65c7f2; --primary-foreground: #2a1025; }
+.dark.color-vision-protanopia { --background: #0d1730; --foreground: #eef2ff; --card: #18264a; --muted: #253968; --muted-foreground: #eef2ff; --border: #3c568f; --primary: #7f9cff; --accent: #ffc857; --primary-foreground: #0d1730; }
+.dark.color-vision-deuteranopia { --background: #071f26; --foreground: #e7fbff; --card: #103943; --muted: #174d58; --muted-foreground: #e7fbff; --border: #32727c; --primary: #52d3e5; --accent: #ffc857; --primary-foreground: #071f26; }
+.dark.color-vision-tritanopia { --background: #2a1025; --foreground: #fff0fb; --card: #45183d; --muted: #632255; --muted-foreground: #fff0fb; --border: #8e3f78; --primary: #ff77c8; --accent: #65c7f2; --primary-foreground: #2a1025; }
 
 @media (max-width: 620px) {
   .settings-panel { padding: 18px; }

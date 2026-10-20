@@ -9,14 +9,6 @@ import { AuthService } from '../../services/auth.service';
 import { MarketStock } from '../../data/mock-data';
 import { OrderModalComponent } from '../shared/order-modal.component';
 
-interface DashboardTransaction {
-  symbol: string;
-  status: string;
-  shares: number;
-  total: number;
-  date: string;
-}
-
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -25,7 +17,6 @@ interface DashboardTransaction {
 })
 
 export class HomeComponent implements OnInit, OnDestroy {
-  transactions = signal<DashboardTransaction[]>([]);
   private orderHistory = signal<TransactionResponse[]>([]);
   orderModal = signal<{ stock: MarketStock; mode: 'buy' | 'sell' } | null>(null);
   today = new Date();
@@ -64,12 +55,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.transactionRefreshSubscription = timer(0, 30000).subscribe(() => this.refreshTransactions());
   }
 
-  private formatDate(value: string): string {
-    const parsed = new Date(`${value}T00:00:00`);
-    if (Number.isNaN(parsed.getTime())) return value;
-    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(parsed);
-  }
-
   ngOnDestroy(): void {
     this.priceSubscription?.unsubscribe();
     this.transactionRefreshSubscription?.unsubscribe();
@@ -78,13 +63,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   refreshTransactions(): void {
     this.portfolioService.getTransactions().subscribe({
       next: (records) => {
-        this.transactions.set(records.map((record) => ({
-          symbol: record.instrument.symbol,
-          status: record.status || 'Filled',
-          shares: Number(record.quantity) || 0,
-          total: (Number(record.quantity) || 0) * (Number(record.purchasePrice) || 0),
-          date: this.formatDate(record.timeOfPurchase)
-        })));
         this.orderHistory.set(records.filter((record) => record.status !== 'REJECTED'));
       },
       error: (error) => console.error('Unable to load transaction history:', error)
@@ -99,7 +77,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     const returnPct = totalCost > 0 ? (totalReturn / totalCost) * 100 : 0;
     return [
       { label: 'Portfolio Value', value: '$' + this.portfolioService.netWorth().toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: 'var(--foreground)', sub: '', subColor: 'var(--muted-foreground)' },
-      { label: 'Total Return', value: (returnPct >= 0 ? '+' : '') + returnPct.toFixed(1) + '%', color: totalReturn >= 0 ? 'var(--success)' : 'var(--error)', sub: '$' + totalReturn.toFixed(0), subColor: totalReturn >= 0 ? 'var(--success)' : 'var(--error)' },
+      { label: 'Total G/L', value: (returnPct >= 0 ? '+' : '') + returnPct.toFixed(1) + '%', color: totalReturn >= 0 ? 'var(--success)' : 'var(--error)', sub: '$' + totalReturn.toFixed(0), subColor: totalReturn >= 0 ? 'var(--success)' : 'var(--error)' },
       // No backend-tracked daily open/close, so "Open Positions" stands in for a
       // "Today's Gain" card rather than a fabricated intraday number.
       { label: 'Open Positions', value: h.length.toString(), color: 'var(--foreground)', sub: '', subColor: 'var(--muted-foreground)' },
