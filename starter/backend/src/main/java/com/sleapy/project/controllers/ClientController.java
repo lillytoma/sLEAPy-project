@@ -61,10 +61,10 @@ public class ClientController {
             return ResponseEntity.ok(clientService.addCash(clientId, request.getAmount()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(java.util.Map.of("error", e.getMessage()));
+                    .body(java.util.Map.of("error", "Please enter a valid deposit amount."));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(java.util.Map.of("error", e.getMessage()));
+                    .body(java.util.Map.of("error", "We could not update the account balance."));
         }
     }
 
@@ -73,7 +73,8 @@ public class ClientController {
         try {
             return ResponseEntity.ok(Map.of("frozen", clientService.isFrozen(clientId)));
         } catch (NoSuchElementException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "The requested account was not found."));
         }
     }
 
@@ -83,7 +84,8 @@ public class ClientController {
             clientService.freeze(clientId);
             return ResponseEntity.ok(Map.of("frozen", true));
         } catch (NoSuchElementException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "The requested account was not found."));
         }
     }
 
@@ -93,7 +95,8 @@ public class ClientController {
             clientService.unfreeze(clientId);
             return ResponseEntity.ok(Map.of("frozen", false));
         } catch (NoSuchElementException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "The requested account was not found."));
         }
     }
 
@@ -103,7 +106,8 @@ public class ClientController {
             clientService.deleteAccount(clientId);
             return ResponseEntity.noContent().build();
         } catch (NoSuchElementException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "The requested account was not found."));
         }
     }
 

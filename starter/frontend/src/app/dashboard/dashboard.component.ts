@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { PortfolioService } from '../services/portfolio.service';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -23,7 +24,7 @@ import { PortfolioService } from '../services/portfolio.service';
               <span class="eyebrow">Net worth</span>
               <strong>{{ '$' }}{{ portfolioService.netWorth().toFixed(2) }}</strong>
             </div>
-            <a routerLink="/login" class="sign-out">Sign out</a>
+            <button type="button" class="sign-out" (click)="logout()">Sign out</button>
           </div>
         </div>
       </header>
@@ -57,5 +58,9 @@ import { PortfolioService } from '../services/portfolio.service';
   `
 })
 export class DashboardComponent {
-  constructor(public portfolioService: PortfolioService) {}
+  constructor(public portfolioService: PortfolioService, private authService: AuthService) {}
+
+  logout(): void {
+    this.authService.logout();
+  }
 }
