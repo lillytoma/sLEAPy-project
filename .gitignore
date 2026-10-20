@@ -19,9 +19,9 @@ dist/
 .classpath
 .project
 
+#ETL
+*.pyc
+
 # OS
 .DS_Store
-
-backend/
-etl/
 .venv
