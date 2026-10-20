@@ -100,13 +100,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     // Keep the series away from the SVG edges so the stroke and smoothed control
     // points remain visible when the series reaches its minimum or maximum.
     const chartPadding = valueSpan * 0.08;
-    const gridlineSteps = 4;
-    // Snap the axis to round steps ($250, $500, $1k...) so labels read cleanly,
-    // and never dip below $0 since portfolio value can't be negative.
-    // A $25 floor keeps an empty portfolio's axis at $0–$100 instead of repeating "$0".
-    const step = Math.max(25, this.niceStep((max - min + 2 * chartPadding) / gridlineSteps));
-    const chartMin = Math.max(0, Math.floor((min - chartPadding) / step) * step);
-    const chartMax = Math.max(chartMin + step * gridlineSteps, Math.ceil((max + chartPadding) / step) * step);
+    const chartMin = min - chartPadding;
+    const chartMax = max + chartPadding;
     const chartSpan = chartMax - chartMin;
     const width = 600;
     const height = 220;
@@ -119,9 +114,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     const linePath = this.smoothPath(coords);
     const areaPath = `${linePath} L ${width} ${height} L 0 ${height} Z`;
 
+    const gridlineSteps = 4;
     const yGridlines = Array.from({ length: gridlineSteps + 1 }, (_, i) => {
       const value = chartMin + (chartSpan * i) / gridlineSteps;
-      return { value, y: height - (i / gridlineSteps) * height, label: this.formatCompactDollar(value, chartSpan / gridlineSteps) };
+      return { value, y: height - (i / gridlineSteps) * height, label: this.formatCompactDollar(value) };
     });
 
     return { points, coords, linePath, areaPath, yGridlines, width, height };
@@ -207,21 +203,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     return path;
   }
 
-  // Rounds a raw step up to 1, 2, 2.5 or 5 times a power of ten.
-  private niceStep(rawStep: number): number {
-    if (rawStep <= 0) return 1;
-    const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
-    const normalized = rawStep / magnitude;
-    const nice = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 2.5 ? 2.5 : normalized <= 5 ? 5 : 10;
-    return nice * magnitude;
-  }
-
-  // Uses enough decimals in "k" mode that neighbouring labels never collapse to
-  // the same text (e.g. $12.5k vs $13k rather than $13k twice).
-  private formatCompactDollar(value: number, step: number): string {
-    if (Math.abs(value) < 1000) return '$' + value.toFixed(0);
-    const decimals = step >= 1000 && step % 1000 === 0 ? 0 : step >= 100 ? 1 : 2;
-    return '$' + parseFloat((value / 1000).toFixed(decimals)) + 'k';
+  private formatCompactDollar(value: number): string {
+    return Math.abs(value) >= 1000 ? '$' + (value / 1000).toFixed(0) + 'k' : '$' + value.toFixed(0);
   }
 
   onChartHover(event: MouseEvent, svg: Element): void {
