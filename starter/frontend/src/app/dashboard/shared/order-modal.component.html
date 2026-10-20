@@ -261,13 +261,20 @@
           }
         </div>
         <h3 class="text-xl font-semibold mb-2" style="color:var(--foreground)">
-          {{ orderStatus() === 'REJECTED' ? 'Order Rejected' : 'Order Placed!' }}
+          {{ orderStatus() === 'REJECTED' ? 'Order Rejected' : (orderStatus() === 'FILLED' ? 'Order Filled' : 'Order Placed') }}
         </h3>
+        <p class="text-sm font-semibold mb-2" style="color:var(--primary)">
+          Status: {{ orderStatus() }}
+        </p>
         <p class="text-sm mb-1" style="color:var(--muted-foreground)">
           {{ orderMessage() }}
         </p>
         <p class="text-sm mb-6" style="color:var(--muted-foreground)">
-          {{ confirmedShares() }} shares {{ mode() === 'buy' ? 'bought' : 'sold' }} for {{ '$' }}{{ confirmedTotal().toFixed(2) }}
+          @if (orderStatus() === 'FILLED') {
+            {{ confirmedShares() }} shares {{ mode() === 'buy' ? 'bought' : 'sold' }} for {{ '$' }}{{ confirmedTotal().toFixed(2) }}
+          } @else if (orderStatus() !== 'REJECTED') {
+            Your order is pending execution. You can continue using the app while we process it.
+          }
         </p>
         <button (click)="close.emit()" class="w-full py-2 px-4 rounded-md font-semibold text-sm outlined transition-opacity"
           style="background-color:var(--muted);color:var(--foreground)">

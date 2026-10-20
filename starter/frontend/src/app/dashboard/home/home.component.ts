@@ -9,6 +9,15 @@ import { AuthService } from '../../services/auth.service';
 import { MarketStock } from '../../data/mock-data';
 import { OrderModalComponent } from '../shared/order-modal.component';
 
+interface DashboardTransaction {
+  orderId: number;
+  symbol: string;
+  status: string;
+  shares: number;
+  total: number;
+  date: string;
+}
+
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -60,8 +69,17 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.priceSubscription = this.marketDataService.priceUpdates$.subscribe((updates) => {
       this.livePrices.set(new Map(updates));
     });
-    this.transactionRefreshSubscription = timer(0, 30000).subscribe(() => this.refreshTransactions());
-    this.clockSubscription = timer(60000, 60000).subscribe(() => this.now.set(new Date()));
+    this.transactionRefreshSubscription = timer(0, 2000).subscribe(() => {
+      this.refreshTransactions();
+      this.portfolioService.refreshHoldings();
+      this.portfolioService.refreshCashBalance();
+    });
+  }
+
+  private formatDate(value: string): string {
+    const parsed = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(parsed.getTime())) return value;
+    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(parsed);
   }
 
   ngOnDestroy(): void {
@@ -72,9 +90,17 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   refreshTransactions(): void {
     this.portfolioService.getTransactions().subscribe({
-      next: (records) => {
-        this.orderHistory.set(records.filter((record) => record.status !== 'REJECTED'));
-      },
+      next: (records) => this.transactions.set(records
+        .map((record) => ({
+          orderId: record.orderId ?? 0,
+          symbol: record.instrument.symbol,
+          status: (record.status || 'PENDING').toUpperCase(),
+          shares: Number(record.quantity) || 0,
+          total: (Number(record.quantity) || 0) * (Number(record.purchasePrice) || 0),
+          date: this.formatDate(record.timeOfPurchase)
+        }))
+        .sort((a, b) => b.orderId - a.orderId)
+        .slice(0, 5)),
       error: (error) => console.error('Unable to load transaction history:', error)
     });
   }

@@ -5,17 +5,33 @@ import { ThemeService } from '../services/theme.service';
 import { FrogMascotComponent } from '../shared/frog-mascot.component';
 import { MarketHoursService } from '../services/market-hours.service';
 import { PortfolioService } from '../services/portfolio.service';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, FrogMascotComponent],
-  templateUrl: './dashboard.component.html'
-})
-export class DashboardComponent {
-  accountMenuOpen = signal(false);
-  // Read once rather than as a signal — it's set at login and doesn't change during a session.
-  userEmail = localStorage.getItem('user_email') || '';
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  template: `
+    <div class="dashboard-shell">
+      <header class="dashboard-header">
+        <div class="dashboard-header-inner">
+          <a routerLink="home" class="dashboard-brand" aria-label="sLEAPy dashboard home">
+            <span class="brand-mark">S</span>
+            <span>sLEAPy</span>
+          </a>
+          <div class="dashboard-actions">
+            <div class="cash-balance">
+              <span class="eyebrow">Available cash</span>
+              <strong>{{ '$' }}{{ portfolioService.availableCash().toFixed(2) }}</strong>
+            </div>
+            <div class="cash-balance">
+              <span class="eyebrow">Net worth</span>
+              <strong>{{ '$' }}{{ portfolioService.netWorth().toFixed(2) }}</strong>
+            </div>
+            <button type="button" class="sign-out" (click)="logout()">Sign out</button>
+          </div>
+        </div>
+      </header>
 
   constructor(
     public authService: AuthService,
@@ -39,8 +55,13 @@ export class DashboardComponent {
     }
   }
 
-  @HostListener('document:keydown.escape')
-  onEscape(): void {
-    this.accountMenuOpen.set(false);
+    </div>
+  `
+})
+export class DashboardComponent {
+  constructor(public portfolioService: PortfolioService, private authService: AuthService) {}
+
+  logout(): void {
+    this.authService.logout();
   }
 }
