@@ -17,7 +17,6 @@
   --card: #f8eed4;
   --primary: #3f7a30;
   --primary-foreground: #f8eed4;
-  --on-color: #ffffff; /* text on bright green/red/mustard fills */
   --muted: #e6d5ab;
   --muted-foreground: #2a1d14;
   --accent: #d99a1e;
@@ -38,32 +37,29 @@
   --film-vignette: rgba(60, 38, 18, 0.32);
 }
 
-/* "Night show" — the same cartoon reel projected in a dark theatre: warm sepia
-   stage, walnut cels outlined in black ink, cream lettering. Same hues as the
-   light theme, lifted a little so they stay readable on dark surfaces. */
+/* "Night show" — a dim theatre: dark sepia stage, cream ink. */
 .dark {
-  --background: #2e2117;
-  --foreground: #f3e6c4;
-  --card: #3f2f22;
-  --primary: #8fc265;
-  --primary-foreground: #1a120c;
-  --on-color: #1a120c;
-  --muted: #503c2b;
-  --muted-foreground: #d8c49c;
-  --accent: #f0b43a;
-  --accent-blue: #8db7cf;
-  --accent-red: #f0705a;
-  --accent-plum: #cd97bf;
-  --accent-teal: #80c6b6;
-  --border: #6e5640;
-  --error: #f6866f;
-  --success: #8fc265;
-  --error-tint: rgba(246, 134, 111, 0.18);
-  --success-tint: rgba(143, 194, 101, 0.18);
-  --accent-blue-tint: rgba(141, 183, 207, 0.18);
-  --frog-ink: #0a0705;
-  --frog-belly: #503c2b;
-  --card-shadow: 3px 3px 0 #0a0705;
+  --background: #101b36;
+  --foreground: #f2e6c8;
+  --card: #202b48;
+  --primary: #7fb35a;
+  --primary-foreground: #101b36;
+  --muted: #2c3855;
+  --muted-foreground: #f2e6c8;
+  --accent: #f0b73c;
+  --accent-blue: #7fb0cf;
+  --accent-red: #e0574a;
+  --accent-plum: #c08ab3;
+  --accent-teal: #79bfb1;
+  --border: rgba(242, 230, 200, 0.22);
+  --error: #e0574a;
+  --success: #7fb35a;
+  --error-tint: rgba(224, 87, 74, 0.18);
+  --success-tint: rgba(127, 179, 90, 0.2);
+  --accent-blue-tint: rgba(127, 176, 207, 0.2);
+  --frog-ink: #f2e6c8;
+  --frog-belly: #2c3855;
+  --card-shadow: 3px 3px 0 rgba(0, 0, 0, 0.65);
   --film-vignette: rgba(0, 0, 0, 0.55);
 }
 
@@ -88,11 +84,22 @@ body {
   transition: background-color 0.2s, color 0.2s;
 }
 
-/* Dark mode: a warm projector beam falling from the top of a dark theatre,
-   fading to sepia-black at the edges (the film vignette overlay adds the rest). */
+/* Dark mode: an inked night sky with scattered stars and soft, hand-painted
+   cloud banks behind the existing Cuphead-inspired panels. */
 .dark body {
-  background-color: #2e2117;
-  background-image: radial-gradient(ellipse 90% 70% at 50% 0%, #46331f 0%, #2e2117 55%, #1f160f 100%);
+  background-color: #101b36;
+  background-image:
+    radial-gradient(circle at 8% 18%, rgba(255, 241, 181, .9) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 18% 72%, rgba(255, 241, 181, .75) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 31% 28%, rgba(255, 255, 235, .8) 0 1.2px, transparent 1.9px),
+    radial-gradient(circle at 46% 12%, rgba(255, 241, 181, .8) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 61% 36%, rgba(255, 255, 235, .75) 0 1.2px, transparent 1.9px),
+    radial-gradient(circle at 77% 16%, rgba(255, 241, 181, .85) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 91% 48%, rgba(255, 255, 235, .8) 0 1.2px, transparent 1.9px),
+    radial-gradient(ellipse at 12% 93%, rgba(87, 105, 139, .42) 0 9%, transparent 25%),
+    radial-gradient(ellipse at 43% 88%, rgba(72, 91, 126, .35) 0 11%, transparent 29%),
+    radial-gradient(ellipse at 78% 96%, rgba(88, 104, 137, .4) 0 12%, transparent 30%),
+    linear-gradient(180deg, #0c1730 0%, #172747 58%, #283654 100%);
   background-attachment: fixed;
 }
 
@@ -162,7 +169,7 @@ body {
 .period-pill.is-active { background: var(--primary); color: var(--primary-foreground); }
 .order-chart-range, .order-option-button { cursor: pointer; transition: background-color .15s ease, border-color .15s ease, color .15s ease, transform .15s ease; }
 .order-chart-range:hover, .order-option-button:hover { background-color: var(--primary) !important; border-color: var(--primary) !important; color: var(--primary-foreground) !important; transform: translateY(-1px); }
-.order-option-button:hover { background-color: var(--error) !important; border-color: var(--error) !important; color: var(--on-color) !important; }
+.order-option-button:hover { background-color: var(--error) !important; border-color: var(--error) !important; color: #fff !important; }
 /* Portfolio "Return by Position" chart — horizontal bars diverging from 0%. */
 .rbp-summary { display: flex; flex-wrap: wrap; gap: 4px 28px; margin: 6px 0 16px; color: var(--muted-foreground); font-size: 13px; }
 .rbp-summary strong { font-family: var(--font-mono); }
@@ -178,11 +185,9 @@ body {
 .rbp-dollars { color: var(--muted-foreground); font-size: 11px; font-weight: 400; }
 .rbp-axis { height: 22px; }
 .rbp-tick { position: absolute; top: 4px; transform: translateX(-50%); color: var(--muted-foreground); font: 11px var(--font-mono); white-space: nowrap; }
-/* Ink outline + offset shadow (same treatment as .button) for standalone buttons and button groups. */
-.outlined { border: 2px solid var(--frog-ink); box-shadow: var(--card-shadow); }
-/* !important beats the templates' inline tan border-color so every field gets the same ink outline. */
-input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="date"], select { border: 2px solid var(--frog-ink) !important; box-shadow: var(--card-shadow); }
-input:focus-visible, select:focus-visible { border-color: var(--primary) !important; box-shadow: 3px 3px 0 var(--primary); }
+/* Panel-style outline (same border + offset shadow as .panel) for standalone buttons and button groups. */
+.outlined { border: 1.5px solid var(--border); box-shadow: var(--card-shadow); }
+input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="date"], select { border-width: 1.5px; box-shadow: var(--card-shadow); }
 
 /* Chart hover tooltip (Performance chart) */
 .chart-tooltip { position: absolute; transform: translate(-50%, -115%); background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; padding: 8px 12px; box-shadow: var(--card-shadow); pointer-events: none; white-space: nowrap; z-index: 5; }
@@ -298,14 +303,14 @@ input, select, textarea {
 .settings-section-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
 .settings-section-heading h2 { margin-top: 4px; font-size: 18px; font-weight: 700; }
 .settings-section-icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; color: var(--primary-foreground); background: var(--primary); font-size: 19px; }
-.settings-section-icon-warning { color: var(--on-color); background: var(--accent); }
+.settings-section-icon-warning { color: #fff; background: var(--accent); }
 .settings-option { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 20px 0; border-bottom: 1px solid var(--border); }
 .settings-option:last-child { border-bottom: 0; padding-bottom: 0; }
 .settings-account-panel { margin-top: 4px; }
 .settings-account-button { min-width: 118px; color: var(--primary); background: var(--muted); }
 .settings-account-button:disabled, .settings-delete-button:disabled { cursor: wait; opacity: .6; }
 .settings-delete-button { min-width: 118px; color: var(--error); background: transparent; border: 1px solid var(--error); }
-.settings-delete-button:hover { color: var(--on-color); background: var(--error); }
+.settings-delete-button:hover { color: #fff; background: var(--error); }
 .settings-danger-option { border-bottom: 0; }
 .settings-account-error { padding: 10px 12px; border-radius: 6px; color: var(--error); background: color-mix(in srgb, var(--error) 12%, transparent); font-size: 12px; }
 .settings-option h3 { font-size: 14px; font-weight: 700; }
@@ -411,10 +416,10 @@ html[data-font-size='large'] .dashboard-shell { zoom: 1.1; }
 .button { transition: transform .12s ease-out, box-shadow .12s ease-out; }
 .button:hover:not(:disabled) { transform: translate(-1px, -2px); box-shadow: 5px 6px 0 var(--frog-ink); }
 .button:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--frog-ink); }
+.dark .button:hover:not(:disabled) { box-shadow: 5px 6px 0 rgba(0, 0, 0, .65); }
+.dark .button:active:not(:disabled) { box-shadow: 1px 1px 0 rgba(0, 0, 0, .65); }
 
 ::-webkit-scrollbar-thumb { background: var(--frog-ink); }
-/* Black ink would vanish against the dark stage, so the dark scrollbar uses the sepia border tone. */
-.dark ::-webkit-scrollbar-thumb { background: var(--border); }
 
 /* Old-film overlay: vignette (::before) + jittering grain (::after).
    Both ignore the mouse, so nothing underneath is blocked. */
@@ -464,6 +469,6 @@ body::after {
    (the Zs, the dream-bubble edge) from vanishing into the dark stage. */
 .frog-mascot { display: block; width: auto; max-width: 100%; user-select: none; }
 .dark .frog-mascot {
-  filter: drop-shadow(1px 0 0 var(--foreground)) drop-shadow(-1px 0 0 var(--foreground))
-          drop-shadow(0 1px 0 var(--foreground)) drop-shadow(0 -1px 0 var(--foreground));
+  filter: drop-shadow(1px 0 0 var(--frog-ink)) drop-shadow(-1px 0 0 var(--frog-ink))
+          drop-shadow(0 1px 0 var(--frog-ink)) drop-shadow(0 -1px 0 var(--frog-ink));
 }
