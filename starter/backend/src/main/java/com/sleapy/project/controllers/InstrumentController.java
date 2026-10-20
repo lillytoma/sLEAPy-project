@@ -17,7 +17,7 @@ import java.util.Optional;
  * Endpoints:
  * - GET /api/instruments - all instruments with current prices
  * - GET /api/instruments/{symbol} - single instrument by symbol
- * - GET /api/instruments/search?q=query - search by symbol or name
+ * - GET /api/instruments/search?q=query&field=ticker|company - search by ticker or company name
  */
 @RestController
 @RequestMapping("/api/instruments")
@@ -65,20 +65,20 @@ public class InstrumentController {
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Error retrieving instrument: " + e.getMessage()));
+                    .body(Map.of("message", "We could not retrieve that instrument. Please try again."));
         }
     }
 
     /**
-     * Search instruments by symbol or name (case-insensitive, partial match).
-     * Usage: GET /api/instruments/search?q=apple
-     *        GET /api/instruments/search?q=AAPL
+     * Search instruments by ticker or company name (case-insensitive, partial match).
      * 
      * @param query search term (symbol or company name)
      * @return List of matching InstrumentWithPriceDTO objects
      */
     @GetMapping("/search")
-    public ResponseEntity<?> searchInstruments(@RequestParam(name = "q", required = false) String query) {
+    public ResponseEntity<?> searchInstruments(
+            @RequestParam(name = "q", required = false) String query,
+            @RequestParam(name = "field", defaultValue = "ticker") String field) {
         try {
             if (query == null || query.trim().isEmpty()) {
                 return ResponseEntity
@@ -86,12 +86,17 @@ public class InstrumentController {
                         .body(Map.of("message", "Search query parameter 'q' is required"));
             }
 
-            List<InstrumentWithPriceDTO> results = instrumentService.searchInstruments(query);
+            if (!field.equals("ticker") && !field.equals("company")) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("message", "Search field must be 'ticker' or 'company'"));
+            }
+
+            List<InstrumentWithPriceDTO> results = instrumentService.searchInstruments(query, field);
             return ResponseEntity.ok(results);
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Error searching instruments: " + e.getMessage()));
+                    .body(Map.of("message", "We could not complete the instrument search. Please try again."));
         }
     }
 
@@ -101,7 +106,8 @@ public class InstrumentController {
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(instrumentService.importFromYahoo(request));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "The instrument request could not be completed."));
         }
     }
 }

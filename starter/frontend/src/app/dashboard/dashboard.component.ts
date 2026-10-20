@@ -67,5 +67,9 @@ import { AuthService } from '../services/auth.service';
   `
 })
 export class DashboardComponent {
-  constructor(public portfolioService: PortfolioService, public authService: AuthService) {}
+  constructor(public portfolioService: PortfolioService, private authService: AuthService) {}
+
+  logout(): void {
+    this.authService.logout();
+  }
 }

@@ -22,6 +22,8 @@ export class MarketDataService {
   // WebSocket-related subjects for price updates
   private priceUpdatesSubject = new BehaviorSubject<Map<string, any>>(new Map());
   public priceUpdates$ = this.priceUpdatesSubject.asObservable();
+  private orderStatusSubject = new BehaviorSubject<OrderStatusUpdate | null>(null);
+  public orderStatusUpdates$ = this.orderStatusSubject.asObservable();
   public instruments = signal<any[]>([]);
 
   private webSocketConnectedSubject = new BehaviorSubject<boolean>(false);
@@ -53,16 +55,15 @@ export class MarketDataService {
   }
 
   /**
-   * Search instruments by symbol or name.
-   * REST call: GET /api/instruments/search?q=query
-   * Case-insensitive, partial match on symbol or company name.
+   * Search instruments by ticker or company name.
+   * REST call: GET /api/instruments/search?q=query&field=ticker|company
    *
    * @param query - Search term (e.g., "apple" or "AAPL")
    * @return Observable of matching InstrumentWithPriceDTO list
    */
-  searchInstruments(query: string): Observable<any[]> {
+  searchInstruments(query: string, field: 'ticker' | 'company' = 'ticker'): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiBaseUrl}/search`, {
-      params: { q: query }
+      params: { q: query, field }
     });
   }
 
@@ -112,6 +113,16 @@ export class MarketDataService {
             console.error('Error parsing price update:', e);
           }
         });
+        const clientId = Number(localStorage.getItem('user_id'));
+        if (Number.isFinite(clientId) && clientId > 0) {
+          this.stompClient!.subscribe(`/topic/orders/${clientId}`, (message: IMessage) => {
+            try {
+              this.orderStatusSubject.next(JSON.parse(message.body) as OrderStatusUpdate);
+            } catch (error) {
+              console.error('Error parsing order status update:', error);
+            }
+          });
+        }
       },
       onDisconnect: () => {
         console.log('WebSocket disconnected');
@@ -144,6 +155,7 @@ export class MarketDataService {
               lastUpdated: instrument.lastUpdated
             });
           }
+
         });
         this.priceUpdatesSubject.next(merged);
       },
@@ -180,4 +192,15 @@ export class MarketDataService {
   isWebSocketConnected(): boolean {
     return this.webSocketConnectedSubject.value;
   }
+
+}
+
+export interface OrderStatusUpdate {
+  orderId: number | null;
+  clientId: number;
+  symbol: string | null;
+  tradeType: 'BUY' | 'SELL';
+  status: 'PENDING' | 'ACCEPTED' | 'FILLED' | 'REJECTED';
+  message: string;
+  timestamp: string;
 }
