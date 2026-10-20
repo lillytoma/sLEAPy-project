@@ -66,7 +66,7 @@ public class InstrumentController {
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Error retrieving instrument: " + e.getMessage()));
+                    .body(Map.of("message", "We could not retrieve that instrument. Please try again."));
         }
     }
 
@@ -97,7 +97,7 @@ public class InstrumentController {
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Error searching instruments: " + e.getMessage()));
+                    .body(Map.of("message", "We could not complete the instrument search. Please try again."));
         }
 
     }
@@ -124,7 +124,8 @@ public class InstrumentController {
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(instrumentService.importFromYahoo(request));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "The instrument request could not be completed."));
         }
     }
 }

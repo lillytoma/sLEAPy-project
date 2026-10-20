@@ -1,7 +1,8 @@
-import { Component, Input, Output, EventEmitter, OnDestroy, OnInit, signal, computed } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, computed, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { PortfolioService, OrderRequest } from '../../services/portfolio.service';
+import { firstValueFrom, Subscription } from 'rxjs';
 import { MarketStock } from '../../data/mock-data';
 import { MarketDataService } from '../../services/market-data.service';
 import { Subscription } from 'rxjs';
@@ -14,7 +15,7 @@ type ChartRange = '6mo' | '1mo' | '2wk' | '1wk' | '3d';
   imports: [FormsModule, HttpClientModule],
   templateUrl: './order-modal.component.html'
 })
-export class OrderModalComponent implements OnInit, OnDestroy {
+export class OrderModalComponent implements OnDestroy {
   @Input() stock!: MarketStock;
   @Input() availableCash = 0;
   @Input() sharesOwned = 0;
@@ -41,18 +42,7 @@ export class OrderModalComponent implements OnInit, OnDestroy {
   confirmedShares = signal(0);
   confirmedTotal = signal(0);
   error = signal<string | null>(null);
-  private priceSubscription?: Subscription;
-  private livePrice = signal<number | null>(null);
-  private priceHistory = signal<{ date: string; value: number }[]>([]);
-  hoveredChartIndex = signal<number | null>(null);
-  selectedChartRange = signal<ChartRange>('1mo');
-  chartRanges: { value: ChartRange; label: string }[] = [
-    { value: '6mo', label: '6M' },
-    { value: '1mo', label: '1M' },
-    { value: '2wk', label: '2W' },
-    { value: '1wk', label: '1W' },
-    { value: '3d', label: '3D' }
-  ];
+  private orderStatusSubscription?: Subscription;
 
   quickSellPcts = [25, 50, 75, 100];
 
@@ -158,47 +148,32 @@ export class OrderModalComponent implements OnInit, OnDestroy {
     };
   });
 
-  onChartHover(event: MouseEvent, svg: Element): void {
-    const chart = this.stockChart();
-    const rect = svg.getBoundingClientRect();
-    if (!rect.width || !chart.coords.length) return;
-    const x = ((event.clientX - rect.left) / rect.width) * chart.width;
-    const index = Math.max(0, Math.min(chart.coords.length - 1,
-      Math.round(((x - chart.plot.left) / chart.plotWidth) * (chart.coords.length - 1))));
-    this.hoveredChartIndex.set(index);
+  ngOnDestroy(): void {
+    this.orderStatusSubscription?.unsubscribe();
   }
 
-  onChartLeave(): void {
-    this.hoveredChartIndex.set(null);
+  private watchOrder(orderId: string | number | undefined): void {
+    if (orderId == null) return;
+    this.orderStatusSubscription?.unsubscribe();
+    this.orderStatusSubscription = this.portfolioService.getOrderStatusUpdates().subscribe((update) => {
+      if (!update || String(update.orderId) !== String(orderId)) return;
+      this.orderStatus.set(update.status);
+      this.orderMessage.set(update.message);
+      if (update.status === 'FILLED') {
+        this.success.set(true);
+        this.loading.set(false);
+        this.portfolioService.refreshCashBalance();
+        this.portfolioService.refreshHoldings();
+        this.orderCompleted.emit();
+      } else if (update.status === 'REJECTED') {
+        this.loading.set(false);
+        this.success.set(true);
+        this.error.set(update.message);
+      }
+    });
   }
 
-  chartTooltipX(x: number): number {
-    return x > 240 ? x - 76 : x + 6;
-  }
-
-  chartTooltipTextX(x: number): number {
-    return x > 240 ? x - 41 : x + 41;
-  }
-
-  chartTooltipY(y: number): number {
-    return Math.max(y - 25, 2);
-  }
-
-  chartTooltipTextY(y: number): number {
-    return Math.max(y - 12, 15);
-  }
-
-  private formatChartPrice(value: number): string {
-    return `$${value.toFixed(value < 10 ? 2 : 0)}`;
-  }
-
-  private formatChartDate(value: string): string {
-    const date = new Date(value);
-    if (this.selectedChartRange() === '3d') {
-      return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    }
-    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-  }
+  effectivePrice = computed(() => this.stock?.price ?? 0);
 
   // Buy computed properties
   calculatedBuyShares = computed(() => {
@@ -251,7 +226,7 @@ export class OrderModalComponent implements OnInit, OnDestroy {
     this.inputMode.set('shares');
   }
 
-  executeBuy(): void {
+  async executeBuy(): Promise<void> {
     const quantity = this.calculatedBuyShares();
     const total = quantity * this.effectivePrice();
     if (quantity < 0.001 || total > this.availableCash) return;
@@ -271,30 +246,28 @@ export class OrderModalComponent implements OnInit, OnDestroy {
     this.shares.set(0);
     this.moneyAmount.set(0);
 
-    this.portfolioService.placeOrder(orderRequest).subscribe({
-      next: (response) => {
+    try {
+      const response = await firstValueFrom(this.portfolioService.placeOrder(orderRequest));
         this.loading.set(false);
         this.orderMessage.set(response.message);
         this.orderStatus.set(response.status);
+        this.watchOrder(response.orderId);
 
-        if (response.success && response.status === 'FILLED') {
+        if (response.success && response.status !== 'REJECTED') {
           this.confirmedShares.set(quantity);
           this.confirmedTotal.set(total);
           this.success.set(true);
-          this.orderCompleted.emit();
         } else if (response.status === 'REJECTED') {
           this.error.set(response.error || response.message);
         }
-      },
-      error: (err) => {
-        this.loading.set(false);
-        this.error.set(err.error?.message || err.error?.error || 'Failed to place order. Please try again.');
-        this.orderStatus.set('REJECTED');
-      }
-    });
+    } catch (err: any) {
+      this.loading.set(false);
+      this.error.set(err.error?.message || err.error?.error || 'Failed to place order. Please try again.');
+      this.orderStatus.set('REJECTED');
+    }
   }
 
-  executeSell(): void {
+  async executeSell(): Promise<void> {
     const quantity = this.calculatedSellShares();
     const total = quantity * this.effectivePrice();
     if (quantity < 0.001 || quantity > this.sharesOwned) return;
@@ -314,27 +287,25 @@ export class OrderModalComponent implements OnInit, OnDestroy {
     this.sharesToSell.set(0);
     this.moneyAmountToReceive.set(0);
 
-    this.portfolioService.sellOrder(orderRequest).subscribe({
-      next: (response) => {
+    try {
+      const response = await firstValueFrom(this.portfolioService.sellOrder(orderRequest));
         this.loading.set(false);
         this.orderMessage.set(response.message);
         this.orderStatus.set(response.status);
+        this.watchOrder(response.orderId);
 
-        if (response.success && response.status === 'FILLED') {
+        if (response.success && response.status !== 'REJECTED') {
           this.confirmedShares.set(quantity);
           this.confirmedTotal.set(total);
           this.success.set(true);
-          this.orderCompleted.emit();
         } else if (response.status === 'REJECTED') {
           this.error.set(response.error || response.message);
         }
-      },
-      error: (err) => {
-        this.loading.set(false);
-        this.error.set(err.error?.message || err.error?.error || 'Failed to place order. Please try again.');
-        this.orderStatus.set('REJECTED');
-      }
-    });
+    } catch (err: any) {
+      this.loading.set(false);
+      this.error.set(err.error?.message || err.error?.error || 'Failed to place order. Please try again.');
+      this.orderStatus.set('REJECTED');
+    }
   }
 
   onBackdropClick(event: Event): void {

@@ -2,9 +2,11 @@ package com.sleapy.project;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
 @EnableScheduling
+@EnableAsync
 public class Main {
     public static void greeter(String name) {
      
@@ -24,4 +26,3 @@ public class Main {
         SpringApplication.run(Main.class, args);
     }
 }
-
