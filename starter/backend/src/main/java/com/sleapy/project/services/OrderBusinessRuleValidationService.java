@@ -5,6 +5,7 @@ import com.sleapy.project.mappers.ClientMapper;
 import com.sleapy.project.mappers.HoldingMapper;
 import com.sleapy.project.mappers.InstrumentMapper;
 import com.sleapy.project.mappers.MarketPriceMapper;
+import com.sleapy.project.mappers.OrderMapper;
 import com.sleapy.project.models.entities.ClientEntity;
 import com.sleapy.project.models.entities.HoldingEntity;
 import com.sleapy.project.models.entities.InstrumentEntity;
@@ -26,6 +27,7 @@ public class OrderBusinessRuleValidationService {
     private final MarketPriceMapper marketPriceMapper;
     private final PriceService priceService;
     private final MarketHoursService marketHoursService;
+    private final OrderMapper orderMapper;
 
     public BuyValidation validateBuy(Long clientId, Long instrumentId, BigDecimal quantity) {
         BigDecimal normalizedQuantity = normalizeQuantity(quantity);
@@ -46,6 +48,11 @@ public class OrderBusinessRuleValidationService {
     }
 
     public SellValidation validateSell(Long clientId, Long instrumentId, BigDecimal quantity) {
+        return validateSell(clientId, instrumentId, quantity, null);
+    }
+
+    public SellValidation validateSell(Long clientId, Long instrumentId, BigDecimal quantity,
+                                       Long excludedOrderId) {
             BigDecimal normalizedQuantity = normalizeQuantity(quantity);
         ClientEntity client = findActiveClient(clientId);
         InstrumentEntity instrument = findInstrument(instrumentId);
@@ -53,9 +60,16 @@ public class OrderBusinessRuleValidationService {
                 .orElseThrow(() -> reject("POSITION_NOT_OWNED", "Client does not own " + instrument.getSymbol()));
 
         BigDecimal owned = holding.getQuantityShares();
-        if (owned == null || owned.compareTo(normalizedQuantity) < 0) {
+        BigDecimal pendingSellQuantity = excludedOrderId == null
+                ? orderMapper.findPendingSellQuantity(clientId, instrumentId)
+                : orderMapper.findPendingSellQuantityExcludingOrder(clientId, instrumentId, excludedOrderId);
+        BigDecimal availableToSell = (owned == null ? BigDecimal.ZERO : owned)
+                .subtract(pendingSellQuantity == null ? BigDecimal.ZERO : pendingSellQuantity);
+        if (availableToSell.compareTo(normalizedQuantity) < 0) {
             throw reject("INSUFFICIENT_SHARES", "Insufficient shares. Owned: "
-                + (owned == null ? BigDecimal.ZERO : owned) + ", Attempting to sell: " + normalizedQuantity);
+                + (owned == null ? BigDecimal.ZERO : owned) + ", Reserved by pending sells: "
+                + (pendingSellQuantity == null ? BigDecimal.ZERO : pendingSellQuantity)
+                + ", Attempting to sell: " + normalizedQuantity);
         }
 
         BigDecimal price = resolveCurrentPrice(instrument);

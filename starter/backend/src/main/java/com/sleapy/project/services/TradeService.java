@@ -27,19 +27,17 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Service
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:4200")
 public class TradeService {
-    private static final long ACCEPT_DELAY_SECONDS = 15;
-    private static final long FILL_DELAY_SECONDS = 30;
-    private static final ScheduledExecutorService ORDER_EXECUTOR =
-            Executors.newScheduledThreadPool(2);
+    private static final ExecutorService ORDER_EXECUTOR = Executors.newFixedThreadPool(4);
+    private static final ConcurrentHashMap<String, Object> ACCEPTANCE_LOCKS = new ConcurrentHashMap<>();
 
     private final OrderBusinessRuleValidationService orderValidationService;
     private final ClientMapper clientMapper;
@@ -48,56 +46,98 @@ public class TradeService {
     private final OrderMapper orderMapper;
     private final OrderStatusMapper orderStatusMapper;
     private final OrderStatusNotificationService orderStatusNotificationService;
+    private final OrderAuditLogService orderAuditLogService;
     private final PriceService priceService;
     @Autowired(required = false)
     private TransactionTemplate transactionTemplate;
 
     @Transactional
     public TradeResponseDTO submitBuyOrder(BuyOrderRequestDTO request) {
-        OrderBusinessRuleValidationService.BuyValidation validation =
-                orderValidationService.validateBuy(request.getClientId(), request.getInstrumentId(), request.getQuantity());
-        OrderEntity order = createPendingOrder(validation.client(), validation.instrument(),
-                validation.quantity(), validation.price(), "BUY");
-        publishAccepted(order, request.getClientId(), validation.instrument().getSymbol(), "BUY");
+        PendingOrderDetails details = preparePendingOrder(request.getClientId(), request.getInstrumentId(),
+                request.getQuantity());
+        OrderEntity order = createPendingOrder(details.client(), details.instrument(),
+                details.quantity(), details.price(), "BUY");
+        publishAccepted(order, request.getClientId(), details.instrument().getSymbol(), "BUY");
         scheduleExecution(order.getId(), request.getClientId(), request.getInstrumentId(),
-                validation.quantity(), validation.instrument().getSymbol(), "BUY");
-        return pendingResponse(order, request.getClientId(), validation.instrument().getSymbol(), "BUY",
-                validation.quantity(), validation.price(), validation.total());
+                details.quantity(), details.instrument().getSymbol(), "BUY",
+                details.client().getUsername(), details.total());
+        return pendingResponse(order, request.getClientId(), details.instrument().getSymbol(), "BUY",
+                details.quantity(), details.price(), details.total());
     }
 
     @Transactional
     public TradeResponseDTO submitSellOrder(SellOrderRequestDTO request) {
-        OrderBusinessRuleValidationService.SellValidation validation =
-                orderValidationService.validateSell(request.getClientId(), request.getInstrumentId(), request.getQuantity());
-        OrderEntity order = createPendingOrder(validation.client(), validation.instrument(),
-                validation.quantity(), validation.price(), "SELL");
-        publishAccepted(order, request.getClientId(), validation.instrument().getSymbol(), "SELL");
+        PendingOrderDetails details = preparePendingOrder(request.getClientId(), request.getInstrumentId(),
+                request.getQuantity());
+        OrderEntity order = createPendingOrder(details.client(), details.instrument(),
+                details.quantity(), details.price(), "SELL");
+        publishAccepted(order, request.getClientId(), details.instrument().getSymbol(), "SELL");
         scheduleExecution(order.getId(), request.getClientId(), request.getInstrumentId(),
-                validation.quantity(), validation.instrument().getSymbol(), "SELL");
-        return pendingResponse(order, request.getClientId(), validation.instrument().getSymbol(), "SELL",
-                validation.quantity(), validation.price(), validation.total());
+                details.quantity(), details.instrument().getSymbol(), "SELL",
+                details.client().getUsername(), details.total());
+        return pendingResponse(order, request.getClientId(), details.instrument().getSymbol(), "SELL",
+                details.quantity(), details.price(), details.total());
+    }
+
+    private PendingOrderDetails preparePendingOrder(Long clientId, Long instrumentId, BigDecimal requestedQuantity) {
+        if (requestedQuantity == null || requestedQuantity.signum() <= 0) {
+            throw new IllegalArgumentException("Quantity must be positive");
+        }
+        ClientEntity client = clientMapper.findById(clientId)
+                .orElseThrow(() -> new NoSuchElementException("Client not found"));
+        InstrumentEntity instrument = instrumentMapper.findById(instrumentId)
+                .orElseThrow(() -> new NoSuchElementException("Instrument not found"));
+        BigDecimal quantity = requestedQuantity.setScale(3, RoundingMode.HALF_UP);
+        BigDecimal price = priceService.getCurrentPrice(instrument.getSymbol());
+        return new PendingOrderDetails(client, instrument, quantity, price, price.multiply(quantity));
     }
 
     private void scheduleExecution(Long orderId, Long clientId, Long instrumentId,
-                                   BigDecimal quantity, String symbol, String tradeType) {
-        Runnable acceptedNotification = () -> orderStatusNotificationService.publish(
-                orderId, clientId, symbol, tradeType, "ACCEPTED",
-                "Order accepted and queued for execution");
-        Runnable execution = () -> executePendingOrder(orderId, clientId, instrumentId, quantity, tradeType);
-        Runnable schedule = () -> {
-            ORDER_EXECUTOR.schedule(acceptedNotification, ACCEPT_DELAY_SECONDS, TimeUnit.SECONDS);
-            ORDER_EXECUTOR.schedule(execution, FILL_DELAY_SECONDS, TimeUnit.SECONDS);
-        };
+                                   BigDecimal quantity, String symbol, String tradeType,
+                                   String username, BigDecimal totalAmount) {
+        Runnable acceptanceStage = () -> acceptPendingOrder(orderId, clientId, instrumentId,
+                quantity, symbol, tradeType, username, totalAmount);
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    schedule.run();
+                    ORDER_EXECUTOR.execute(acceptanceStage);
                 }
             });
         } else {
-            schedule.run();
+            ORDER_EXECUTOR.execute(acceptanceStage);
         }
+    }
+
+    private void acceptPendingOrder(Long orderId, Long clientId, Long instrumentId,
+                                    BigDecimal quantity, String symbol, String tradeType,
+                                    String username, BigDecimal totalAmount) {
+        Object acceptanceLock = ACCEPTANCE_LOCKS.computeIfAbsent(
+                clientId + ":" + instrumentId, ignored -> new Object());
+        synchronized (acceptanceLock) {
+            try {
+                if ("BUY".equals(tradeType)) {
+                    orderValidationService.validateBuy(clientId, instrumentId, quantity);
+                } else {
+                    orderValidationService.validateSell(clientId, instrumentId, quantity, orderId);
+                }
+
+                orderStatusNotificationService.publish(orderId, clientId, symbol, tradeType,
+                        "ACCEPTED", "Order accepted and queued for execution");
+                orderAuditLogService.log(orderId, username, tradeType, symbol, totalAmount,
+                        quantity, "ACCEPTED");
+
+                Runnable fillStage = () -> executePendingOrder(orderId, clientId, instrumentId,
+                        quantity, tradeType);
+                ORDER_EXECUTOR.execute(fillStage);
+            } catch (RuntimeException exception) {
+                rejectPendingOrder(orderId, clientId, tradeType, exception.getMessage());
+            }
+        }
+    }
+
+    private record PendingOrderDetails(ClientEntity client, InstrumentEntity instrument,
+                                       BigDecimal quantity, BigDecimal price, BigDecimal total) {
     }
 
     public void executePendingOrder(Long orderId, Long clientId, Long instrumentId,
@@ -112,7 +152,7 @@ public class TradeService {
                 } else {
                     SellOrderRequestDTO request = new SellOrderRequestDTO(clientId, instrumentId, quantity);
                     OrderBusinessRuleValidationService.SellValidation validation =
-                            orderValidationService.validateSell(clientId, instrumentId, quantity);
+                            orderValidationService.validateSell(clientId, instrumentId, quantity, orderId);
                     settlePendingSell(orderId, request, validation);
                 }
             };
@@ -151,6 +191,8 @@ public class TradeService {
             holdingMapper.save(holding);
         }
         fillOrder(orderId, currentPrice);
+        orderAuditLogService.log(orderId, client.getUsername(), "BUY", instrument.getSymbol(),
+                totalCost, quantity, "FILLED");
         orderStatusNotificationService.publish(orderId, request.getClientId(), instrument.getSymbol(),
                 "BUY", "FILLED", "Buy order filled");
     }
@@ -173,6 +215,8 @@ public class TradeService {
             holdingMapper.update(holding);
         }
         fillOrder(orderId, currentPrice);
+        orderAuditLogService.log(orderId, client.getUsername(), "SELL", instrument.getSymbol(),
+                validation.total(), quantity, "FILLED");
         orderStatusNotificationService.publish(orderId, request.getClientId(), instrument.getSymbol(),
                 "SELL", "FILLED", "Sell order filled");
     }
@@ -195,6 +239,9 @@ public class TradeService {
     private void publishAccepted(OrderEntity order, Long clientId, String symbol, String tradeType) {
         orderStatusNotificationService.publish(order.getId(), clientId, symbol, tradeType,
                 "PENDING", "Order received and awaiting execution");
+        orderAuditLogService.log(order.getId(), order.getClient().getUsername(), tradeType, symbol,
+                order.getPurchasePrice().multiply(order.getQuantity()),
+                order.getQuantity(), "PENDING");
     }
 
     private TradeResponseDTO pendingResponse(OrderEntity order, Long clientId, String symbol,
@@ -217,19 +264,29 @@ public class TradeService {
     }
 
     private void rejectPendingOrder(Long orderId, Long clientId, String tradeType, String message) {
-        OrderEntity order = orderMapper.findById(orderId);
-        if (order == null) return;
-        OrderStatus status = orderStatusMapper.findById(3L).orElse(null);
-        if (status == null) {
-            status = new OrderStatus();
-            status.setId(2L);
-            status.setName("Rejected");
+        Runnable rejection = () -> {
+            OrderEntity order = orderMapper.findById(orderId);
+            if (order == null) return;
+            OrderStatus status = orderStatusMapper.findById(3L).orElse(null);
+            if (status == null) {
+                status = new OrderStatus();
+                status.setId(2L);
+                status.setName("Rejected");
+            }
+            order.setStatus(status);
+            orderMapper.update(order);
+            orderAuditLogService.log(order.getId(), order.getClient().getUsername(), tradeType,
+                    order.getInstrument().getSymbol(), order.getPurchasePrice().multiply(order.getQuantity()),
+                    order.getQuantity(), "REJECTED");
+            orderStatusNotificationService.publish(orderId, clientId,
+                    order.getInstrument().getSymbol(), tradeType, "REJECTED",
+                    message == null ? "Order execution failed" : message);
+        };
+        if (transactionTemplate == null) {
+            rejection.run();
+        } else {
+            transactionTemplate.executeWithoutResult(status -> rejection.run());
         }
-        order.setStatus(status);
-        orderMapper.update(order);
-        orderStatusNotificationService.publish(orderId, clientId,
-                order.getInstrument().getSymbol(), tradeType, "REJECTED",
-                message == null ? "Order execution failed" : message);
     }
 
     @Transactional

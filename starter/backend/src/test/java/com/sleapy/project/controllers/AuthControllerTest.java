@@ -11,6 +11,7 @@ import com.sleapy.project.mappers.ClientMapper;
 import com.sleapy.project.models.dtos.LoginRequestDTO;
 import com.sleapy.project.models.entities.ClientEntity;
 import com.sleapy.project.services.ClientService;
+import com.sleapy.project.services.AuthenticationAuditLogService;
 import com.sleapy.project.services.JwtService;
 import com.sleapy.project.validators.ClientValidator;
 
@@ -40,6 +41,9 @@ class AuthControllerTest {
 
     @MockitoBean
     private JwtService jwtService;
+
+    @MockitoBean
+    private AuthenticationAuditLogService authenticationAuditLogService;
  
     // Test cases will go here
     @Test

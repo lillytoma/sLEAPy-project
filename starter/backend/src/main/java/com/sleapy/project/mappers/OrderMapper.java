@@ -9,6 +9,7 @@ import org.apache.ibatis.annotations.Results;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
+import java.math.BigDecimal;
 
 /**
  * MyBatis mapper interface for OrderEntity.
@@ -86,6 +87,32 @@ public interface OrderMapper {
         @Result(column = "instrument_symbol_name", property = "instrument.symbolName")
     })
     List<OrderEntity> findTransactionsByClientId(@Param("clientId") Long clientId);
+
+    @Select("""
+        SELECT COALESCE(SUM(o.Quantity), 0)
+        FROM Orders o
+        JOIN Order_Status os ON o.Status = os.OrderStatus_ID
+        WHERE o.Client_ID = #{clientId}
+          AND o.Instrument_ID = #{instrumentId}
+          AND o.trade_type = 'SELL'
+          AND UPPER(os.OrderStatus_Name) = 'PENDING'
+        """)
+    BigDecimal findPendingSellQuantity(@Param("clientId") Long clientId,
+                                       @Param("instrumentId") Long instrumentId);
+
+    @Select("""
+        SELECT COALESCE(SUM(o.Quantity), 0)
+        FROM Orders o
+        JOIN Order_Status os ON o.Status = os.OrderStatus_ID
+        WHERE o.Client_ID = #{clientId}
+          AND o.Instrument_ID = #{instrumentId}
+          AND o.trade_type = 'SELL'
+          AND UPPER(os.OrderStatus_Name) = 'PENDING'
+          AND o.Order_ID <> #{excludedOrderId}
+        """)
+    BigDecimal findPendingSellQuantityExcludingOrder(@Param("clientId") Long clientId,
+                                                     @Param("instrumentId") Long instrumentId,
+                                                     @Param("excludedOrderId") Long excludedOrderId);
 
 
     /**
