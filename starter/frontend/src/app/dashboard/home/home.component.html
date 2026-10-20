@@ -1,7 +1,7 @@
 <div class="dashboard-home">
       <div class="page-intro">
         <div>
-          <h1>Good morning, {{ displayName() }}<span class="intro-accent">.</span></h1>
+          <h1>{{ greeting() }}, {{ displayName() }}<span class="intro-accent">.</span></h1>
           <p class="page-subtitle" style="color:var(--foreground);font-size:15px;font-weight:500">{{ today | date:'EEEE, MMMM d, y' }} · {{ marketsStatusLabel() }}</p>
         </div>
         <a routerLink="/dashboard/markets" class="text-link">Explore markets <span aria-hidden="true">→</span></a>

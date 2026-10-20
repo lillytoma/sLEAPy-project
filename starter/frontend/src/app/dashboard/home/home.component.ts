@@ -24,6 +24,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   private livePrices = signal<Map<string, any>>(new Map());
   private priceSubscription?: Subscription;
   private transactionRefreshSubscription?: Subscription;
+  private clockSubscription?: Subscription;
 
   constructor(
     public portfolioService: PortfolioService,
@@ -40,6 +41,13 @@ export class HomeComponent implements OnInit, OnDestroy {
     return localPart.charAt(0).toUpperCase() + localPart.slice(1);
   });
 
+  // Ticks every minute so the greeting flips (e.g. morning → afternoon) without a reload.
+  private now = signal(new Date());
+  greeting = computed(() => {
+    const hour = this.now().getHours();
+    return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  });
+
   // Weekday-only approximation (no holiday/after-hours awareness) since the backend
   // doesn't expose real market-hours data.
   marketsStatusLabel = computed(() => {
@@ -53,11 +61,13 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.livePrices.set(new Map(updates));
     });
     this.transactionRefreshSubscription = timer(0, 30000).subscribe(() => this.refreshTransactions());
+    this.clockSubscription = timer(60000, 60000).subscribe(() => this.now.set(new Date()));
   }
 
   ngOnDestroy(): void {
     this.priceSubscription?.unsubscribe();
     this.transactionRefreshSubscription?.unsubscribe();
+    this.clockSubscription?.unsubscribe();
   }
 
   refreshTransactions(): void {

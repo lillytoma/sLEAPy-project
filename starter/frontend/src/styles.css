@@ -410,6 +410,10 @@ html[data-font-size='large'] .dashboard-shell { zoom: 1.1; }
 }
 .page-intro h1 { text-shadow: 3px 3px 0 var(--accent); line-height: 1.05; }
 .page-intro h1 .intro-accent { color: var(--accent-red); text-shadow: 3px 3px 0 var(--frog-ink); }
+/* Dark mode: bright cream on a bright mustard shadow blurs together, so soften the
+   lettering and drop the shadow to a deeper mustard for a crisp edge. */
+.dark .page-intro h1 { color: #e2d2ab; text-shadow: 3px 3px 0 #8a6420; }
+.dark .page-intro h1 .intro-accent { text-shadow: 3px 3px 0 rgba(0, 0, 0, .6); }
 .eyebrow { font-family: var(--font-mono); letter-spacing: .16em; }
 
 /* Buttons bounce like rubber-hose props: lift on hover, squash on press. */
