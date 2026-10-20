@@ -4,6 +4,7 @@ import { PortfolioService } from '../../services/portfolio.service';
 import { MarketDataService } from '../../services/market-data.service';
 import { MarketStock, WatchlistStock } from '../../data/mock-data';
 import { OrderModalComponent } from '../shared/order-modal.component';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-watchlist',
@@ -16,14 +17,37 @@ export class WatchlistComponent implements OnInit, OnDestroy {
 
   private livePrices = signal<Map<string, any>>(new Map());
   private priceSubscription?: Subscription;
+  private previousPrices = new Map<string, number>();
+  private alertedAt = new Map<string, number>();
 
-  constructor(public portfolioService: PortfolioService, private marketDataService: MarketDataService) {}
+  constructor(public portfolioService: PortfolioService, private marketDataService: MarketDataService, private notificationService: NotificationService) {}
 
   ngOnInit(): void {
     this.marketDataService.connectWebSocket();
     this.priceSubscription = this.marketDataService.priceUpdates$.subscribe((updates) => {
       this.livePrices.set(new Map(updates));
+      this.checkPriceAlerts(updates);
     });
+  }
+
+  private checkPriceAlerts(updates: Map<string, any>): void {
+    const threshold = this.notificationService.preferences().thresholdPercent;
+    for (const symbol of this.portfolioService.watchlistedSymbols()) {
+      const price = Number(updates.get(symbol)?.currentPrice);
+      const previous = this.previousPrices.get(symbol);
+      this.previousPrices.set(symbol, price);
+      if (!price || !previous || !threshold) continue;
+      const changePercent = ((price - previous) / previous) * 100;
+      if (Math.abs(changePercent) < threshold) continue;
+      const now = Date.now();
+      if (now - (this.alertedAt.get(symbol) ?? 0) < 15 * 60 * 1000) continue;
+      this.alertedAt.set(symbol, now);
+      const direction = changePercent > 0 ? 'BUY' : 'SELL';
+      this.notificationService.sendPriceAlert(symbol, direction, Math.abs(changePercent), price);
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        new Notification(`${symbol} watchlist alert`, { body: `${symbol} moved ${Math.abs(changePercent).toFixed(2)}%.` });
+      }
+    }
   }
 
   ngOnDestroy(): void {

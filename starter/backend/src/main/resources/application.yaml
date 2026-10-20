@@ -30,6 +30,11 @@ jwt:
 server:
   port: 8081
 
+# Optional email delivery. Notifications remain disabled until SMTP is configured.
+notification:
+  mail:
+    from: ${MAIL_FROM:${spring.mail.username:}}
+
 # Base URL of the Python price service (starter/backend/etl/price_service.py)
 # that wraps yfinance for live stock quotes.
 price-service:

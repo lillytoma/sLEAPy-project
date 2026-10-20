@@ -1,8 +1,8 @@
 package com.sleapy.project.exceptions;
 
-public class InsufficientCashException extends RuntimeException {
+public class InsufficientCashException extends OrderValidationException {
     
     public InsufficientCashException(String message) {
-        super(message);
+        super("INSUFFICIENT_CASH", message);
     }
 }

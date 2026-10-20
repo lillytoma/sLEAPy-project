@@ -27,6 +27,7 @@ public class ClientService {
     private final ClientValidator clientValidator;
 
     private final ClientMapper clientMapper;
+    private final NotificationDeliveryService notificationDeliveryService;
 
     public double getCashBalance(Long clientId) {
         
@@ -139,6 +140,7 @@ public class ClientService {
         
         // Save to database (ID will be auto-generated and populated in newClient)
         clientMapper.save(newClient);
+        notificationDeliveryService.sendAccountCreatedEmail(newClient);
         return newClient;
     }
 }

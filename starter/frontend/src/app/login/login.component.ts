@@ -41,6 +41,7 @@ export class LoginComponent {
         localStorage.setItem('auth_token', response.jwtToken);
         localStorage.setItem('user_id', String(response.id));
         localStorage.setItem('user_email', this.email);
+        if (response.phoneNumber) localStorage.setItem('user_phone', response.phoneNumber);
         localStorage.setItem('account_frozen', String(response.frozen === true));
         
         const userId = response?.userID ?? response?.userId;
@@ -78,4 +79,3 @@ export class LoginComponent {
     });
   }
 }
-

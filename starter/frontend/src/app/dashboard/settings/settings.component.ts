@@ -2,6 +2,7 @@ import { Component, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ThemeService } from '../../services/theme.service';
 import { AuthService } from '../../services/auth.service';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-settings',
@@ -51,6 +52,39 @@ import { AuthService } from '../../services/auth.service';
               [attr.aria-pressed]="themeService.fontSize() === 'large'" (click)="themeService.setFontSize('large')">Larger</button>
           </div>
         </div>
+      </section>
+
+      <section class="panel settings-panel" aria-labelledby="notifications-heading">
+        <div class="settings-section-heading">
+          <div>
+            <div class="eyebrow">Alerts</div>
+            <h2 id="notifications-heading">Notifications</h2>
+          </div>
+          <span class="settings-section-icon" aria-hidden="true">•</span>
+        </div>
+        <p class="settings-help">Get notified when a stock on your watchlist moves sharply. Preferences are saved for this account.</p>
+        <div class="settings-option">
+          <div><h3>Email alerts</h3><p>Send account and market activity alerts to {{ authService.userName() || 'your email address' }}.</p></div>
+          <button type="button" class="settings-toggle" [class.is-on]="notificationService.preferences().emailAlerts"
+            [attr.aria-pressed]="notificationService.preferences().emailAlerts" (click)="toggle('emailAlerts')">
+            <span class="settings-toggle-track"><span class="settings-toggle-thumb"></span></span>
+            <span>{{ notificationService.preferences().emailAlerts ? 'On' : 'Off' }}</span>
+          </button>
+        </div>
+        <div class="settings-option">
+          <div><h3>Phone alerts</h3><p>{{ hasPhone ? 'Send market alerts by text message.' : 'Add a phone number to your account to enable text alerts.' }}</p></div>
+          <button type="button" class="settings-toggle" [class.is-on]="notificationService.preferences().phoneAlerts"
+            [disabled]="!hasPhone" [attr.aria-pressed]="notificationService.preferences().phoneAlerts" (click)="toggle('phoneAlerts')">
+            <span class="settings-toggle-track"><span class="settings-toggle-thumb"></span></span>
+            <span>{{ hasPhone && notificationService.preferences().phoneAlerts ? 'On' : 'Unavailable' }}</span>
+          </button>
+        </div>
+        <div class="settings-option settings-option-stack">
+          <div><h3>Watchlist movement threshold</h3><p>Alert when a watched instrument gains or drops by at least this percentage.</p></div>
+          <label class="settings-threshold"><input type="number" min="1" max="100" [value]="notificationService.preferences().thresholdPercent"
+            (change)="setThreshold($event)" aria-label="Watchlist movement threshold percentage">%</label>
+        </div>
+        <p class="settings-save-note" role="status">Changes save automatically.</p>
       </section>
 
       <section class="panel settings-panel" aria-labelledby="color-vision-heading">
@@ -118,11 +152,13 @@ export class SettingsComponent {
   frozen = signal(false);
   isSaving = signal(false);
   accountError = signal('');
+  hasPhone = Boolean(localStorage.getItem('user_phone'));
 
   constructor(
     public themeService: ThemeService,
-    private authService: AuthService,
-    private router: Router
+    public authService: AuthService,
+    private router: Router,
+    public notificationService: NotificationService
   ) {
     const clientId = this.getClientId();
     if (clientId !== null) {
@@ -131,6 +167,19 @@ export class SettingsComponent {
         error: () => this.accountError.set('Account status could not be loaded.')
       });
     }
+
+  }
+
+  toggle(key: 'emailAlerts' | 'phoneAlerts'): void {
+    this.notificationService.savePreferences({
+      ...this.notificationService.preferences(),
+      [key]: !this.notificationService.preferences()[key]
+    });
+  }
+
+  setThreshold(event: Event): void {
+    const value = Number((event.target as HTMLInputElement).value);
+    this.notificationService.savePreferences({ ...this.notificationService.preferences(), thresholdPercent: value });
   }
 
   toggleFreeze(): void {

@@ -52,7 +52,7 @@ export class SignupComponent {
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
       dob: ['', [Validators.required, this.ageValidator]],
-      phone: ['', [Validators.required, Validators.pattern(/^\(\d{3}\) \d{3}-\d{4}$/)]],
+      phone: ['', [Validators.pattern(/^\(\d{3}\) \d{3}-\d{4}$/)]],
       street: ['', Validators.required],
       city: ['', Validators.required],
       zip: ['', [Validators.required, Validators.pattern(/^\d{5}(-\d{4})?$/)]],
@@ -169,7 +169,9 @@ export class SignupComponent {
     this.signupService.signup(signupData).subscribe(
      {next: (response) => {
         console.log('Signup successful:', response);
-        setTimeout(() => this.router.navigate(['/login']), 2000);
+       const phoneNumber = this.form.get('phone')?.value;
+       if (phoneNumber) localStorage.setItem('user_phone', phoneNumber);
+       setTimeout(() => this.router.navigate(['/login']), 2000);
       },
       error:(error) => {
         console.error('Signup failed:', error);

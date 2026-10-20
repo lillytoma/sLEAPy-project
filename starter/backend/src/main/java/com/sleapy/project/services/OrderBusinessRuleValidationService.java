@@ -1,6 +1,7 @@
 package com.sleapy.project.services;
 
 import com.sleapy.project.exceptions.OrderValidationException;
+import com.sleapy.project.exceptions.InsufficientCashException;
 import com.sleapy.project.mappers.ClientMapper;
 import com.sleapy.project.mappers.HoldingMapper;
 import com.sleapy.project.mappers.InstrumentMapper;
@@ -37,7 +38,7 @@ public class OrderBusinessRuleValidationService {
         BigDecimal cash = BigDecimal.valueOf(client.getCashBalance());
 
         if (cash.compareTo(total) < 0) {
-            throw reject("INSUFFICIENT_CASH", "Insufficient cash balance. Required: $" + total
+            throw new InsufficientCashException("Insufficient cash balance. Required: $" + total
                     + ", Available: $" + cash);
         }
 
