@@ -5,7 +5,6 @@ import { ThemeService } from '../services/theme.service';
 import { FrogMascotComponent } from '../shared/frog-mascot.component';
 import { MarketHoursService } from '../services/market-hours.service';
 import { PortfolioService } from '../services/portfolio.service';
-import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -28,7 +27,7 @@ import { AuthService } from '../services/auth.service';
               <span class="eyebrow">Net worth</span>
               <strong>{{ '$' }}{{ portfolioService.netWorth().toFixed(2) }}</strong>
             </div>
-            <button type="button" class="sign-out" (click)="logout()">Sign out</button>
+            <a routerLink="/login" class="sign-out">Sign out</a>
           </div>
         </div>
       </header>
@@ -59,9 +58,5 @@ import { AuthService } from '../services/auth.service';
   `
 })
 export class DashboardComponent {
-  constructor(public portfolioService: PortfolioService, private authService: AuthService) {}
-
-  logout(): void {
-    this.authService.logout();
-  }
+  constructor(public portfolioService: PortfolioService) {}
 }

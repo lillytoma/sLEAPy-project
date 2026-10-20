@@ -1,5 +1,4 @@
-import { Component, computed, OnDestroy, OnInit, signal } from '@angular/core';
-import { Subscription, timer } from 'rxjs';
+import { Component, computed, OnInit, signal } from '@angular/core';
 import { PortfolioService } from '../../services/portfolio.service';
 import { MarketStock } from '../../data/mock-data';
 import { MarketDataService } from '../../services/market-data.service';
@@ -12,35 +11,14 @@ import { AddCashModalComponent } from '../shared/add-cash-modal.component';
   imports: [OrderModalComponent, AddCashModalComponent],
   templateUrl: './portfolio.component.html'
 })
-export class PortfolioComponent implements OnInit, OnDestroy {
+export class PortfolioComponent implements OnInit {
   orderModal = signal<{ stock: MarketStock; mode: 'buy' | 'sell' } | null>(null);
   showAddCash = signal(false);
-  pendingOrders = signal<import('../../services/portfolio.service').TransactionResponse[]>([]);
-  private refreshSubscription?: Subscription;
 
   constructor(public portfolioService: PortfolioService, private marketDataService: MarketDataService) {}
 
   ngOnInit(): void {
     this.marketDataService.connectWebSocket();
-    this.refreshSubscription = timer(0, 2000).subscribe(() => {
-      this.refreshOrders();
-      this.portfolioService.refreshHoldings();
-      this.portfolioService.refreshCashBalance();
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.refreshSubscription?.unsubscribe();
-  }
-
-  private refreshOrders(): void {
-    this.portfolioService.getTransactions().subscribe({
-      next: (orders) => this.pendingOrders.set(orders.filter((order) => {
-        const status = (order.status ?? '').toUpperCase();
-        return status === 'PENDING' || status === 'ACCEPTED';
-      })),
-      error: (error) => console.error('Unable to load portfolio orders:', error)
-    });
   }
 
   statCards = computed(() => {

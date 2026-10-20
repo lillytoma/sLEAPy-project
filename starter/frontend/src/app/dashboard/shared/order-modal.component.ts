@@ -1,8 +1,7 @@
-import { Component, Input, Output, EventEmitter, signal, computed, OnDestroy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { PortfolioService, OrderRequest } from '../../services/portfolio.service';
-import { firstValueFrom, Subscription } from 'rxjs';
 import { MarketStock } from '../../data/mock-data';
 import { MarketDataService } from '../../services/market-data.service';
 import { Subscription } from 'rxjs';
@@ -15,7 +14,7 @@ type ChartRange = '6mo' | '1mo' | '2wk' | '1wk' | '3d';
   imports: [FormsModule, HttpClientModule],
   templateUrl: './order-modal.component.html'
 })
-export class OrderModalComponent implements OnDestroy {
+export class OrderModalComponent {
   @Input() stock!: MarketStock;
   @Input() availableCash = 0;
   @Input() sharesOwned = 0;
@@ -42,7 +41,6 @@ export class OrderModalComponent implements OnDestroy {
   confirmedShares = signal(0);
   confirmedTotal = signal(0);
   error = signal<string | null>(null);
-  private orderStatusSubscription?: Subscription;
 
   quickSellPcts = [25, 50, 75, 100];
 
@@ -148,31 +146,6 @@ export class OrderModalComponent implements OnDestroy {
     };
   });
 
-  ngOnDestroy(): void {
-    this.orderStatusSubscription?.unsubscribe();
-  }
-
-  private watchOrder(orderId: string | number | undefined): void {
-    if (orderId == null) return;
-    this.orderStatusSubscription?.unsubscribe();
-    this.orderStatusSubscription = this.portfolioService.getOrderStatusUpdates().subscribe((update) => {
-      if (!update || String(update.orderId) !== String(orderId)) return;
-      this.orderStatus.set(update.status);
-      this.orderMessage.set(update.message);
-      if (update.status === 'FILLED') {
-        this.success.set(true);
-        this.loading.set(false);
-        this.portfolioService.refreshCashBalance();
-        this.portfolioService.refreshHoldings();
-        this.orderCompleted.emit();
-      } else if (update.status === 'REJECTED') {
-        this.loading.set(false);
-        this.success.set(true);
-        this.error.set(update.message);
-      }
-    });
-  }
-
   effectivePrice = computed(() => this.stock?.price ?? 0);
 
   // Buy computed properties
@@ -226,7 +199,7 @@ export class OrderModalComponent implements OnDestroy {
     this.inputMode.set('shares');
   }
 
-  async executeBuy(): Promise<void> {
+  executeBuy(): void {
     const quantity = this.calculatedBuyShares();
     const total = quantity * this.effectivePrice();
     if (quantity < 0.001 || total > this.availableCash) return;
@@ -246,28 +219,30 @@ export class OrderModalComponent implements OnDestroy {
     this.shares.set(0);
     this.moneyAmount.set(0);
 
-    try {
-      const response = await firstValueFrom(this.portfolioService.placeOrder(orderRequest));
+    this.portfolioService.placeOrder(orderRequest).subscribe({
+      next: (response) => {
         this.loading.set(false);
         this.orderMessage.set(response.message);
         this.orderStatus.set(response.status);
-        this.watchOrder(response.orderId);
 
-        if (response.success && response.status !== 'REJECTED') {
+        if (response.success && response.status === 'FILLED') {
           this.confirmedShares.set(quantity);
           this.confirmedTotal.set(total);
           this.success.set(true);
+          this.orderCompleted.emit();
         } else if (response.status === 'REJECTED') {
           this.error.set(response.error || response.message);
         }
-    } catch (err: any) {
-      this.loading.set(false);
-      this.error.set(err.error?.message || err.error?.error || 'Failed to place order. Please try again.');
-      this.orderStatus.set('REJECTED');
-    }
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.error.set(err.error?.message || err.error?.error || 'Failed to place order. Please try again.');
+        this.orderStatus.set('REJECTED');
+      }
+    });
   }
 
-  async executeSell(): Promise<void> {
+  executeSell(): void {
     const quantity = this.calculatedSellShares();
     const total = quantity * this.effectivePrice();
     if (quantity < 0.001 || quantity > this.sharesOwned) return;
@@ -287,25 +262,27 @@ export class OrderModalComponent implements OnDestroy {
     this.sharesToSell.set(0);
     this.moneyAmountToReceive.set(0);
 
-    try {
-      const response = await firstValueFrom(this.portfolioService.sellOrder(orderRequest));
+    this.portfolioService.sellOrder(orderRequest).subscribe({
+      next: (response) => {
         this.loading.set(false);
         this.orderMessage.set(response.message);
         this.orderStatus.set(response.status);
-        this.watchOrder(response.orderId);
 
-        if (response.success && response.status !== 'REJECTED') {
+        if (response.success && response.status === 'FILLED') {
           this.confirmedShares.set(quantity);
           this.confirmedTotal.set(total);
           this.success.set(true);
+          this.orderCompleted.emit();
         } else if (response.status === 'REJECTED') {
           this.error.set(response.error || response.message);
         }
-    } catch (err: any) {
-      this.loading.set(false);
-      this.error.set(err.error?.message || err.error?.error || 'Failed to place order. Please try again.');
-      this.orderStatus.set('REJECTED');
-    }
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.error.set(err.error?.message || err.error?.error || 'Failed to place order. Please try again.');
+        this.orderStatus.set('REJECTED');
+      }
+    });
   }
 
   onBackdropClick(event: Event): void {

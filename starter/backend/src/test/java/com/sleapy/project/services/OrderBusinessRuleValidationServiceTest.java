@@ -5,10 +5,8 @@ import com.sleapy.project.mappers.ClientMapper;
 import com.sleapy.project.mappers.HoldingMapper;
 import com.sleapy.project.mappers.InstrumentMapper;
 import com.sleapy.project.mappers.MarketPriceMapper;
-import com.sleapy.project.mappers.OrderMapper;
 import com.sleapy.project.models.entities.ClientEntity;
 import com.sleapy.project.models.entities.ClientStatus;
-import com.sleapy.project.models.entities.HoldingEntity;
 import com.sleapy.project.models.entities.InstrumentEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,7 +30,6 @@ class OrderBusinessRuleValidationServiceTest {
     @Mock private MarketPriceMapper marketPriceMapper;
     @Mock private PriceService priceService;
     @Mock private MarketHoursService marketHoursService;
-    @Mock private OrderMapper orderMapper;
 
     private OrderBusinessRuleValidationService validationService;
     private ClientEntity client;
@@ -41,8 +38,7 @@ class OrderBusinessRuleValidationServiceTest {
     @BeforeEach
     void setUp() {
         validationService = new OrderBusinessRuleValidationService(
-            clientMapper, instrumentMapper, holdingMapper, marketPriceMapper, priceService,
-            marketHoursService, orderMapper);
+            clientMapper, instrumentMapper, holdingMapper, marketPriceMapper, priceService, marketHoursService);
         client = new ClientEntity();
         client.setCashBalance(100);
         client.setClientStatus(new ClientStatus(1L, "Active"));
@@ -51,7 +47,7 @@ class OrderBusinessRuleValidationServiceTest {
         instrument.setCurrentPrice(BigDecimal.TEN);
         lenient().when(clientMapper.findById(1L)).thenReturn(Optional.of(client));
         lenient().when(instrumentMapper.findById(2L)).thenReturn(Optional.of(instrument));
-        lenient().when(marketHoursService.isMarketOpen()).thenReturn(true);
+        when(marketHoursService.isMarketOpen()).thenReturn(true);
     }
 
     @Test
@@ -85,20 +81,12 @@ class OrderBusinessRuleValidationServiceTest {
     }
 
     @Test
-    void acceptsOrdersWhenMarketIsClosedForTesting() {
-        assertEquals(0, BigDecimal.ONE.compareTo(validationService.validateBuy(1L, 2L, BigDecimal.ONE).quantity()));
-    }
-
-    @Test
-    void rejectsSellWhenPendingSellAlreadyReservesShares() {
-        HoldingEntity holding = new HoldingEntity();
-        holding.setQuantityShares(BigDecimal.ONE);
-        when(holdingMapper.findByClientIdAndInstrumentId(1L, 2L)).thenReturn(Optional.of(holding));
-        when(orderMapper.findPendingSellQuantity(1L, 2L)).thenReturn(BigDecimal.ONE);
+    void rejectsOrdersWhenMarketIsClosed() {
+        when(marketHoursService.isMarketOpen()).thenReturn(false);
 
         OrderValidationException exception = assertThrows(OrderValidationException.class,
-                () -> validationService.validateSell(1L, 2L, BigDecimal.ONE));
+                () -> validationService.validateBuy(1L, 2L, BigDecimal.ONE));
 
-        assertEquals("INSUFFICIENT_SHARES", exception.getRule());
+        assertEquals("MARKET_CLOSED", exception.getRule());
     }
 }
