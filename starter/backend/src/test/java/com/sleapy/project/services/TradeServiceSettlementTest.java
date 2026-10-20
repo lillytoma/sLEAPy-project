@@ -63,11 +63,15 @@ class TradeServiceSettlementTest {
     @Mock
     private PriceService priceService;
 
+    @Mock
+    private OrderBusinessRuleValidationService orderValidationService;
+
     @InjectMocks
     private TradeService tradeService;
 
     private ClientEntity client;
     private InstrumentEntity instrument;
+    private HoldingEntity holding;
     private OrderStatus filledStatus;
 
     @BeforeEach
@@ -82,22 +86,32 @@ class TradeServiceSettlementTest {
         instrument.setSymbol("AAPL");
         instrument.setSymbolName("Apple Inc.");
 
+        holding = new HoldingEntity(9L, client, instrument, new BigDecimal("5"), new BigDecimal("80.00"));
+
         filledStatus = new OrderStatus();
         filledStatus.setId(2L);
         filledStatus.setName("Filled");
 
     }
 
-    private void stubQuoteAndSettlementDependencies() {
-        when(clientMapper.findById(1L)).thenReturn(Optional.of(client));
-        when(instrumentMapper.findById(2L)).thenReturn(Optional.of(instrument));
+    private void stubBuySettlementDependencies() {
         when(orderStatusMapper.findById(2L)).thenReturn(Optional.of(filledStatus));
-        when(priceService.getCurrentPrice("AAPL")).thenReturn(new BigDecimal("100.00"));
+        when(orderValidationService.validateBuy(1L, 2L, new BigDecimal("2")))
+            .thenReturn(new OrderBusinessRuleValidationService.BuyValidation(
+                client, instrument, new BigDecimal("2"), new BigDecimal("100.00"), new BigDecimal("200.00")));
+    }
+
+    private void stubSellSettlementDependencies() {
+        when(orderStatusMapper.findById(2L)).thenReturn(Optional.of(filledStatus));
+        when(orderValidationService.validateSell(1L, 2L, new BigDecimal("2")))
+            .thenReturn(new OrderBusinessRuleValidationService.SellValidation(
+                client, instrument, holding, new BigDecimal("2"),
+                new BigDecimal("100.00"), new BigDecimal("200.00")));
     }
 
     @Test
     void buySettlesCashHoldingAndPermanentHistoryAtExecutionPrice() {
-        stubQuoteAndSettlementDependencies();
+        stubBuySettlementDependencies();
         when(holdingMapper.findByClientIdAndInstrumentId(1L, 2L)).thenReturn(Optional.empty());
         doAnswer(invocation -> {
             invocation.getArgument(0, OrderEntity.class).setId(10L);
@@ -129,10 +143,8 @@ class TradeServiceSettlementTest {
 
     @Test
     void sellSettlesCashHoldingAndPermanentHistoryAtExecutionPrice() {
-        stubQuoteAndSettlementDependencies();
+        stubSellSettlementDependencies();
         client.setCashBalance(500.00);
-        HoldingEntity holding = new HoldingEntity(9L, client, instrument, new BigDecimal("5"), new BigDecimal("80.00"));
-        when(holdingMapper.findByClientIdAndInstrumentId(1L, 2L)).thenReturn(Optional.of(holding));
         doAnswer(invocation -> {
             invocation.getArgument(0, OrderEntity.class).setId(11L);
             return null;
@@ -155,10 +167,9 @@ class TradeServiceSettlementTest {
 
     @Test
     void insufficientCashRejectsBeforeSettlementMutation() {
-        when(clientMapper.findById(1L)).thenReturn(Optional.of(client));
-        when(instrumentMapper.findById(2L)).thenReturn(Optional.of(instrument));
-        when(priceService.getCurrentPrice("AAPL")).thenReturn(new BigDecimal("100.00"));
         client.setCashBalance(50.00);
+        when(orderValidationService.validateBuy(1L, 2L, new BigDecimal("2")))
+            .thenThrow(new InsufficientCashException("Insufficient cash balance"));
 
         assertThrows(InsufficientCashException.class,
                 () -> tradeService.buyStock(new BuyOrderRequestDTO(1L, 2L, new BigDecimal("2"))));

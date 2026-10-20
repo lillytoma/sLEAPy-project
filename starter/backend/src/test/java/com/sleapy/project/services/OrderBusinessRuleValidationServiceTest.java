@@ -1,5 +1,6 @@
 package com.sleapy.project.services;
 
+import com.sleapy.project.exceptions.InsufficientCashException;
 import com.sleapy.project.exceptions.OrderValidationException;
 import com.sleapy.project.mappers.ClientMapper;
 import com.sleapy.project.mappers.HoldingMapper;
@@ -54,10 +55,10 @@ class OrderBusinessRuleValidationServiceTest {
     void rejectsBuyWhenCashBalanceIsInsufficient() {
         when(priceService.getCurrentPrice("ABC")).thenThrow(new UnsupportedOperationException());
 
-        OrderValidationException exception = assertThrows(OrderValidationException.class,
+        InsufficientCashException exception = assertThrows(InsufficientCashException.class,
                 () -> validationService.validateBuy(1L, 2L, BigDecimal.valueOf(11)));
 
-        assertEquals("INSUFFICIENT_CASH", exception.getRule());
+        assertEquals("Insufficient cash balance. Required: $110.000, Available: $100.0", exception.getMessage());
     }
 
     @Test
