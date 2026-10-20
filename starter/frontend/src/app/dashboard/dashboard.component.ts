@@ -4,6 +4,7 @@ import { AuthService } from '../services/auth.service';
 import { ThemeService } from '../services/theme.service';
 import { FrogMascotComponent } from '../shared/frog-mascot.component';
 import { MarketHoursService } from '../services/market-hours.service';
+import { PortfolioService } from '../services/portfolio.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -19,6 +20,10 @@ export class DashboardComponent {
   constructor(
     public authService: AuthService,
     public themeService: ThemeService,
-    public marketHoursService: MarketHoursService
-  ) {}
+    public marketHoursService: MarketHoursService,
+    portfolioService: PortfolioService
+  ) {
+    // PortfolioService outlives logout/login, so reload the watchlist for whoever just signed in.
+    portfolioService.loadWatchlist();
+  }
 }

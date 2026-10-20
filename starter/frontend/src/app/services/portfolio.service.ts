@@ -76,6 +76,7 @@ export class PortfolioService {
     });
     this.refreshCashBalance();
     this.refreshHoldings();
+    this.loadWatchlist();
   }
 
   refreshCashBalance(): void {
@@ -191,10 +192,39 @@ export class PortfolioService {
     return parsed;
   }
 
+  // The watchlist is kept in this browser's localStorage (not the DB), one key per
+  // user so people sharing a computer don't see each other's lists.
+  private watchlistStorageKey(): string | null {
+    const clientId = this.resolveClientId(false);
+    return clientId === null ? null : `watchlist_${clientId}`;
+  }
+
+  loadWatchlist(): void {
+    const key = this.watchlistStorageKey();
+    if (key === null) {
+      this.watchlistedSymbols.set([]);
+      return;
+    }
+    try {
+      const parsed = JSON.parse(localStorage.getItem(key) ?? '[]');
+      this.watchlistedSymbols.set(Array.isArray(parsed) ? parsed.filter((s) => typeof s === 'string') : []);
+    } catch {
+      this.watchlistedSymbols.set([]);
+    }
+  }
+
   toggleWatchlist(symbol: string): void {
     this.watchlistedSymbols.update((prev) =>
       prev.includes(symbol) ? prev.filter((s) => s !== symbol) : [...prev, symbol]
     );
+    const key = this.watchlistStorageKey();
+    if (key !== null) {
+      try {
+        localStorage.setItem(key, JSON.stringify(this.watchlistedSymbols()));
+      } catch {
+        // Storage full or blocked (e.g. private mode) — the list still works for this session.
+      }
+    }
   }
 
   isWatchlisted(symbol: string): boolean {
