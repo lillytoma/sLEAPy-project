@@ -59,7 +59,7 @@
                         </button>
                         @if (portfolioService.getHolding(item.symbol)) {
                           <button (click)="openSell(item)"
-                            class="px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap"
+                            class="px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap outlined"
                             style="background-color:var(--error-tint);color:var(--error)">
                             Sell
                           </button>

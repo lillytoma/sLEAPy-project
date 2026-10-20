@@ -39,7 +39,7 @@ import { PortfolioService } from '../../services/portfolio.service';
           }
 
           <button type="submit" [disabled]="!isValid() || loading()"
-            class="w-full py-3 rounded-md font-semibold text-sm"
+            class="w-full py-3 rounded-md font-semibold text-sm outlined"
             style="background-color:var(--primary);color:var(--primary-foreground)"
             [style.opacity]="(!isValid() || loading()) ? '0.5' : '1'">
             {{ loading() ? 'Adding Cash...' : 'Add Cash' }}

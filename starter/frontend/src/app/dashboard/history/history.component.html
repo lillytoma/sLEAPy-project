@@ -45,7 +45,7 @@
             <div class="flex items-center gap-2">
               <button
                 type="button"
-                class="rounded-md border px-3 py-1.5 text-xs font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+                class="rounded-md outlined px-3 py-1.5 text-xs font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
                 style="border-color:var(--border);color:var(--foreground);background-color:var(--card)"
                 [disabled]="currentPage === 1 || isLoading"
                 (click)="loadPreviousPage()">
@@ -53,7 +53,7 @@
               </button>
               <button
                 type="button"
-                class="rounded-md border px-3 py-1.5 text-xs font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+                class="rounded-md outlined px-3 py-1.5 text-xs font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
                 style="border-color:var(--border);color:var(--foreground);background-color:var(--card)"
                 [disabled]="!hasNextPage || isLoading"
                 (click)="loadNextPage()">

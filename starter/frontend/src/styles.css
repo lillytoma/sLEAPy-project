@@ -169,6 +169,9 @@ body {
 .order-chart-range, .order-option-button { cursor: pointer; transition: background-color .15s ease, border-color .15s ease, color .15s ease, transform .15s ease; }
 .order-chart-range:hover, .order-option-button:hover { background-color: var(--primary) !important; border-color: var(--primary) !important; color: var(--primary-foreground) !important; transform: translateY(-1px); }
 .order-option-button:hover { background-color: var(--error) !important; border-color: var(--error) !important; color: #fff !important; }
+/* Panel-style outline (same border + offset shadow as .panel) for standalone buttons and button groups. */
+.outlined { border: 1.5px solid var(--border); box-shadow: var(--card-shadow); }
+input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="date"], select { border-width: 1.5px; box-shadow: var(--card-shadow); }
 
 /* Chart hover tooltip (Performance chart) */
 .chart-tooltip { position: absolute; transform: translate(-50%, -115%); background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; padding: 8px 12px; box-shadow: var(--card-shadow); pointer-events: none; white-space: nowrap; z-index: 5; }

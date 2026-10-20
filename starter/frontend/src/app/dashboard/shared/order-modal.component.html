@@ -24,14 +24,14 @@
       <div class="flex gap-2 px-6 py-3 border-b" style="border-color:var(--border)">
         <button (click)="switchMode('buy')" 
           [disabled]="mode() === 'buy'"
-          class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all" 
+          class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all outlined" 
           [style.background-color]="mode() === 'buy' ? 'var(--primary)' : 'var(--success-tint)'"
           [style.color]="mode() === 'buy' ? '#fff' : 'var(--success)'">
           Buy
         </button>
         <button (click)="switchMode('sell')" 
           [disabled]="sharesOwned === 0 || mode() === 'sell'"
-          class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all" 
+          class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all outlined" 
           [style.opacity]="sharesOwned > 0 ? '1' : '0.5'"
           [style.background-color]="mode() === 'sell' ? 'var(--error)' : 'var(--error-tint)'"
           [style.color]="mode() === 'sell' ? '#fff' : 'var(--error)'">
@@ -113,7 +113,7 @@
             <div class="grid grid-cols-4 gap-2">
               @for (pct of quickSellPcts; track pct) {
                 <button (click)="setSharesByPct(pct)"
-                  class="order-option-button py-2 text-xs font-medium rounded-md border transition-colors"
+                  class="order-option-button py-2 text-xs font-medium rounded-md outlined transition-colors"
                   style="border-color:var(--border);color:var(--foreground);background-color:var(--background)">
                   {{ pct === 100 ? 'All' : pct + '%' }}
                 </button>
@@ -125,7 +125,7 @@
         <!-- Input mode toggle: Shares vs Money -->
         <div>
           <label class="block text-sm font-medium mb-2" style="color:var(--foreground)">Input By</label>
-          <div class="flex rounded-md overflow-hidden border" style="border-color:var(--border)">
+          <div class="flex rounded-md overflow-hidden outlined">
             <button (click)="inputMode.set('shares')"
               class="flex-1 py-2 text-sm font-medium transition-colors"
               [style.background-color]="inputMode() === 'shares' ? (mode() === 'buy' ? 'var(--primary)' : 'var(--error)') : 'var(--background)'"
@@ -229,7 +229,7 @@
         <!-- Submit button -->
         <button (click)="mode() === 'buy' ? executeBuy() : executeSell()"
           [disabled]="(mode() === 'buy' ? (calculatedBuyShares() < 0.001 || estimatedBuyTotal() > availableCash) : (calculatedSellShares() < 0.001 || calculatedSellShares() > sharesOwned)) || loading()"
-          class="w-full py-3 rounded-md font-semibold text-sm transition-opacity flex items-center justify-center gap-2"
+          class="w-full py-3 rounded-md font-semibold text-sm outlined transition-opacity flex items-center justify-center gap-2"
           [style.background-color]="mode() === 'buy' ? 'var(--primary)' : 'var(--error)'"
           style="color:#fff"
           [style.opacity]="(mode() === 'buy' ? (calculatedBuyShares() < 0.001 || estimatedBuyTotal() > availableCash) : (calculatedSellShares() < 0.001 || calculatedSellShares() > sharesOwned)) || loading() ? '0.5' : '1'">
@@ -269,7 +269,7 @@
         <p class="text-sm mb-6" style="color:var(--muted-foreground)">
           {{ confirmedShares() }} shares {{ mode() === 'buy' ? 'bought' : 'sold' }} for {{ '$' }}{{ confirmedTotal().toFixed(2) }}
         </p>
-        <button (click)="close.emit()" class="w-full py-2 px-4 rounded-md font-semibold text-sm transition-opacity"
+        <button (click)="close.emit()" class="w-full py-2 px-4 rounded-md font-semibold text-sm outlined transition-opacity"
           style="background-color:var(--muted);color:var(--foreground)">
           Close
         </button>

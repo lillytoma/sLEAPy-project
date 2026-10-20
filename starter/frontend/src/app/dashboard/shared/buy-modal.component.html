@@ -20,11 +20,11 @@
 
           <!-- Buy/Sell Toggle -->
           <div class="flex gap-2 px-6 py-3 border-b" style="border-color:var(--border)">
-            <button disabled class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all" 
+            <button disabled class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all outlined" 
               style="background-color:var(--primary);color:#fff">
               Buy
             </button>
-            <button (click)="switchToSell.emit()" class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all" 
+            <button (click)="switchToSell.emit()" class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all outlined" 
               [style.opacity]="sharesOwned > 0 ? '1' : '0.5'"
               [disabled]="sharesOwned === 0"
               style="background-color:rgba(239,68,68,0.2);color:var(--error)">
@@ -42,7 +42,7 @@
             <!-- Input mode toggle: Shares vs Money -->
             <div>
               <label class="block text-sm font-medium mb-2" style="color:var(--foreground)">Input By</label>
-              <div class="flex rounded-md overflow-hidden border" style="border-color:var(--border)">
+              <div class="flex rounded-md overflow-hidden outlined">
                 <button (click)="inputMode.set('shares')"
                   class="flex-1 py-2 text-sm font-medium transition-colors"
                   [style.background-color]="inputMode() === 'shares' ? 'var(--primary)' : 'var(--background)'"
@@ -113,7 +113,7 @@
             <!-- Submit -->
             <button (click)="executeBuy()"
               [disabled]="calculatedShares() <= 0 || estimatedTotal() > availableCash || loading()"
-              class="w-full py-3 rounded-md font-semibold text-sm transition-opacity flex items-center justify-center gap-2"
+              class="w-full py-3 rounded-md font-semibold text-sm outlined transition-opacity flex items-center justify-center gap-2"
               style="background-color:var(--primary);color:var(--primary-foreground)"
               [style.opacity]="(calculatedShares() <= 0 || estimatedTotal() > availableCash || loading()) ? '0.5' : '1'">
               @if (loading()) {
@@ -158,7 +158,7 @@
               </p>
             }
             <button (click)="close.emit()"
-              class="px-8 py-2.5 rounded-md font-semibold text-sm"
+              class="px-8 py-2.5 rounded-md font-semibold text-sm outlined"
               style="background-color:var(--primary);color:var(--primary-foreground)">
               Done
             </button>
