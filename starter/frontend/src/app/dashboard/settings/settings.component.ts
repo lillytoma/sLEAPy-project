@@ -1,11 +1,13 @@
 import { Component, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { FrogMascotComponent } from '../../shared/frog-mascot.component';
 import { ThemeService } from '../../services/theme.service';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
+  imports: [FrogMascotComponent],
   template: `
     <div class="settings-page">
       <div class="page-intro">
