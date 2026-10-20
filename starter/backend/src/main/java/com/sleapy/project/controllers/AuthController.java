@@ -5,9 +5,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestHeader;
-import jakarta.servlet.http.HttpServletRequest;
-import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -20,7 +17,6 @@ import com.sleapy.project.models.dtos.SignUpResponseDTO;
 import com.sleapy.project.models.entities.ClientEntity;
 import com.sleapy.project.services.ClientService;
 import com.sleapy.project.services.JwtService;
-import com.sleapy.project.services.AuthenticationAuditLogService;
 import com.sleapy.project.validators.ClientValidator;
 
 import lombok.AllArgsConstructor;
@@ -37,12 +33,11 @@ public class AuthController {
     private final ClientValidator clientValidator;
     private final ClientMapper clientMapper;
     private final JwtService jwtService;
-    private final AuthenticationAuditLogService authenticationAuditLogService;
 
 
     //The login method handles POST requests to the /login endpoint. It takes a LoginRequestDTO object containing the user's email and password, checks the credentials using the ClientService, and returns a ResponseEntity indicating whether the login was successful or not.
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDTO request, HttpServletRequest httpRequest) {
+    public ResponseEntity<?> login(@RequestBody LoginRequestDTO request) {
         try {
             // Step 1: Validate email format
             clientValidator.validateEmail(request.getEmail());
@@ -52,7 +47,6 @@ public class AuthController {
             
             //3. if the email / password are invalid throw a failed repsonse
             if (!isValid) {
-                authenticationAuditLogService.log("FAIL", "SIGN_IN", request.getEmail(), clientIp(httpRequest));
                 return new ResponseEntity<>(
                     "Invalid email or password", 
                     HttpStatus.UNAUTHORIZED
@@ -71,48 +65,25 @@ public class AuthController {
                 "Login successful",
                 user.getId(),
                 jwtToken,
-                clientService.isFrozen(user)
+                clientService.isFrozen(user),
+                user.getFirstName(),
+                user.getLastName()
             );
 
-            authenticationAuditLogService.log("SUCCESS", "SIGN_IN", user.getEmail(), clientIp(httpRequest));
             //6. return the 200 status OK
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (InvalidEmailFormatException ex) {
-            authenticationAuditLogService.log("FAIL", "SIGN_IN", request.getEmail(), clientIp(httpRequest));
-            return new ResponseEntity<>("Please enter a valid email address.", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception ex) {
-            authenticationAuditLogService.log("FAIL", "SIGN_IN", request.getEmail(), clientIp(httpRequest));
             ex.printStackTrace();
+            String errorMsg = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();
             return new ResponseEntity<>(
-                "We could not sign you in. Please check your credentials and try again.",
+                "Login failed: " + errorMsg, 
                 HttpStatus.INTERNAL_SERVER_ERROR
             );
         }
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<Void> logout(
-            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
-            @RequestBody(required = false) Map<String, String> logoutRequest,
-            HttpServletRequest httpRequest) {
-        String username = jwtService.getSubject(authorizationHeader);
-        if (username == null) {
-            String email = logoutRequest == null ? null : logoutRequest.get("email");
-            authenticationAuditLogService.log("FAIL", "SIGN_OUT", email, clientIp(httpRequest));
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        authenticationAuditLogService.log("SUCCESS", "SIGN_OUT", username, clientIp(httpRequest));
-        return ResponseEntity.noContent().build();
-    }
-
-    private String clientIp(HttpServletRequest request) {
-        String forwardedFor = request.getHeader("X-Forwarded-For");
-        if (forwardedFor != null && !forwardedFor.isBlank()) {
-            return forwardedFor.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
-    }
     @PostMapping("/signup")
     public ResponseEntity<?> signUp(@RequestBody SignUpRequestDTO request) {
         try {
@@ -138,18 +109,21 @@ public class AuthController {
                 "Signup successful. Welcome!",
                 newClient.getId(),
                 jwtToken,
-                false
+                false,
+                newClient.getFirstName(),
+                newClient.getLastName()
             );
             
             // Step 6: Return 201 CREATED (RESTful standard)
             return new ResponseEntity<>(response, HttpStatus.CREATED);
             
         } catch (InvalidEmailFormatException ex) {
-            return new ResponseEntity<>("Please enter a valid email address.", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception ex) {
             ex.printStackTrace();
+            String errorMsg = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();
             return new ResponseEntity<>(
-                "We could not create your account. Please try again.",
+                "Signup failed: " + errorMsg, 
                 HttpStatus.INTERNAL_SERVER_ERROR
             );
         }

@@ -1,16 +1,16 @@
 <div class="space-y-6">
       <div>
-        <h2 class="font-serif text-2xl mb-1" style="color:var(--foreground)">Transaction History</h2>
-        <p class="text-sm" style="color:var(--muted-foreground)">All your past trades and activity</p>
+        <h1 class="font-serif text-2xl font-bold" style="color:var(--foreground)">History</h1>
+        <p class="text-sm mt-1" style="color:var(--muted-foreground)">All your past trades and activity</p>
       </div>
 
       @if (transactions.length > 0) {
-        <div class="rounded-xl border overflow-hidden" style="background-color:var(--card);border-color:var(--border)">
+        <div class="panel overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead>
                 <tr style="border-bottom:1px solid var(--border)">
-                  @for (h of ['Date','Status','Type','Symbol','Shares','Price','Total']; track h) {
+                  @for (h of ['Date','Type','Symbol','Shares','Price','Total']; track h) {
                     <th class="px-5 py-3 text-left text-xs font-medium" style="color:var(--muted-foreground);white-space:nowrap">{{ h }}</th>
                   }
                 </tr>
@@ -20,23 +20,18 @@
                   <tr style="border-bottom:1px solid var(--border)">
                     <td class="px-5 py-4 text-sm" style="color:var(--muted-foreground);white-space:nowrap">{{ tx.date }}</td>
                     <td class="px-5 py-4">
-                      <span class="text-xs font-semibold" [style.color]="tx.status === 'FILLED' ? 'var(--success)' : (tx.status === 'REJECTED' ? 'var(--error)' : 'var(--primary)')">
-                        {{ tx.status }}
-                      </span>
-                    </td>
-                    <td class="px-5 py-4">
                       <span class="text-xs font-semibold px-2 py-0.5 rounded"
-                        [style.background-color]="tx.type === 'BUY' ? 'rgba(87,136,108,0.12)' : 'rgba(125,18,30,0.1)'"
+                        [style.background-color]="tx.type === 'BUY' ? 'var(--success-tint)' : 'var(--error-tint)'"
                         [style.color]="tx.type === 'BUY' ? 'var(--success)' : 'var(--error)'">
                         {{ tx.type }}
                       </span>
                     </td>
                     <td class="px-5 py-4 font-semibold" style="color:var(--foreground)">{{ tx.symbol }}</td>
                     <td class="px-5 py-4 font-mono text-sm" style="color:var(--foreground)">{{ tx.shares }}</td>
-                    <td class="px-5 py-4 font-mono text-sm" style="color:var(--foreground)">\${{ tx.price.toFixed(2) }}</td>
+                    <td class="px-5 py-4 font-mono text-sm" style="color:var(--foreground)">${{ tx.price.toFixed(2) }}</td>
                     <td class="px-5 py-4 font-mono text-sm font-medium"
                       [style.color]="tx.type === 'BUY' ? 'var(--error)' : 'var(--success)'">
-                      {{ tx.type === 'BUY' ? '-' : '+' }}\${{ tx.total.toFixed(2) }}
+                      {{ tx.type === 'BUY' ? '-' : '+' }}${{ tx.total.toFixed(2) }}
                     </td>
                   </tr>
                 }
@@ -50,7 +45,7 @@
             <div class="flex items-center gap-2">
               <button
                 type="button"
-                class="rounded-md border px-3 py-1.5 text-xs font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+                class="rounded-md outlined px-3 py-1.5 text-xs font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
                 style="border-color:var(--border);color:var(--foreground);background-color:var(--card)"
                 [disabled]="currentPage === 1 || isLoading"
                 (click)="loadPreviousPage()">
@@ -58,7 +53,7 @@
               </button>
               <button
                 type="button"
-                class="rounded-md border px-3 py-1.5 text-xs font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+                class="rounded-md outlined px-3 py-1.5 text-xs font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
                 style="border-color:var(--border);color:var(--foreground);background-color:var(--card)"
                 [disabled]="!hasNextPage || isLoading"
                 (click)="loadNextPage()">
@@ -68,9 +63,10 @@
           </div>
         </div>
       } @else {
-        <div class="rounded-xl border p-10 text-center" style="background-color:var(--card);border-color:var(--border)">
-          <p class="text-base font-medium" style="color:var(--foreground)">No transactions yet.</p>
-          <p class="mt-1 text-sm" style="color:var(--muted-foreground)">Your completed trades will appear here.</p>
+        <div class="panel p-10 text-center flex flex-col items-center gap-3">
+          <app-frog-mascot variant="scene" [size]="96" />
+          <p class="text-base font-bold" style="color:var(--foreground)">No transactions yet</p>
+          <p class="text-sm" style="color:var(--muted-foreground)">Your completed trades will appear here.</p>
         </div>
       }
     </div>

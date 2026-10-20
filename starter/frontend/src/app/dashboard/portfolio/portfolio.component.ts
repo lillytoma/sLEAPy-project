@@ -1,5 +1,4 @@
-import { Component, computed, OnDestroy, OnInit, signal } from '@angular/core';
-import { Subscription, timer } from 'rxjs';
+import { Component, computed, OnInit, signal } from '@angular/core';
 import { PortfolioService } from '../../services/portfolio.service';
 import { MarketStock } from '../../data/mock-data';
 import { MarketDataService } from '../../services/market-data.service';
@@ -12,35 +11,14 @@ import { AddCashModalComponent } from '../shared/add-cash-modal.component';
   imports: [OrderModalComponent, AddCashModalComponent],
   templateUrl: './portfolio.component.html'
 })
-export class PortfolioComponent implements OnInit, OnDestroy {
+export class PortfolioComponent implements OnInit {
   orderModal = signal<{ stock: MarketStock; mode: 'buy' | 'sell' } | null>(null);
   showAddCash = signal(false);
-  pendingOrders = signal<import('../../services/portfolio.service').TransactionResponse[]>([]);
-  private refreshSubscription?: Subscription;
 
   constructor(public portfolioService: PortfolioService, private marketDataService: MarketDataService) {}
 
   ngOnInit(): void {
     this.marketDataService.connectWebSocket();
-    this.refreshSubscription = timer(0, 2000).subscribe(() => {
-      this.refreshOrders();
-      this.portfolioService.refreshHoldings();
-      this.portfolioService.refreshCashBalance();
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.refreshSubscription?.unsubscribe();
-  }
-
-  private refreshOrders(): void {
-    this.portfolioService.getTransactions().subscribe({
-      next: (orders) => this.pendingOrders.set(orders.filter((order) => {
-        const status = (order.status ?? '').toUpperCase();
-        return status === 'PENDING' || status === 'ACCEPTED';
-      })),
-      error: (error) => console.error('Unable to load portfolio orders:', error)
-    });
   }
 
   statCards = computed(() => {
@@ -50,10 +28,10 @@ export class PortfolioComponent implements OnInit, OnDestroy {
     const pnl = totalValue - totalCost;
     const returnPct = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
     return [
-      { label: 'Net Worth', value: '$' + this.portfolioService.netWorth().toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: 'var(--foreground)' },
-      { label: 'Total Cost', value: '$' + totalCost.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: 'var(--foreground)' },
-      { label: 'Unrealised P&L', value: (pnl >= 0 ? '+$' : '-$') + Math.abs(pnl).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: pnl >= 0 ? 'var(--success)' : 'var(--error)' },
-      { label: 'Overall Return', value: (returnPct >= 0 ? '+' : '') + returnPct.toFixed(1) + '%', color: returnPct >= 0 ? 'var(--success)' : 'var(--error)' },
+      { label: 'Portfolio Value', value: '$' + this.portfolioService.netWorth().toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: 'var(--foreground)' },
+      { label: 'Holdings Value', value: '$' + totalCost.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: 'var(--foreground)' },
+      { label: 'Overall G/L', value: (returnPct >= 0 ? '+' : '') + returnPct.toFixed(2) + '%', color: returnPct >= 0 ? 'var(--success)' : 'var(--error)' },
+      { label: 'Cash Balance', value: '$' + this.portfolioService.availableCash().toFixed(2), color: 'var(--foreground)' },
     ];
   });
 
@@ -64,7 +42,8 @@ export class PortfolioComponent implements OnInit, OnDestroy {
       sectorMap[holding.sector] = (sectorMap[holding.sector] ?? 0) + holding.shares * holding.current;
     }
     const total = Object.values(sectorMap).reduce((a, b) => a + b, 0);
-    const colors = ['var(--primary)', 'var(--accent)', '#F59E0B', '#3B82F6', '#EC4899', '#8B5CF6'];
+    // Warm, muted categorical palette — vintage cartoon inks that follow the theme.
+    const colors = ['var(--primary)', 'var(--accent)', 'var(--accent-blue)', 'var(--accent-red)', 'var(--accent-plum)', 'var(--accent-teal)'];
     const circumference = 2 * Math.PI * 60;
     let cumulative = 0;
     return Object.entries(sectorMap).map(([label, value], i) => {
@@ -72,7 +51,7 @@ export class PortfolioComponent implements OnInit, OnDestroy {
       const dashLen = (pct / 100) * circumference;
       const dashOffset = -cumulative * circumference / 100;
       cumulative += pct;
-      return { label, pct, color: colors[i % colors.length], dash: `${dashLen} ${circumference - dashLen}`, offset: dashOffset };
+      return { label, pct, value, color: colors[i % colors.length], dash: `${dashLen} ${circumference - dashLen}`, offset: dashOffset };
     });
   });
 
@@ -81,15 +60,57 @@ export class PortfolioComponent implements OnInit, OnDestroy {
     return sectors.size;
   });
 
-  barData = computed(() => {
-    const h = this.portfolioService.holdings();
-    const maxPct = Math.max(...h.map((x) => Math.abs(((x.current - x.avgCost) / x.avgCost) * 100)), 1);
-    const maxH = 80;
-    return h.map((x) => {
-      const pct = ((x.current - x.avgCost) / x.avgCost) * 100;
-      return { symbol: x.symbol, pct, height: Math.abs(pct) / maxPct * maxH };
-    });
+  // Horizontal diverging bars: each holding's return since purchase (same % as the
+  // holdings table), growing right from 0% for gains and left for losses.
+  // Positions are percentages of the plot width so the chart scales with the card.
+  barChart = computed(() => {
+    const rows = this.portfolioService.holdings()
+      .map((x) => {
+        const cost = x.shares * x.avgCost;
+        const gain = x.shares * x.current - cost;
+        const pct = x.avgCost > 0 ? ((x.current - x.avgCost) / x.avgCost) * 100 : 0;
+        return { symbol: x.symbol, name: x.name, shares: x.shares, avgCost: x.avgCost, current: x.current, pct, gain };
+      })
+      .sort((a, b) => b.pct - a.pct);
+
+    // Domain always includes 0 so the baseline is visible, snapped to round steps.
+    const lo = Math.min(0, ...rows.map((r) => r.pct));
+    const hi = Math.max(0, ...rows.map((r) => r.pct));
+    const step = this.niceStep(Math.max(hi - lo, 1) / 4);
+    const domainMin = Math.floor(lo / step) * step;
+    const domainMax = Math.max(Math.ceil(hi / step) * step, domainMin + step);
+    const toX = (value: number) => ((value - domainMin) / (domainMax - domainMin)) * 100;
+    const zeroX = toX(0);
+
+    const bars = rows.map((r) => ({
+      ...r,
+      left: Math.min(toX(r.pct), zeroX),
+      width: Math.abs(toX(r.pct) - zeroX),
+      positive: r.pct >= 0
+    }));
+    const ticks: { value: number; x: number; label: string }[] = [];
+    for (let value = domainMin; value <= domainMax + step / 2; value += step) {
+      const rounded = Math.round(value * 100) / 100;
+      ticks.push({ value: rounded, x: toX(rounded), label: (rounded > 0 ? '+' : '') + rounded + '%' });
+    }
+
+    return { bars, ticks, zeroX, best: bars[0], worst: bars[bars.length - 1] };
   });
+
+  // Rounds a raw step up to 1, 2, 2.5 or 5 times a power of ten.
+  private niceStep(rawStep: number): number {
+    const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    const normalized = rawStep / magnitude;
+    return (normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 2.5 ? 2.5 : normalized <= 5 ? 5 : 10) * magnitude;
+  }
+
+  formatSignedPct(value: number): string {
+    return (value >= 0 ? '+' : '') + value.toFixed(2) + '%';
+  }
+
+  formatSignedDollar(value: number): string {
+    return (value >= 0 ? '+' : '-') + '$' + Math.abs(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
 
   openSell(symbol: string, shares: number, price: number): void {
     const holding = this.portfolioService.getHolding(symbol);

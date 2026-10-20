@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, signal, computed } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, finalize, of, Subscription, Subject, switchMap } from 'rxjs';
 import { MarketStock } from '../../data/mock-data';
@@ -10,7 +11,7 @@ import { OrderModalComponent } from '../shared/order-modal.component';
   selector: 'app-markets',
   standalone: true,
   templateUrl: './market.component.html',
-  imports: [FormsModule, OrderModalComponent],
+  imports: [DecimalPipe, FormsModule, OrderModalComponent],
 })
 export class MarketsComponent implements OnInit, OnDestroy {
   searchQuery = signal('');
@@ -181,15 +182,8 @@ export class MarketsComponent implements OnInit, OnDestroy {
     }
   }
 
-  ratingColor(rating: string): string {
-    if (rating === 'Strong buy') return 'var(--success)';
-    if (rating === 'Buy') return '#3B82F6';
-    if (rating === 'Hold') return '#F59E0B';
-    if (rating === 'Sell' || rating === 'Strong sell') return 'var(--error)';
-    return 'var(--muted-foreground)';
-  }
-
-  openBuy(stock: MarketStock): void {
+  /** Opens the order popup on the Buy side; it has its own switch to Sell. */
+  openTrade(stock: MarketStock): void {
     if (this.importingSymbols().has(stock.symbol)) return;
 
     if (stock.instrumentId) {
@@ -225,17 +219,4 @@ export class MarketsComponent implements OnInit, OnDestroy {
     });
   }
 
-  openSell(stock: MarketStock): void {
-    const h = this.portfolioService.getHolding(stock.symbol);
-    if (h) this.orderModal.set({ stock, mode: 'sell' });
-  }
-
-  selectSuggestion(stock: MarketStock): void {
-    this.searchQuery.set(stock.symbol);
-    this.showSuggestions.set(false);
-  }
-
-  closeSuggestions(): void {
-    this.showSuggestions.set(false);
-  }
 }

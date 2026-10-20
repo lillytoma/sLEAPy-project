@@ -1,9 +1,12 @@
-import { Component, Input, Output, EventEmitter, signal, computed, OnDestroy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { PortfolioService, OrderRequest } from '../../services/portfolio.service';
-import { firstValueFrom, Subscription } from 'rxjs';
 import { MarketStock } from '../../data/mock-data';
+import { MarketDataService } from '../../services/market-data.service';
+import { Subscription } from 'rxjs';
+
+type ChartRange = '6mo' | '1mo' | '2wk' | '1wk' | '3d';
 
 @Component({
   selector: 'app-order-modal',
@@ -11,10 +14,12 @@ import { MarketStock } from '../../data/mock-data';
   imports: [FormsModule, HttpClientModule],
   templateUrl: './order-modal.component.html'
 })
-export class OrderModalComponent implements OnDestroy {
+export class OrderModalComponent {
   @Input() stock!: MarketStock;
   @Input() availableCash = 0;
   @Input() sharesOwned = 0;
+  /** Which side the popup opens on. Falls back to 'buy' if there's nothing to sell. */
+  @Input() initialMode: 'buy' | 'sell' = 'buy';
   @Output() close = new EventEmitter<void>();
   @Output() orderCompleted = new EventEmitter<void>();
 
@@ -36,36 +41,110 @@ export class OrderModalComponent implements OnDestroy {
   confirmedShares = signal(0);
   confirmedTotal = signal(0);
   error = signal<string | null>(null);
-  private orderStatusSubscription?: Subscription;
 
   quickSellPcts = [25, 50, 75, 100];
 
-  constructor(private portfolioService: PortfolioService) {}
+  constructor(
+    private portfolioService: PortfolioService,
+    private marketDataService: MarketDataService
+  ) {}
 
-  ngOnDestroy(): void {
-    this.orderStatusSubscription?.unsubscribe();
-  }
-
-  private watchOrder(orderId: string | number | undefined): void {
-    if (orderId == null) return;
-    this.orderStatusSubscription?.unsubscribe();
-    this.orderStatusSubscription = this.portfolioService.getOrderStatusUpdates().subscribe((update) => {
-      if (!update || String(update.orderId) !== String(orderId)) return;
-      this.orderStatus.set(update.status);
-      this.orderMessage.set(update.message);
-      if (update.status === 'FILLED') {
-        this.success.set(true);
-        this.loading.set(false);
-        this.portfolioService.refreshCashBalance();
-        this.portfolioService.refreshHoldings();
-        this.orderCompleted.emit();
-      } else if (update.status === 'REJECTED') {
-        this.loading.set(false);
-        this.success.set(true);
-        this.error.set(update.message);
-      }
+  ngOnInit(): void {
+    this.mode.set(this.initialMode === 'sell' && this.sharesOwned > 0 ? 'sell' : 'buy');
+    const initialPrice = this.stock?.price ?? 0;
+    this.livePrice.set(initialPrice);
+    this.priceHistory.set(Array.from({ length: 12 }, (_, index) => ({
+      date: new Date(Date.now() - (11 - index) * 5 * 60 * 1000).toISOString(),
+      value: initialPrice
+    })));
+    this.marketDataService.connectWebSocket();
+    this.loadPriceHistory();
+    this.priceSubscription = this.marketDataService.priceUpdates$.subscribe((updates) => {
+      const update = updates.get(this.stock?.symbol);
+      const nextPrice = Number(update?.currentPrice);
+      if (!Number.isFinite(nextPrice) || nextPrice <= 0) return;
+      this.livePrice.set(nextPrice);
+      this.priceHistory.update((history) => [
+        ...history.slice(-59),
+        { date: new Date().toISOString(), value: nextPrice }
+      ]);
     });
   }
+
+  ngOnDestroy(): void {
+    this.priceSubscription?.unsubscribe();
+  }
+
+  effectivePrice = computed(() => this.livePrice() ?? this.stock?.price ?? 0);
+
+  selectChartRange(range: ChartRange): void {
+    this.selectedChartRange.set(range);
+    this.loadPriceHistory();
+  }
+
+  private loadPriceHistory(): void {
+    if (!this.stock?.symbol) return;
+    this.marketDataService.getPriceHistory(this.stock.symbol, this.selectedChartRange()).subscribe({
+      next: (history) => {
+        const values = history
+          .map((point) => Number(point.close))
+          .filter((value) => Number.isFinite(value) && value > 0);
+        if (values.length > 0) {
+          const live = this.livePrice();
+          this.priceHistory.set(values.map((value, index) => ({
+            date: history[index].date,
+            value
+          })).concat(live ? [{ date: new Date().toISOString(), value: live }] : []));
+        }
+      },
+      error: (error) => console.error('Unable to load stock price history:', error)
+    });
+  }
+
+  stockChart = computed(() => {
+    const points = this.priceHistory();
+    const values = points.map((point) => point.value);
+    const width = 320;
+    const height = 132;
+    const plot = { left: 42, right: 6, top: 8, bottom: 25 };
+    const plotWidth = width - plot.left - plot.right;
+    const plotHeight = height - plot.top - plot.bottom;
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const padding = Math.max((max - min) * 0.15, max * 0.001, 0.01);
+    const range = max - min + padding * 2;
+    const coords = points.map((point, index) => ({
+      x: plot.left + (points.length > 1 ? (index / (points.length - 1)) * plotWidth : plotWidth / 2),
+      y: plot.top + plotHeight - ((point.value - (min - padding)) / range) * plotHeight,
+      date: point.date,
+      value: point.value
+    }));
+    const line = coords.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(' ');
+    const yLabels = [max + padding, min + (range / 2), min - padding].map((value, index) => ({
+      value: this.formatChartPrice(value),
+      y: [plot.top, plot.top + plotHeight / 2, plot.top + plotHeight][index]
+    }));
+    const xLabels = coords.filter((_, index) => index === 0 || index === coords.length - 1 ||
+      index === Math.floor((coords.length - 1) / 2)).map((point) => ({
+        x: point.x,
+        label: this.formatChartDate(point.date)
+      }));
+    const hoveredIndex = this.hoveredChartIndex();
+    return {
+      line: line || '',
+      area: line ? `${line} L ${coords[coords.length - 1].x} ${plot.top + plotHeight} L ${coords[0].x} ${plot.top + plotHeight} Z` : '',
+      width,
+      height,
+      plot,
+      plotWidth,
+      plotHeight,
+      coords,
+      yLabels,
+      xLabels,
+      hovered: hoveredIndex === null ? null : coords[hoveredIndex],
+      direction: values[values.length - 1] >= values[0] ? 'up' : 'down'
+    };
+  });
 
   effectivePrice = computed(() => this.stock?.price ?? 0);
 
@@ -120,7 +199,7 @@ export class OrderModalComponent implements OnDestroy {
     this.inputMode.set('shares');
   }
 
-  async executeBuy(): Promise<void> {
+  executeBuy(): void {
     const quantity = this.calculatedBuyShares();
     const total = quantity * this.effectivePrice();
     if (quantity < 0.001 || total > this.availableCash) return;
@@ -140,28 +219,30 @@ export class OrderModalComponent implements OnDestroy {
     this.shares.set(0);
     this.moneyAmount.set(0);
 
-    try {
-      const response = await firstValueFrom(this.portfolioService.placeOrder(orderRequest));
+    this.portfolioService.placeOrder(orderRequest).subscribe({
+      next: (response) => {
         this.loading.set(false);
         this.orderMessage.set(response.message);
         this.orderStatus.set(response.status);
-        this.watchOrder(response.orderId);
 
-        if (response.success && response.status !== 'REJECTED') {
+        if (response.success && response.status === 'FILLED') {
           this.confirmedShares.set(quantity);
           this.confirmedTotal.set(total);
           this.success.set(true);
+          this.orderCompleted.emit();
         } else if (response.status === 'REJECTED') {
           this.error.set(response.error || response.message);
         }
-    } catch (err: any) {
-      this.loading.set(false);
-      this.error.set(err.error?.message || err.error?.error || 'Failed to place order. Please try again.');
-      this.orderStatus.set('REJECTED');
-    }
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.error.set(err.error?.message || err.error?.error || 'Failed to place order. Please try again.');
+        this.orderStatus.set('REJECTED');
+      }
+    });
   }
 
-  async executeSell(): Promise<void> {
+  executeSell(): void {
     const quantity = this.calculatedSellShares();
     const total = quantity * this.effectivePrice();
     if (quantity < 0.001 || quantity > this.sharesOwned) return;
@@ -181,25 +262,27 @@ export class OrderModalComponent implements OnDestroy {
     this.sharesToSell.set(0);
     this.moneyAmountToReceive.set(0);
 
-    try {
-      const response = await firstValueFrom(this.portfolioService.sellOrder(orderRequest));
+    this.portfolioService.sellOrder(orderRequest).subscribe({
+      next: (response) => {
         this.loading.set(false);
         this.orderMessage.set(response.message);
         this.orderStatus.set(response.status);
-        this.watchOrder(response.orderId);
 
-        if (response.success && response.status !== 'REJECTED') {
+        if (response.success && response.status === 'FILLED') {
           this.confirmedShares.set(quantity);
           this.confirmedTotal.set(total);
           this.success.set(true);
+          this.orderCompleted.emit();
         } else if (response.status === 'REJECTED') {
           this.error.set(response.error || response.message);
         }
-    } catch (err: any) {
-      this.loading.set(false);
-      this.error.set(err.error?.message || err.error?.error || 'Failed to place order. Please try again.');
-      this.orderStatus.set('REJECTED');
-    }
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.error.set(err.error?.message || err.error?.error || 'Failed to place order. Please try again.');
+        this.orderStatus.set('REJECTED');
+      }
+    });
   }
 
   onBackdropClick(event: Event): void {
