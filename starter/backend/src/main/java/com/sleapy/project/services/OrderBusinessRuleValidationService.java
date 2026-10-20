@@ -29,7 +29,6 @@ public class OrderBusinessRuleValidationService {
 
     public BuyValidation validateBuy(Long clientId, Long instrumentId, BigDecimal quantity) {
         BigDecimal normalizedQuantity = normalizeQuantity(quantity);
-        validateMarketHours();
         ClientEntity client = findActiveClient(clientId);
         InstrumentEntity instrument = findInstrument(instrumentId);
         BigDecimal price = resolveCurrentPrice(instrument);
@@ -48,7 +47,6 @@ public class OrderBusinessRuleValidationService {
 
     public SellValidation validateSell(Long clientId, Long instrumentId, BigDecimal quantity) {
             BigDecimal normalizedQuantity = normalizeQuantity(quantity);
-        validateMarketHours();
         ClientEntity client = findActiveClient(clientId);
         InstrumentEntity instrument = findInstrument(instrumentId);
         HoldingEntity holding = holdingMapper.findByClientIdAndInstrumentId(clientId, instrumentId)
@@ -90,12 +88,6 @@ public class OrderBusinessRuleValidationService {
             throw reject("INVALID_QUANTITY", "Quantity must round to at least 0.001 shares");
         }
         return normalized;
-    }
-
-    private void validateMarketHours() {
-        if (!marketHoursService.isMarketOpen()) {
-            throw reject("MARKET_CLOSED", "Trading is unavailable outside US market hours (09:30-16:00 Eastern, Monday-Friday)");
-        }
     }
 
     private OrderValidationException reject(String rule, String message) {

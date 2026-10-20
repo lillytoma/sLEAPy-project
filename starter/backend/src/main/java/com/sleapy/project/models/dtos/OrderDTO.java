@@ -10,6 +10,7 @@ import lombok.Data;
 @Data 
 public class OrderDTO{
     public OrderDTO(OrderEntity entity){
+        this.orderId = entity.getId();
         this.instrument = new InstrumentDTO(entity.getInstrument());
         this.timeOfPurchase = entity.getTimeOfPurchase();
         this.quantity = entity.getQuantity();
@@ -25,6 +26,7 @@ public class OrderDTO{
         this.instrument = instrument;
     }
 
+    private Long orderId;
     private LocalDate timeOfPurchase;
     private BigDecimal quantity;
     private LocalDate timeFilled;

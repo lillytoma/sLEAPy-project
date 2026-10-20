@@ -76,8 +76,8 @@ public class TradeController {
                         .body(Map.of("error", "Quantity must be positive"));
             }
 
-            TradeResponseDTO response = tradeService.buyStock(request);
-            return ResponseEntity.ok(response);
+            TradeResponseDTO response = tradeService.submitBuyOrder(request);
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
 
         } catch (NoSuchElementException e) {
             notifyRejected(request.getClientId(), "BUY", e.getMessage());
@@ -152,8 +152,8 @@ public class TradeController {
                         .body(Map.of("error", "Quantity must be positive"));
             }
 
-            TradeResponseDTO response = tradeService.sellStock(request);
-            return ResponseEntity.ok(response);
+            TradeResponseDTO response = tradeService.submitSellOrder(request);
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
 
         } catch (NoSuchElementException e) {
             notifyRejected(request.getClientId(), "SELL", e.getMessage());

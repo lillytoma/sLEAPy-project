@@ -64,7 +64,7 @@ public interface OrderMapper {
         LEFT JOIN Clients c ON o.Client_ID = c.Client_ID
         LEFT JOIN Instruments i ON o.Instrument_ID = i.Instrument_ID
         WHERE c.Client_ID = #{clientId}
-        ORDER BY o.Time_purchased ASC
+        ORDER BY o.Order_ID DESC
         """)
     @Results({
         @Result(column = "Order_ID", property = "id", id = true),
