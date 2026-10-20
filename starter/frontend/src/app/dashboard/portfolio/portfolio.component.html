@@ -1,9 +1,8 @@
    <div class="space-y-6">
       <div class="flex items-start justify-between gap-4">
         <div>
-          <p class="eyebrow">Long-term view</p>
-          <h1 class="text-2xl font-semibold" style="color:var(--foreground)">Portfolio</h1>
-          <p class="text-sm mt-1" style="color:var(--muted-foreground)">Track allocation, performance, and available capital.</p>
+          <h1 class="font-serif text-2xl font-bold" style="color:var(--foreground)">Portfolio</h1>
+          <p class="text-sm mt-1" style="color:var(--muted-foreground)">Your open positions</p>
         </div>
         <button type="button" (click)="showAddCash.set(true)" class="button button-primary flex-shrink-0">
           <span aria-hidden="true">+</span> Add cash
@@ -13,7 +12,7 @@
       <!-- Stat Cards -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         @for (card of statCards(); track card.label) {
-          <div class="p-5 rounded-xl border" style="background-color:var(--card);border-color:var(--border)">
+          <div class="p-5 panel">
             <p class="text-sm mb-1" style="color:var(--muted-foreground)">{{ card.label }}</p>
             <p class="font-mono text-xl font-bold" [style.color]="card.color">{{ card.value }}</p>
           </div>
@@ -23,7 +22,7 @@
       <!-- Charts row -->
       <div class="grid lg:grid-cols-2 gap-6">
         <!-- Donut chart: sector allocation -->
-        <div class="p-6 rounded-xl border" style="background-color:var(--card);border-color:var(--border)">
+        <div class="p-6 panel">
           <h3 class="font-semibold mb-6" style="color:var(--foreground)">Sector Allocation</h3>
           <div class="flex items-center gap-8">
             <svg width="160" height="160" viewBox="0 0 160 160" class="flex-shrink-0">
@@ -37,15 +36,17 @@
                   transform="rotate(-90 80 80)"/>
               }
               <circle cx="80" cy="80" r="46" fill="var(--card)"/>
-              <text x="80" y="76" text-anchor="middle" font-size="11" fill="var(--muted-foreground)" font-family="DM Sans,sans-serif">Total</text>
-              <text x="80" y="92" text-anchor="middle" font-size="14" font-weight="600" fill="var(--foreground)" font-family="DM Mono,monospace">{{ sectorCount() }}</text>
+              <text x="80" y="76" text-anchor="middle" font-size="11" fill="var(--muted-foreground)" style="font-family:var(--font-body)">Total</text>
+              <text x="80" y="92" text-anchor="middle" font-size="14" font-weight="600" fill="var(--foreground)" style="font-family:var(--font-mono)">{{ sectorCount() }}</text>
             </svg>
-            <div class="space-y-2 flex-1">
+            <div class="space-y-3 flex-1">
               @for (slice of donutSlices(); track slice.label) {
-                <div class="flex items-center gap-2">
-                  <div class="w-3 h-3 rounded-sm flex-shrink-0" [style.background-color]="slice.color"></div>
-                  <span class="text-sm flex-1" style="color:var(--foreground)">{{ slice.label }}</span>
-                  <span class="text-sm font-mono font-medium" style="color:var(--muted-foreground)">{{ slice.pct.toFixed(0) }}%</span>
+                <div class="flex items-start gap-2">
+                  <div class="w-3 h-3 rounded-full flex-shrink-0 mt-1" [style.background-color]="slice.color"></div>
+                  <div>
+                    <p class="text-base font-semibold" style="color:var(--foreground)">{{ slice.label }}</p>
+                    <p class="text-sm font-mono" style="color:var(--muted-foreground)">{{ slice.pct.toFixed(1) }}% · ${{ slice.value.toFixed(2) }}</p>
+                  </div>
                 </div>
               }
             </div>
@@ -53,31 +54,53 @@
         </div>
 
         <!-- Bar chart: return by position -->
-        <div class="p-6 rounded-xl border" style="background-color:var(--card);border-color:var(--border)">
-          <h3 class="font-semibold mb-6" style="color:var(--foreground)">Return by Position</h3>
-          <svg width="100%" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet" style="height:200px">
-            <!-- Zero line -->
-            <line x1="0" y1="100" x2="300" y2="100" stroke="var(--border)" stroke-width="1"/>
-            @for (bar of barData(); track bar.symbol; let i = $index) {
-              <rect
-                [attr.x]="i * 46 + 8"
-                [attr.y]="bar.pct >= 0 ? 100 - bar.height : 100"
-                [attr.width]="38"
-                [attr.height]="bar.height"
-                [attr.fill]="bar.pct >= 0 ? 'var(--success)' : 'var(--error)'"
-                rx="3" opacity="0.85"/>
-              <text
-                [attr.x]="i * 46 + 27"
-                [attr.y]="bar.pct >= 0 ? 97 - bar.height : 110 + bar.height"
-                text-anchor="middle"
-                font-size="9"
-                fill="var(--muted-foreground)"
-                font-family="DM Mono,monospace">
-                {{ bar.pct >= 0 ? '+' : '' }}{{ bar.pct.toFixed(1) }}%
-              </text>
-              <text [attr.x]="i * 46 + 27" y="190" text-anchor="middle" font-size="9" fill="var(--muted-foreground)" font-family="DM Sans,sans-serif">{{ bar.symbol }}</text>
-            }
-          </svg>
+        <div class="p-6 panel">
+          <h3 class="font-semibold" style="color:var(--foreground)">Return by Position</h3>
+          @if (barChart(); as chart) {
+          @if (chart.bars.length === 0) {
+            <p class="text-sm mt-6" style="color:var(--muted-foreground)">No open positions yet. Buy a stock to see how each position is performing.</p>
+          } @else {
+            <p class="rbp-summary">
+              @if (chart.bars.length > 1) {
+                <span>Best <strong [style.color]="chart.best.positive ? 'var(--success)' : 'var(--error)'">{{ chart.best.symbol }} {{ formatSignedPct(chart.best.pct) }}</strong></span>
+                <span>Worst <strong [style.color]="chart.worst.positive ? 'var(--success)' : 'var(--error)'">{{ chart.worst.symbol }} {{ formatSignedPct(chart.worst.pct) }}</strong></span>
+              } @else {
+                <strong [style.color]="chart.best.positive ? 'var(--success)' : 'var(--error)'">{{ chart.best.symbol }} {{ formatSignedPct(chart.best.pct) }}</strong>
+              }
+            </p>
+
+            <div class="rbp-rows">
+              @for (bar of chart.bars; track bar.symbol) {
+                <div class="rbp-row"
+                  [title]="bar.symbol + ' · ' + bar.shares + ' shares · avg $' + bar.avgCost.toFixed(2) + ' → now $' + bar.current.toFixed(2)">
+                  <span class="rbp-symbol">{{ bar.symbol }}</span>
+                  <div class="rbp-track">
+                    @for (tick of chart.ticks; track tick.value) {
+                      <span class="rbp-gridline" [class.is-zero]="tick.value === 0" [style.left.%]="tick.x"></span>
+                    }
+                    <span class="rbp-bar" [style.left.%]="bar.left" [style.width.%]="bar.width"
+                      [style.background-color]="bar.positive ? 'var(--success)' : 'var(--error)'"></span>
+                  </div>
+                  <span class="rbp-value">
+                    <span [style.color]="bar.positive ? 'var(--success)' : 'var(--error)'">{{ formatSignedPct(bar.pct) }}</span>
+                    <span class="rbp-dollars">{{ formatSignedDollar(bar.gain) }}</span>
+                  </span>
+                </div>
+              }
+            </div>
+
+            <!-- X-axis: aligned to the same plot column as the bars -->
+            <div class="rbp-row rbp-axis" aria-hidden="true">
+              <span></span>
+              <div class="rbp-track">
+                @for (tick of chart.ticks; track tick.value) {
+                  <span class="rbp-tick" [style.left.%]="tick.x">{{ tick.label }}</span>
+                }
+              </div>
+              <span></span>
+            </div>
+          }
+          }
         </div>
       </div>
 
@@ -86,34 +109,14 @@
         <div class="px-6 py-4 border-b" style="border-color:var(--border)">
           <h3 class="font-semibold" style="color:var(--foreground)">All Holdings</h3>
         </div>
-
-        @if (pendingOrders().length > 0) {
-          <div class="rounded-xl border overflow-hidden" style="background-color:var(--card);border-color:var(--border)">
-            <div class="px-6 py-4 border-b" style="border-color:var(--border)">
-              <h3 class="font-semibold" style="color:var(--foreground)">Pending orders</h3>
-            </div>
-            @for (order of pendingOrders(); track $index) {
-              <div class="flex items-center justify-between px-6 py-4 border-b last:border-b-0" style="border-color:var(--border)">
-                <div>
-                  <p class="font-semibold" style="color:var(--foreground)">{{ order.instrument.symbol }} · {{ order.tradeType }}</p>
-                  <p class="text-xs" style="color:var(--muted-foreground)">{{ order.quantity }} shares · submitted {{ order.timeOfPurchase }}</p>
-                </div>
-                <span class="text-xs font-semibold" style="color:var(--primary)">{{ order.status }}</span>
-              </div>
-            }
-          </div>
-        }
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
               <tr style="border-bottom:1px solid var(--border)">
-                <th class="px-4 py-3 text-left font-medium" style="color:var(--muted-foreground)">Symbol</th>
-                <th class="px-4 py-3 text-left font-medium hidden md:table-cell" style="color:var(--muted-foreground)">Sector</th>
+                <th class="px-4 py-3 text-left font-medium" style="color:var(--muted-foreground)">Holdings</th>
                 <th class="px-4 py-3 text-right font-medium" style="color:var(--muted-foreground)">Shares</th>
-                <th class="px-4 py-3 text-right font-medium hidden sm:table-cell" style="color:var(--muted-foreground)">Avg Cost</th>
-                <th class="px-4 py-3 text-right font-medium" style="color:var(--muted-foreground)">Current</th>
-                <th class="px-4 py-3 text-right font-medium hidden sm:table-cell" style="color:var(--muted-foreground)">Mkt Value</th>
-                <th class="px-4 py-3 text-right font-medium" style="color:var(--muted-foreground)">Return</th>
+                <th class="px-4 py-3 text-right font-medium" style="color:var(--muted-foreground)">Value</th>
+                <th class="px-4 py-3 text-right font-medium" style="color:var(--muted-foreground)">G/L</th>
                 <th class="px-4 py-3"></th>
               </tr>
             </thead>
@@ -124,25 +127,19 @@
                     <p class="font-semibold" style="color:var(--foreground)">{{ h.symbol }}</p>
                     <p class="text-xs" style="color:var(--muted-foreground)">{{ h.name }}</p>
                   </td>
-                  <td class="px-4 py-3 hidden md:table-cell" style="color:var(--muted-foreground)">{{ h.sector }}</td>
                   <td class="px-4 py-3 text-right font-mono" style="color:var(--foreground)">{{ h.shares }}</td>
-                  <td class="px-4 py-3 text-right font-mono hidden sm:table-cell" style="color:var(--muted-foreground)">${{ h.avgCost.toFixed(2) }}</td>
-                  <td class="px-4 py-3 text-right font-mono" style="color:var(--foreground)">${{ h.current.toFixed(2) }}</td>
-                  <td class="px-4 py-3 text-right font-mono hidden sm:table-cell" style="color:var(--foreground)">${{ (h.shares * h.current).toFixed(0) }}</td>
+                  <td class="px-4 py-3 text-right font-mono" style="color:var(--foreground)">${{ (h.shares * h.current).toFixed(2) }}</td>
                   <td class="px-4 py-3 text-right">
-                    <span class="font-mono text-sm font-medium"
+                    <span class="px-2 py-0.5 rounded-full text-xs font-mono font-semibold"
+                      [style.background-color]="h.current >= h.avgCost ? 'var(--success-tint)' : 'var(--error-tint)'"
                       [style.color]="h.current >= h.avgCost ? 'var(--success)' : 'var(--error)'">
-                      {{ h.current >= h.avgCost ? '+' : '' }}{{ (((h.current - h.avgCost) / h.avgCost) * 100).toFixed(1) }}%
+                      {{ h.current >= h.avgCost ? '+' : '' }}{{ (((h.current - h.avgCost) / h.avgCost) * 100).toFixed(2) }}%
                     </span>
-                    <p class="text-xs font-mono"
-                      [style.color]="h.current >= h.avgCost ? 'var(--success)' : 'var(--error)'">
-                      {{ h.current >= h.avgCost ? '+' : '' }}${{ ((h.current - h.avgCost) * h.shares).toFixed(0) }}
-                    </p>
                   </td>
                   <td class="px-4 py-3 text-right">
                     <button (click)="openSell(h.symbol, h.shares, h.current)"
-                      class="px-3 py-1 text-xs font-medium rounded-md"
-                      style="background-color:rgba(125,18,30,0.1);color:var(--error)">
+                      class="px-3 py-1 text-xs font-medium rounded-md outlined"
+                      style="background-color:var(--error-tint);color:var(--error)">
                       Sell
                     </button>
                   </td>
@@ -158,6 +155,7 @@
     @if (orderModal()) {
       <app-order-modal 
         [stock]="orderModal()!.stock"
+        [initialMode]="orderModal()!.mode"
         [availableCash]="portfolioService.availableCash()" 
         [sharesOwned]="portfolioService.getHolding(orderModal()!.stock.symbol)?.shares ?? 0"
         (close)="orderModal.set(null)">

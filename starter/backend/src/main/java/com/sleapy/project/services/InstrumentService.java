@@ -5,6 +5,7 @@ import com.sleapy.project.mappers.MarketPriceMapper;
 import com.sleapy.project.models.dtos.InstrumentWithPriceDTO;
 import com.sleapy.project.models.dtos.PriceUpdateDTO;
 import com.sleapy.project.models.dtos.YahooSearchResultDTO;
+import com.sleapy.project.models.dtos.PriceHistoryPointDTO;
 import com.sleapy.project.models.entities.InstrumentEntity;
 import com.sleapy.project.models.entities.InstrumentType;
 import com.sleapy.project.models.entities.MarketPriceEntity;
@@ -100,6 +101,10 @@ public class InstrumentService {
 
         Optional<MarketPriceEntity> price = marketPriceMapper.findBySymbol(symbol);
         return Optional.of(new InstrumentWithPriceDTO(instrument.get(), price.orElse(null)));
+    }
+
+    public List<PriceHistoryPointDTO> getPriceHistory(String symbol, String period) {
+        return priceService.getPriceHistory(symbol, period);
     }
 
     public InstrumentWithPriceDTO importFromYahoo(YahooSearchResultDTO request) {

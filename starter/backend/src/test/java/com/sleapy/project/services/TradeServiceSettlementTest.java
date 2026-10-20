@@ -61,9 +61,6 @@ class TradeServiceSettlementTest {
     private OrderStatusNotificationService notificationService;
 
     @Mock
-    private OrderAuditLogService orderAuditLogService;
-
-    @Mock
     private PriceService priceService;
 
     @InjectMocks

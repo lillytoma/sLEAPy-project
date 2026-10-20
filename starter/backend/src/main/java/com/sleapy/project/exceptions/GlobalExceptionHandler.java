@@ -44,7 +44,7 @@ public class GlobalExceptionHandler {
         e.printStackTrace();
 
         return ResponseEntity.status(404).body(
-            ErrorResponse.of(404, "Not Found", "The requested resource was not found.", request.getRequestURI())
+            ErrorResponse.of(404, "Not Found", e.getMessage(), request.getRequestURI())
         );     
     }
 
@@ -58,8 +58,7 @@ public class GlobalExceptionHandler {
         e.printStackTrace();
 
         return ResponseEntity.status(422).body(
-            ErrorResponse.of(422, "Insufficient Cash",
-                "There is not enough available cash to complete this request.", request.getRequestURI())
+            ErrorResponse.of(422, "Insufficient Cash", e.getMessage(), request.getRequestURI())
         );   
     }
 
@@ -73,16 +72,14 @@ public class GlobalExceptionHandler {
         e.printStackTrace();
 
         return ResponseEntity.status(422).body(
-            ErrorResponse.of(422, "Insufficient Shares",
-                "There are not enough available shares to complete this request.", request.getRequestURI())
+            ErrorResponse.of(422, "Insufficient Shares", e.getMessage(), request.getRequestURI())
         );   
     }
 
     @ExceptionHandler(OrderValidationException.class)
     ResponseEntity<ErrorResponse> handleOrderValidation(OrderValidationException e, HttpServletRequest request) {
         return ResponseEntity.status(422).body(
-            ErrorResponse.of(422, "Order Validation Failed",
-                "The request could not be completed. Please check the submitted details.", request.getRequestURI())
+            ErrorResponse.of(422, e.getRule(), e.getMessage(), request.getRequestURI())
         );
     }
 
@@ -97,8 +94,7 @@ public class GlobalExceptionHandler {
         e.printStackTrace();
 
         return ResponseEntity.status(422).body(
-            ErrorResponse.of(422, "Invalid Email",
-                "Please enter a valid email address.", request.getRequestURI())
+            ErrorResponse.of(422, "Invalid Email", e.getMessage(), request.getRequestURI())
         );   
     }
 

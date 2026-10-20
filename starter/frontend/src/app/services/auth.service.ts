@@ -23,7 +23,26 @@ export class AuthService {
       if (email) {
         this.userName.set(email);
       }
+      this.userInitials.set(this.buildInitials(
+        localStorage.getItem('user_first_name'),
+        localStorage.getItem('user_last_name'),
+        email
+      ));
     }
+  }
+
+  // Called after a successful login so the avatar shows e.g. "LT" for Lilly Toma.
+  setUserNames(firstName: string | null | undefined, lastName: string | null | undefined): void {
+    localStorage.setItem('user_first_name', firstName ?? '');
+    localStorage.setItem('user_last_name', lastName ?? '');
+    this.userInitials.set(this.buildInitials(firstName, lastName, localStorage.getItem('user_email')));
+  }
+
+  // First + last initial; falls back to the email's first letter for sessions
+  // stored before names were saved.
+  private buildInitials(firstName: string | null | undefined, lastName: string | null | undefined, email: string | null): string {
+    const initials = ((firstName?.trim()[0] ?? '') + (lastName?.trim()[0] ?? '')).toUpperCase();
+    return initials || (email?.trim()[0] ?? '').toUpperCase();
   }
 
   private hasValidToken(): boolean {
@@ -71,21 +90,12 @@ export class AuthService {
   }
 
   logout(): void {
-    const email = localStorage.getItem('user_email');
-    this.http.post(`${this.apiURL}/logout`, { email }).subscribe({
-      next: () => this.clearSession(),
-      error: (error) => {
-        console.error('Unable to record logout event:', error);
-        this.clearSession();
-      }
-    });
-  }
-
-  private clearSession(): void {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_id');
     localStorage.removeItem('user_email');
     localStorage.removeItem('account_frozen');
+    localStorage.removeItem('user_first_name');
+    localStorage.removeItem('user_last_name');
     this.isLoggedIn.set(false);
     this.userName.set('');
     this.userInitials.set('');

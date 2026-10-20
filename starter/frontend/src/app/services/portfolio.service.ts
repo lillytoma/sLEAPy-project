@@ -1,7 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, of, switchMap, tap } from 'rxjs';
-import { Holding } from '../data/mock-data';
+import { getSectorForSymbol, Holding } from '../data/mock-data';
 import { environment } from '../../environments/environment';
 import { MarketDataService } from './market-data.service';
 
@@ -40,7 +40,6 @@ interface TradeResponse {
   pricePerShare: number;
   totalAmount: number;
   timestamp: string;
-  status: OrderResponse['status'];
   message: string;
 }
 
@@ -66,7 +65,6 @@ export class PortfolioService {
     0
   ));
   private apiBaseUrl = `${environment.apiUrl}/api`;
-  private orderStatusOverrides = new Map<number, OrderResponse['status']>();
 
   constructor(private http: HttpClient, private marketDataService: MarketDataService) {
     this.marketDataService.priceUpdates$.subscribe((updates) => {
@@ -76,12 +74,9 @@ export class PortfolioService {
         return live?.currentPrice == null ? holding : { ...holding, current: Number(live.currentPrice) };
       }));
     });
-    this.marketDataService.orderStatusUpdates$.subscribe((update) => {
-      if (update?.orderId == null) return;
-      this.orderStatusOverrides.set(update.orderId, update.status);
-    });
     this.refreshCashBalance();
     this.refreshHoldings();
+    this.loadWatchlist();
   }
 
   refreshCashBalance(): void {
@@ -108,18 +103,7 @@ export class PortfolioService {
   getTransactions(): Observable<TransactionResponse[]> {
     const clientId = this.resolveClientId(false);
     if (clientId === null) return of([]);
-    return this.http.get<TransactionResponse[]>(`${this.apiBaseUrl}/orders/?clientId=${clientId}&page=1&pageSize=5`).pipe(
-      map((orders) => orders.map((order) => ({
-        ...order,
-        status: order.orderId == null
-          ? order.status
-          : this.orderStatusOverrides.get(order.orderId) ?? order.status
-      })))
-    );
-  }
-
-  getOrderStatusUpdates(): Observable<import('./market-data.service').OrderStatusUpdate | null> {
-    return this.marketDataService.orderStatusUpdates$;
+    return this.http.get<TransactionResponse[]>(`${this.apiBaseUrl}/orders/?clientId=${clientId}&page=1&pageSize=5`);
   }
 
   refreshHoldings(): void {
@@ -136,7 +120,10 @@ export class PortfolioService {
           shares: quantity,
           avgCost: quantity > 0 ? costBasis / quantity : 0,
           current: Number(holding.instrument.currentPrice) || 0,
-          sector: holding.instrument.instrumentType?.name || 'Other'
+          sector: getSectorForSymbol(
+            holding.instrument.symbol,
+            holding.instrument.instrumentType?.name || 'Other'
+          )
         };
       })),
       error: () => this.holdings.set([])
@@ -168,18 +155,16 @@ export class PortfolioService {
       }),
       switchMap((tradeRequest) => this.http.post<TradeResponse>(`${this.apiBaseUrl}/trades/${side}`, tradeRequest)),
       tap((response) => {
-        if (response.status === 'FILLED') {
-          this.availableCash.update((cash) => side === 'buy'
-            ? cash - response.totalAmount
-            : cash + response.totalAmount);
-          this.refreshHoldings();
-        }
+        this.availableCash.update((cash) => side === 'buy'
+          ? cash - response.totalAmount
+          : cash + response.totalAmount);
+        this.refreshHoldings();
       }),
       map((response) => ({
         success: true,
         orderId: response.orderId,
         message: response.message,
-        status: response.status as OrderResponse['status']
+        status: 'FILLED' as const
       }))
     );
   }
@@ -207,10 +192,39 @@ export class PortfolioService {
     return parsed;
   }
 
+  // The watchlist is kept in this browser's localStorage (not the DB), one key per
+  // user so people sharing a computer don't see each other's lists.
+  private watchlistStorageKey(): string | null {
+    const clientId = this.resolveClientId(false);
+    return clientId === null ? null : `watchlist_${clientId}`;
+  }
+
+  loadWatchlist(): void {
+    const key = this.watchlistStorageKey();
+    if (key === null) {
+      this.watchlistedSymbols.set([]);
+      return;
+    }
+    try {
+      const parsed = JSON.parse(localStorage.getItem(key) ?? '[]');
+      this.watchlistedSymbols.set(Array.isArray(parsed) ? parsed.filter((s) => typeof s === 'string') : []);
+    } catch {
+      this.watchlistedSymbols.set([]);
+    }
+  }
+
   toggleWatchlist(symbol: string): void {
     this.watchlistedSymbols.update((prev) =>
       prev.includes(symbol) ? prev.filter((s) => s !== symbol) : [...prev, symbol]
     );
+    const key = this.watchlistStorageKey();
+    if (key !== null) {
+      try {
+        localStorage.setItem(key, JSON.stringify(this.watchlistedSymbols()));
+      } catch {
+        // Storage full or blocked (e.g. private mode) — the list still works for this session.
+      }
+    }
   }
 
   isWatchlisted(symbol: string): boolean {
@@ -241,13 +255,19 @@ export class PortfolioService {
           h.symbol === symbol ? { ...h, shares: totalShares, avgCost: newAvg } : h
         );
       }
-      return [...prev, { symbol, name, shares, avgCost: price, current: price, sector }];
+      return [{
+        symbol,
+        name,
+        shares,
+        avgCost: price,
+        current: price,
+        sector: getSectorForSymbol(symbol, sector)
+      }];
     });
   }
 }
 
 export interface TransactionResponse {
-  orderId?: number;
   timeOfPurchase: string;
   timeFilled?: string;
   quantity: number;
