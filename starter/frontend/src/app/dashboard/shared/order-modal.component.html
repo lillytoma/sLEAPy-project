@@ -26,7 +26,7 @@
           [disabled]="mode() === 'buy'"
           class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all outlined" 
           [style.background-color]="mode() === 'buy' ? 'var(--primary)' : 'var(--success-tint)'"
-          [style.color]="mode() === 'buy' ? '#fff' : 'var(--success)'">
+          [style.color]="mode() === 'buy' ? 'var(--on-color)' : 'var(--success)'">
           Buy
         </button>
         <button (click)="switchMode('sell')" 
@@ -34,7 +34,7 @@
           class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all outlined" 
           [style.opacity]="sharesOwned > 0 ? '1' : '0.5'"
           [style.background-color]="mode() === 'sell' ? 'var(--error)' : 'var(--error-tint)'"
-          [style.color]="mode() === 'sell' ? '#fff' : 'var(--error)'">
+          [style.color]="mode() === 'sell' ? 'var(--on-color)' : 'var(--error)'">
           Sell
         </button>
       </div>
@@ -129,13 +129,13 @@
             <button (click)="inputMode.set('shares')"
               class="flex-1 py-2 text-sm font-medium transition-colors"
               [style.background-color]="inputMode() === 'shares' ? (mode() === 'buy' ? 'var(--primary)' : 'var(--error)') : 'var(--background)'"
-              [style.color]="inputMode() === 'shares' ? '#fff' : 'var(--muted-foreground)'">
+              [style.color]="inputMode() === 'shares' ? 'var(--on-color)' : 'var(--muted-foreground)'">
               Shares
             </button>
             <button (click)="inputMode.set('money')"
               class="flex-1 py-2 text-sm font-medium transition-colors"
               [style.background-color]="inputMode() === 'money' ? (mode() === 'buy' ? 'var(--primary)' : 'var(--error)') : 'var(--background)'"
-              [style.color]="inputMode() === 'money' ? '#fff' : 'var(--muted-foreground)'">
+              [style.color]="inputMode() === 'money' ? 'var(--on-color)' : 'var(--muted-foreground)'">
               Money
             </button>
           </div>
@@ -231,7 +231,7 @@
           [disabled]="(mode() === 'buy' ? (calculatedBuyShares() < 0.001 || estimatedBuyTotal() > availableCash) : (calculatedSellShares() < 0.001 || calculatedSellShares() > sharesOwned)) || loading()"
           class="w-full py-3 rounded-md font-semibold text-sm outlined transition-opacity flex items-center justify-center gap-2"
           [style.background-color]="mode() === 'buy' ? 'var(--primary)' : 'var(--error)'"
-          style="color:#fff"
+          style="color: var(--on-color)"
           [style.opacity]="(mode() === 'buy' ? (calculatedBuyShares() < 0.001 || estimatedBuyTotal() > availableCash) : (calculatedSellShares() < 0.001 || calculatedSellShares() > sharesOwned)) || loading() ? '0.5' : '1'">
           @if (loading()) {
             <svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -249,7 +249,7 @@
       <div class="px-6 py-10 text-center">
         <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
           [style.background-color]="orderStatus() === 'REJECTED' ? 'var(--error)' : (mode() === 'buy' ? 'var(--primary)' : 'var(--success)')"
-          style="color:#fff">
+          style="color: var(--on-color)">
           @if (orderStatus() === 'REJECTED') {
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
