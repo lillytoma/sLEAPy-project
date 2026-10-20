@@ -156,8 +156,9 @@ body {
 .stat-card-top { display: flex; align-items: center; justify-content: space-between; color: var(--muted-foreground); font-size: 12px; }
 .stat-card-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 .stat-value { margin-top: 16px; font: 700 23px var(--font-mono); letter-spacing: -.04em; }
-.stat-sub { margin-top: 8px; font: 700 15px var(--font-mono); }
-.stat-sub span { color: var(--muted-foreground); font-family: var(--font-body); font-size: 12px; font-weight: 500; }
+.stat-value-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 16px; }
+.stat-value-row .stat-value { margin-top: 0; }
+.stat-sub-pill { padding: 3px 10px; border-radius: 999px; font: 700 14px var(--font-mono); white-space: nowrap; }
 .panel { overflow: hidden; }
 .chart-panel { padding: 22px; }
 .chart-panel svg text { letter-spacing: 0; }

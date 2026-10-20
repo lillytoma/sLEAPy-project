@@ -12,10 +12,12 @@
         @for (card of statCards(); track card.label) {
           <div class="stat-card">
             <div class="stat-card-top"><p>{{ card.label }}</p><span class="stat-card-dot"></span></div>
-            <p class="stat-value" [style.color]="card.color || 'var(--foreground)'">{{ card.value }}</p>
-            @if (card.sub) {
-              <p class="stat-sub" [style.color]="card.subColor || 'var(--muted-foreground)'">{{ card.sub }} <span>this period</span></p>
-            }
+            <div class="stat-value-row">
+              <p class="stat-value" [style.color]="card.color || 'var(--foreground)'">{{ card.value }}</p>
+              @if (card.sub) {
+                <span class="stat-sub-pill" [style.color]="card.subColor" [style.background-color]="card.subBg">{{ card.sub }}</span>
+              }
+            </div>
           </div>
         }
       </div>

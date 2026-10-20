@@ -76,12 +76,13 @@ export class HomeComponent implements OnInit, OnDestroy {
     const totalReturn = totalValue - totalCost;
     const returnPct = totalCost > 0 ? (totalReturn / totalCost) * 100 : 0;
     return [
-      { label: 'Portfolio Value', value: '$' + this.portfolioService.netWorth().toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: 'var(--foreground)', sub: '', subColor: 'var(--muted-foreground)' },
-      { label: 'Total G/L', value: (returnPct >= 0 ? '+' : '') + returnPct.toFixed(1) + '%', color: totalReturn >= 0 ? 'var(--success)' : 'var(--error)', sub: '$' + totalReturn.toFixed(0), subColor: totalReturn >= 0 ? 'var(--success)' : 'var(--error)' },
+      { label: 'Portfolio Value', value: '$' + this.portfolioService.netWorth().toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: 'var(--foreground)', sub: '', subColor: '', subBg: '' },
+      // Sign goes before the "$" ("-$50.00", not "$-50") so losses read the way traders expect.
+      { label: 'Total G/L', value: (returnPct >= 0 ? '+' : '') + returnPct.toFixed(1) + '%', color: totalReturn >= 0 ? 'var(--success)' : 'var(--error)', sub: (totalReturn >= 0 ? '+' : '-') + '$' + Math.abs(totalReturn).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','), subColor: totalReturn >= 0 ? 'var(--success)' : 'var(--error)', subBg: totalReturn >= 0 ? 'var(--success-tint)' : 'var(--error-tint)' },
       // No backend-tracked daily open/close, so "Open Positions" stands in for a
       // "Today's Gain" card rather than a fabricated intraday number.
-      { label: 'Open Positions', value: h.length.toString(), color: 'var(--foreground)', sub: '', subColor: 'var(--muted-foreground)' },
-      { label: 'Cash Balance', value: '$' + this.portfolioService.availableCash().toFixed(2), color: 'var(--foreground)', sub: 'available to trade', subColor: 'var(--muted-foreground)' },
+      { label: 'Open Positions', value: h.length.toString(), color: 'var(--foreground)', sub: '', subColor: '', subBg: '' },
+      { label: 'Cash Balance', value: '$' + this.portfolioService.availableCash().toFixed(2), color: 'var(--foreground)', sub: '', subColor: '', subBg: '' },
     ];
   });
 
