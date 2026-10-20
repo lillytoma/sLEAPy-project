@@ -191,6 +191,10 @@ public class TradeController {
     }
 
     private ResponseEntity<?> verifyAuthorization(String authorizationHeader) {
+        if (jwtService.isAdminAuthorizationHeader(authorizationHeader)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Administrators cannot place trades"));
+        }
         if (jwtService.verifyAuthorizationHeader(authorizationHeader)) {
             return null;
         }

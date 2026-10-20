@@ -51,7 +51,10 @@
             "production": { "buildTarget": "sleapy-stocks:build:production" },
             "development": { "buildTarget": "sleapy-stocks:build:development" }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "development",
+          "options": {
+            "proxyConfig": "proxy.conf.json"
+          }
         }
       }
     }

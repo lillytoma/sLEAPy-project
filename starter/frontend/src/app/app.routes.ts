@@ -14,6 +14,7 @@ import { WatchlistComponent } from './dashboard/watchlist/watchlist.component';
 import { HistoryComponent } from './dashboard/history/history.component';
 import { SettingsComponent } from './dashboard/settings/settings.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
+import { AdminComponent } from './dashboard/admin/admin.component';
 
 
 const authGuard = () => {
@@ -21,6 +22,23 @@ const authGuard = () => {
   const router = inject(Router);
   if (auth.isLoggedIn()) return true;
   return router.createUrlTree(['/login']);
+};
+
+const adminGuard = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  return auth.isAdmin() ? true : router.createUrlTree(['/dashboard/home']);
+};
+
+const userGuard = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  return auth.isAdmin() ? router.createUrlTree(['/dashboard/admin']) : true;
+};
+
+const dashboardDefaultRedirect = () => {
+  const auth = inject(AuthService);
+  return inject(Router).createUrlTree([auth.isAdmin() ? '/dashboard/admin' : '/dashboard/home']);
 };
 
 export const routes: Routes = [
@@ -32,15 +50,16 @@ export const routes: Routes = [
     component: DashboardComponent,
     canActivate: [authGuard],
     children: [
-      { path: '', redirectTo: 'home', pathMatch: 'full' },
-        { path: 'history', component: HistoryComponent },
+      { path: '', canActivate: [dashboardDefaultRedirect], component: HomeComponent },
+      { path: 'history', component: HistoryComponent, canActivate: [userGuard] },
 
-      { path: 'home', component: HomeComponent },
-      { path: 'portfolio', component: PortfolioComponent },
-      { path: 'markets', component: MarketsComponent },
-      { path: 'watchlist', component: WatchlistComponent },
+      { path: 'home', component: HomeComponent, canActivate: [userGuard] },
+      { path: 'portfolio', component: PortfolioComponent, canActivate: [userGuard] },
+      { path: 'markets', component: MarketsComponent, canActivate: [userGuard] },
+      { path: 'watchlist', component: WatchlistComponent, canActivate: [userGuard] },
       
       { path: 'settings', component: SettingsComponent },
+      { path: 'admin', component: AdminComponent, canActivate: [adminGuard] },
     ],
   },
   { path: '**', redirectTo: '' },

@@ -150,31 +150,33 @@ INSERT INTO Clients (
 
  zip_code,
 
- region
+ region,
+
+ is_admin
 
 )
 
 VALUES
 
- (1, 'jdoe', 'jdoe@email.com', 'hash001', '555-1001', '111-11-1001', 15842.33, 'John', 'Doe', '1985-03-15', '123 Main St', 'Dallas', 'TX', '75001', 'North Texas'),
+ (1, 'jdoe', 'jdoe@email.com', '$2a$10$ptnaw1mf2r2TRo8ANIN.3OXRgKIdgCzXWDtyWE0.btT0JHXu7W/OO', '555-1001', '111-11-1001', 15842.33, 'John', 'Doe', '1985-03-15', '123 Main St', 'Dallas', 'TX', '75001', 'North Texas', TRUE),
 
- (1, 'asmith', 'asmith@email.com', 'hash002', '555-1002', '111-11-1002', 42112.88, 'Alice', 'Smith', '1990-07-22', '456 Oak St', 'Houston', 'TX', '77001', 'Houston Metro'),
+ (1, 'asmith', 'asmith@email.com', 'hash002', '555-1002', '111-11-1002', 42112.88, 'Alice', 'Smith', '1990-07-22', '456 Oak St', 'Houston', 'TX', '77001', 'Houston Metro', FALSE),
 
- (1, 'rjohnson', 'rjohnson@email.com', 'hash003', '555-1003', '111-11-1003', 9575.00, 'Robert', 'Johnson', '1988-11-08', '789 Pine St', 'Austin', 'TX', '78701', 'Central Texas'),
+ (1, 'rjohnson', 'rjohnson@email.com', 'hash003', '555-1003', '111-11-1003', 9575.00, 'Robert', 'Johnson', '1988-11-08', '789 Pine St', 'Austin', 'TX', '78701', 'Central Texas', FALSE),
 
- (1, 'mwilliams', 'mwilliams@email.com', 'hash004', '555-1004', '111-11-1004', 22831.45, 'Michael', 'Williams', '1992-05-30', '845 Lake Rd', 'Fort Worth', 'TX', '76102', 'North Texas'),
+ (1, 'mwilliams', 'mwilliams@email.com', 'hash004', '555-1004', '111-11-1004', 22831.45, 'Michael', 'Williams', '1992-05-30', '845 Lake Rd', 'Fort Worth', 'TX', '76102', 'North Texas', FALSE),
 
- (1, 'ldavis', 'ldavis@email.com', 'hash005', '555-1005', '111-11-1005', 33450.76, 'Lisa', 'Davis', '1987-09-12', '900 Cedar Ln', 'Plano', 'TX', '75074', 'North Texas'),
+ (1, 'ldavis', 'ldavis@email.com', 'hash005', '555-1005', '111-11-1005', 33450.76, 'Lisa', 'Davis', '1987-09-12', '900 Cedar Ln', 'Plano', 'TX', '75074', 'North Texas', FALSE),
 
- (2, 'ewilson', 'ewilson@email.com', 'hash006', '555-1006', '111-11-1006', 645.50, 'Emily', 'Wilson', '1995-01-25', '44 Bluebird St', 'Irving', 'TX', '75060', 'North Texas'),
+ (2, 'ewilson', 'ewilson@email.com', 'hash006', '555-1006', '111-11-1006', 645.50, 'Emily', 'Wilson', '1995-01-25', '44 Bluebird St', 'Irving', 'TX', '75060', 'North Texas', FALSE),
 
- (1, 'bmoore', 'bmoore@email.com', 'hash007', '555-1007', '111-11-1007', 18732.22, 'Brian', 'Moore', '1989-04-18', '78 Magnolia Ave', 'Waco', 'TX', '76701', 'Central Texas'),
+ (1, 'bmoore', 'bmoore@email.com', 'hash007', '555-1007', '111-11-1007', 18732.22, 'Brian', 'Moore', '1989-04-18', '78 Magnolia Ave', 'Waco', 'TX', '76701', 'Central Texas', FALSE),
 
- (1, 'ttaylor', 'ttaylor@email.com', 'hash008', '555-1008', '111-11-1008', 55123.11, 'Thomas', 'Taylor', '1986-08-03', '501 Park Blvd', 'Frisco', 'TX', '75034', 'North Texas'),
+ (1, 'ttaylor', 'ttaylor@email.com', 'hash008', '555-1008', '111-11-1008', 55123.11, 'Thomas', 'Taylor', '1986-08-03', '501 Park Blvd', 'Frisco', 'TX', '75034', 'North Texas', FALSE),
 
- (3, 'kanderson', 'kanderson@email.com', 'hash009', '555-1009', '111-11-1009', 0.00, 'Karen', 'Anderson', '1993-12-27', '100 River Dr', 'Lubbock', 'TX', '79401', 'West Texas'),
+ (3, 'kanderson', 'kanderson@email.com', 'hash009', '555-1009', '111-11-1009', 0.00, 'Karen', 'Anderson', '1993-12-27', '100 River Dr', 'Lubbock', 'TX', '79401', 'West Texas', FALSE),
 
- (1, 'gmartin', 'gmartin@email.com', 'hash010', '555-1010', '111-11-1010', 12880.44, 'George', 'Martin', '1991-06-14', '212 Elm St', 'Denton', 'TX', '76201', 'North Texas');
+ (1, 'gmartin', 'gmartin@email.com', 'hash010', '555-1010', '111-11-1010', 12880.44, 'George', 'Martin', '1991-06-14', '212 Elm St', 'Denton', 'TX', '76201', 'North Texas', FALSE);
 
 -- Development-only account used by the frontend login hint.
 INSERT INTO Clients (
