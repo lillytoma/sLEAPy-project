@@ -3,6 +3,7 @@ import { DatePipe } from '@angular/common';
 import { Subscription, timer } from 'rxjs';
 import { RouterLink } from '@angular/router';
 import { PortfolioService } from '../../services/portfolio.service';
+import { TransactionResponse } from '../../services/portfolio.service';
 import { MarketDataService } from '../../services/market-data.service';
 import { AuthService } from '../../services/auth.service';
 import { MarketStock } from '../../data/mock-data';
@@ -25,6 +26,7 @@ interface DashboardTransaction {
 
 export class HomeComponent implements OnInit, OnDestroy {
   transactions = signal<DashboardTransaction[]>([]);
+  private orderHistory = signal<TransactionResponse[]>([]);
   orderModal = signal<{ stock: MarketStock; mode: 'buy' | 'sell' } | null>(null);
   today = new Date();
 
@@ -75,13 +77,16 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   refreshTransactions(): void {
     this.portfolioService.getTransactions().subscribe({
-      next: (records) => this.transactions.set(records.map((record) => ({
-        symbol: record.instrument.symbol,
-        status: record.status || 'Filled',
-        shares: Number(record.quantity) || 0,
-        total: (Number(record.quantity) || 0) * (Number(record.purchasePrice) || 0),
-        date: this.formatDate(record.timeOfPurchase)
-      }))),
+      next: (records) => {
+        this.transactions.set(records.map((record) => ({
+          symbol: record.instrument.symbol,
+          status: record.status || 'Filled',
+          shares: Number(record.quantity) || 0,
+          total: (Number(record.quantity) || 0) * (Number(record.purchasePrice) || 0),
+          date: this.formatDate(record.timeOfPurchase)
+        })));
+        this.orderHistory.set(records.filter((record) => record.status !== 'REJECTED'));
+      },
       error: (error) => console.error('Unable to load transaction history:', error)
     });
   }
@@ -106,16 +111,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   chartRanges = ['1M', '3M', '6M', '1Y'] as const;
   selectedRange = signal<'1M' | '3M' | '6M' | '1Y'>('1Y');
 
-  // Illustrative trend only — there's no historical portfolio-value tracking in the
-  // backend. Each range gets its own deterministic (not random-every-render) synthetic
-  // shape so switching ranges visibly changes the chart, but every shape is rescaled to
-  // always end exactly at the real current net worth, so the chart and the headline
-  // never disagree. The x-axis labels are real calendar dates relative to today, though —
-  // only the line's shape between them is made up.
   performanceChart = computed(() => {
-    const target = this.portfolioService.netWorth();
     const range = this.selectedRange();
-    const points = this.buildRangeSeries(range, target);
+    const points = this.buildOrderSeries(range, this.orderHistory());
 
     const values = points.map((p) => p.value);
     const max = Math.max(...values);
@@ -147,9 +145,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     return { points, coords, linePath, areaPath, yGridlines, width, height };
   });
 
-  private readonly rangeSeeds: Record<string, number> = { '1M': 1, '3M': 2, '6M': 3, '1Y': 4 };
-
-  private buildRangeSeries(range: '1M' | '3M' | '6M' | '1Y', target: number): { label: string; value: number }[] {
+  private buildOrderSeries(range: '1M' | '3M' | '6M' | '1Y', orders: TransactionResponse[]): { label: string; value: number }[] {
     const configs = {
       '1M': { count: 5, stepDays: 7 },
       '3M': { count: 6, stepDays: 15 },
@@ -161,30 +157,36 @@ export class HomeComponent implements OnInit, OnDestroy {
     const labels = range === '6M' || range === '1Y'
       ? this.monthLabels(count)
       : this.dayLabels(count, stepDays);
-
-    const shape = this.deterministicTrend(count, this.rangeSeeds[range]);
-    const amplitude = 0.22;
-    const values = shape.map((n) => target * (1 - amplitude + n * amplitude));
-
-    return labels.map((label, i) => ({ label, value: values[i] }));
+    const now = this.today.getTime();
+    const cutoff = new Date(this.today);
+    const rangeDays = range === '1M' ? 30 : range === '3M' ? 90 : range === '6M' ? 180 : 365;
+    cutoff.setDate(cutoff.getDate() - rangeDays);
+    const sortedOrders = orders
+      .map((order) => ({ order, date: new Date(order.timeFilled || order.timeOfPurchase) }))
+      .filter((entry) => !Number.isNaN(entry.date.getTime()))
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+    let runningValue = 0;
+    for (const entry of sortedOrders) {
+      if (entry.date < cutoff) {
+        runningValue += this.orderValue(entry.order);
+      }
+    }
+    let nextOrderIndex = sortedOrders.findIndex((entry) => entry.date >= cutoff);
+    if (nextOrderIndex < 0) nextOrderIndex = sortedOrders.length;
+    return labels.map((label, index) => {
+      const pointDate = new Date(now);
+      pointDate.setDate(pointDate.getDate() - (count - 1 - index) * stepDays);
+      while (nextOrderIndex < sortedOrders.length && sortedOrders[nextOrderIndex].date <= pointDate) {
+        runningValue += this.orderValue(sortedOrders[nextOrderIndex].order);
+        nextOrderIndex++;
+      }
+      return { label, value: Math.max(runningValue, 0) };
+    });
   }
 
-  // Sum of a couple of sine waves at a range-specific seed, normalized to [0, 1] with the
-  // last point pinned to 1 — deterministic per (count, seed), not Math.random(), so the
-  // chart doesn't jitter on every change-detection cycle.
-  private deterministicTrend(count: number, seed: number): number[] {
-    const raw = Array.from({ length: count }, (_, i) => {
-      const t = count > 1 ? i / (count - 1) : 0;
-      return 0.5
-        + 0.3 * Math.sin(t * Math.PI * (1.6 + seed * 0.5) + seed)
-        + 0.15 * Math.sin(t * Math.PI * (3.1 + seed * 0.3) + seed * 2);
-    });
-    const min = Math.min(...raw);
-    const max = Math.max(...raw);
-    const span = max - min || 1;
-    const normalized = raw.map((v) => (v - min) / span);
-    normalized[normalized.length - 1] = 1;
-    return normalized;
+  private orderValue(order: TransactionResponse): number {
+    const value = (Number(order.quantity) || 0) * (Number(order.purchasePrice) || 0);
+    return (order.tradeType || '').toUpperCase() === 'SELL' ? -value : value;
   }
 
   private dayLabels(count: number, stepDays: number): string[] {

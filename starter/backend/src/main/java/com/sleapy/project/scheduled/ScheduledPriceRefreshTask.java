@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Scheduled task for refreshing market prices and broadcasting updates via WebSocket.
- * Runs every 5 seconds to fetch latest prices and push to connected clients.
+ * Runs periodically to fetch latest prices and push to connected clients.
  */
 @Component
 @RequiredArgsConstructor
@@ -23,7 +23,7 @@ public class ScheduledPriceRefreshTask {
      * This method fetches updated prices from the service and broadcasts them
      * to all connected WebSocket clients at /topic/prices.
      */
-    @Scheduled(fixedDelay = 5000)
+    @Scheduled(fixedDelayString = "${price-service.refresh-delay-ms:300000}")
     public void refreshPricesAndBroadcast() {
         try {
             log.debug("Refreshing market prices...");
