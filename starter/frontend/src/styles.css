@@ -185,8 +185,6 @@ body {
 .rbp-dollars { color: var(--muted-foreground); font-size: 11px; font-weight: 400; }
 .rbp-axis { height: 22px; }
 .rbp-tick { position: absolute; top: 4px; transform: translateX(-50%); color: var(--muted-foreground); font: 11px var(--font-mono); white-space: nowrap; }
-.rbp-axis-title { margin-top: 4px; text-align: center; color: var(--muted-foreground); font-size: 11px; }
-
 /* Panel-style outline (same border + offset shadow as .panel) for standalone buttons and button groups. */
 .outlined { border: 1.5px solid var(--border); box-shadow: var(--card-shadow); }
 input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="date"], select { border-width: 1.5px; box-shadow: var(--card-shadow); }
