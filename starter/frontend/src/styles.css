@@ -32,7 +32,7 @@
   --accent-blue-tint: rgba(62, 111, 142, 0.16);
   --frog-ink: #2a1d14;
   --frog-belly: #f6ecd0;
-  --card-shadow: 4px 4px 0 #2a1d14;
+  --card-shadow: 3px 3px 0 rgba(42, 29, 20, 0.35);
   --radius: 14px;
   --film-vignette: rgba(60, 38, 18, 0.32);
 }
@@ -59,7 +59,7 @@
   --accent-blue-tint: rgba(127, 176, 207, 0.2);
   --frog-ink: #f2e6c8;
   --frog-belly: #2c3855;
-  --card-shadow: 4px 4px 0 rgba(0, 0, 0, 0.65);
+  --card-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
   --film-vignette: rgba(0, 0, 0, 0.55);
 }
 
@@ -161,9 +161,10 @@ body {
 .panel { overflow: hidden; }
 .chart-panel { padding: 22px; }
 .chart-panel svg text { letter-spacing: 0; }
+.chart-panel .eyebrow { font-size: 13px; }
 .panel-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .panel-heading h2 { margin-top: 3px; font-family: var(--font-display); font-size: 16px; font-weight: 700; }
-.period-pill { padding: 5px 10px; border-radius: 999px; color: var(--primary); background: var(--muted); font: 700 10px var(--font-mono); }
+.period-pill { padding: 7px 14px; border-radius: 999px; color: var(--primary); background: var(--muted); font: 700 13px var(--font-mono); }
 .period-pill.is-active { background: var(--primary); color: var(--primary-foreground); }
 .order-chart-range, .order-option-button { cursor: pointer; transition: background-color .15s ease, border-color .15s ease, color .15s ease, transform .15s ease; }
 .order-chart-range:hover, .order-option-button:hover { background-color: var(--primary) !important; border-color: var(--primary) !important; color: var(--primary-foreground) !important; transform: translateY(-1px); }

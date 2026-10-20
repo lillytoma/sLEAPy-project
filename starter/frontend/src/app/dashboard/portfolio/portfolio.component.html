@@ -12,7 +12,7 @@
       <!-- Stat Cards -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         @for (card of statCards(); track card.label) {
-          <div class="p-5 rounded-xl border" style="background-color:var(--card);border-color:var(--border)">
+          <div class="p-5 rounded-xl border" style="background-color:var(--card);border-color:var(--border);box-shadow:var(--card-shadow)">
             <p class="text-sm mb-1" style="color:var(--muted-foreground)">{{ card.label }}</p>
             <p class="font-mono text-xl font-bold" [style.color]="card.color">{{ card.value }}</p>
           </div>
@@ -22,7 +22,7 @@
       <!-- Charts row -->
       <div class="grid lg:grid-cols-2 gap-6">
         <!-- Donut chart: sector allocation -->
-        <div class="p-6 rounded-xl border" style="background-color:var(--card);border-color:var(--border)">
+        <div class="p-6 rounded-xl border" style="background-color:var(--card);border-color:var(--border);box-shadow:var(--card-shadow)">
           <h3 class="font-semibold mb-6" style="color:var(--foreground)">Sector Allocation</h3>
           <div class="flex items-center gap-8">
             <svg width="160" height="160" viewBox="0 0 160 160" class="flex-shrink-0">
@@ -54,7 +54,7 @@
         </div>
 
         <!-- Bar chart: return by position -->
-        <div class="p-6 rounded-xl border" style="background-color:var(--card);border-color:var(--border)">
+        <div class="p-6 rounded-xl border" style="background-color:var(--card);border-color:var(--border);box-shadow:var(--card-shadow)">
           <h3 class="font-semibold mb-6" style="color:var(--foreground)">Return by Position</h3>
           <svg width="100%" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid meet" style="height:200px">
             <!-- Gridlines -->
@@ -80,7 +80,7 @@
       </div>
 
       <!-- Holdings Table -->
-      <div class="rounded-xl border overflow-hidden" style="background-color:var(--card);border-color:var(--border)">
+      <div class="rounded-xl border overflow-hidden" style="background-color:var(--card);border-color:var(--border);box-shadow:var(--card-shadow)">
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
