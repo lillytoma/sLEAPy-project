@@ -1,82 +1,52 @@
 import { Component, ElementRef, HostListener, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { MarketHoursService } from '../services/market-hours.service';
+import { OnboardingTourService } from '../services/onboarding-tour.service';
+import { PortfolioService } from '../services/portfolio.service';
 import { ThemeService } from '../services/theme.service';
 import { FrogMascotComponent } from '../shared/frog-mascot.component';
 import { OnboardingTourComponent } from '../shared/onboarding-tour.component';
-import { OnboardingTourService } from '../services/onboarding-tour.service';
-import { MarketHoursService } from '../services/market-hours.service';
-import { PortfolioService } from '../services/portfolio.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, FrogMascotComponent, OnboardingTourComponent],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    FrogMascotComponent,
+    OnboardingTourComponent
+  ],
   templateUrl: './dashboard.component.html'
 })
 export class DashboardComponent {
   accountMenuOpen = signal(false);
-  // Read once rather than as a signal — it's set at login and doesn't change during a session.
   userEmail = localStorage.getItem('user_email') || '';
 
   constructor(
     public authService: AuthService,
     public themeService: ThemeService,
-    private onboardingTourService: OnboardingTourService
-  ) {}
+    public marketHoursService: MarketHoursService,
+    private onboardingTourService: OnboardingTourService,
+    portfolioService: PortfolioService,
+    private elementRef: ElementRef<HTMLElement>
+  ) {
+    portfolioService.loadWatchlist();
+  }
 
   replayTour(): void {
     this.accountMenuOpen.set(false);
     this.onboardingTourService.requestReplay();
   }
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
-  template: `
-    <div class="dashboard-shell">
-      <header class="dashboard-header">
-        <div class="dashboard-header-inner">
-          <a routerLink="home" class="dashboard-brand" aria-label="sLEAPy dashboard home">
-            <span class="brand-mark">S</span>
-            <span>sLEAPy</span>
-          </a>
-          <div class="dashboard-actions">
-            <div class="cash-balance">
-              <span class="eyebrow">Available cash</span>
-              <strong>{{ '$' }}{{ portfolioService.availableCash().toFixed(2) }}</strong>
-            </div>
-            <div class="cash-balance">
-              <span class="eyebrow">Net worth</span>
-              <strong>{{ '$' }}{{ portfolioService.netWorth().toFixed(2) }}</strong>
-            </div>
-            <a routerLink="/login" class="sign-out">Sign out</a>
-          </div>
-        </div>
-      </header>
 
-  constructor(
-    public authService: AuthService,
-    public themeService: ThemeService,
-    public marketHoursService: MarketHoursService,
-    portfolioService: PortfolioService,
-    private elementRef: ElementRef<HTMLElement>
-  ) {
-    // PortfolioService outlives logout/login, so reload the watchlist for whoever just signed in.
-    portfolioService.loadWatchlist();
-  }
-
-  // Close the account menu on any click/tap outside it (clicks inside, like the
-  // Appearance toggle, keep it open).
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     if (!this.accountMenuOpen()) return;
+
     const menuWrap = this.elementRef.nativeElement.querySelector('.account-menu-wrap');
     if (menuWrap && !menuWrap.contains(event.target as Node)) {
       this.accountMenuOpen.set(false);
     }
   }
-
-    </div>
-  `
-})
-export class DashboardComponent {
-  constructor(public portfolioService: PortfolioService) {}
 }
