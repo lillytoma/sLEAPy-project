@@ -150,6 +150,7 @@ body {
 .onboarding-backdrop { position: fixed; inset: 0; z-index: 100; pointer-events: none; background: rgba(42, 29, 20, .2); }
 .onboarding-cloud { position: fixed; width: min(100% - 32px, 570px); height: 570px; color: #111; isolation: isolate; pointer-events: auto; z-index: 101; }
 .onboarding-bubble-art { position: absolute; inset: -58px; z-index: 0; display: block; width: calc(100% + 116px); height: calc(100% + 116px); object-fit: contain; pointer-events: none; }
+.onboarding-arrow { position: absolute; z-index: 2; display: block; width: 140px; height: 110px; object-fit: contain; pointer-events: none; transform-origin: 97.5% 50.3%; }
 .onboarding-cloud-brand { top: 88px; left: 28px; animation: onboarding-fade-brand .3s ease-out both; }
 .onboarding-cloud-markets { top: 88px; left: 50%; transform: translateX(-50%); animation: onboarding-fade-markets .3s ease-out both; }
 .onboarding-cloud-live { top: 88px; right: 126px; animation: onboarding-fade-live .3s ease-out both; }
@@ -178,6 +179,7 @@ body {
 @media (max-width: 560px) {
   .onboarding-cloud-brand, .onboarding-cloud-markets, .onboarding-cloud-live, .onboarding-cloud-account { top: 70px; left: 50%; right: auto; width: min(100% - 8px, 470px); height: 470px; transform: translateX(-50%); }
   .onboarding-bubble-art { inset: -42px; width: calc(100% + 84px); height: calc(100% + 84px); }
+  .onboarding-arrow { width: 110px; height: 86px; }
   .onboarding-cloud-inner { width: min(100% - 112px, 298px); padding: 112px 0 42px; transform: translateX(-24px); }
   .onboarding-icon { width: 44px; height: 44px; margin-bottom: 8px; }
   .onboarding-icon svg { width: 25px; height: 25px; }

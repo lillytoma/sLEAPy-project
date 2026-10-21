@@ -1,4 +1,4 @@
-import { Component, HostListener, effect, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, effect, signal } from '@angular/core';
 import { OnboardingTourService } from '../services/onboarding-tour.service';
 
 interface TourStep {
@@ -14,7 +14,7 @@ interface TourStep {
   standalone: true,
   templateUrl: './onboarding-tour.component.html',
 })
-export class OnboardingTourComponent {
+export class OnboardingTourComponent implements AfterViewInit, OnDestroy {
   private readonly storageKey = this.getStorageKey();
   readonly steps: TourStep[] = [
     {
@@ -49,6 +49,10 @@ export class OnboardingTourComponent {
 
   currentStep = signal(0);
   visible = signal(localStorage.getItem(this.storageKey) !== 'true');
+  @ViewChild('tourBubble') private tourBubble?: ElementRef<HTMLElement>;
+  @ViewChild('tourArrow') private tourArrow?: ElementRef<HTMLImageElement>;
+  private targetResizeObserver?: ResizeObserver;
+  private positionFrame?: number;
 
   constructor(private onboardingTourService: OnboardingTourService) {
     effect(() => {
@@ -58,6 +62,27 @@ export class OnboardingTourComponent {
         this.visible.set(true);
       }
     }, { allowSignalWrites: true });
+
+    effect(() => {
+      this.currentStep();
+      this.visible();
+      if (this.visible()) {
+        setTimeout(() => this.positionArrow());
+      }
+    });
+  }
+
+  ngAfterViewInit(): void {
+    this.positionArrow();
+    this.targetResizeObserver = new ResizeObserver(() => this.positionArrow());
+    this.targetResizeObserver.observe(document.body);
+  }
+
+  ngOnDestroy(): void {
+    this.targetResizeObserver?.disconnect();
+    if (this.positionFrame !== undefined) {
+      cancelAnimationFrame(this.positionFrame);
+    }
   }
 
   @HostListener('document:keydown.escape')
@@ -79,6 +104,16 @@ export class OnboardingTourComponent {
     }
   }
 
+  @HostListener('window:resize')
+  onResize(): void {
+    this.positionArrow();
+  }
+
+  @HostListener('window:scroll')
+  onScroll(): void {
+    this.positionArrow();
+  }
+
   skip(): void {
     this.finish();
   }
@@ -96,5 +131,37 @@ export class OnboardingTourComponent {
     return accountKey
       ? `sleapy-onboarding-complete:${encodeURIComponent(accountKey)}`
       : 'sleapy-onboarding-complete:anonymous';
+  }
+
+  private positionArrow(): void {
+    if (this.positionFrame !== undefined) {
+      cancelAnimationFrame(this.positionFrame);
+    }
+    this.positionFrame = requestAnimationFrame(() => this.positionArrowNow());
+  }
+
+  private positionArrowNow(): void {
+    const bubble = this.tourBubble?.nativeElement;
+    const arrow = this.tourArrow?.nativeElement;
+    const targetName = this.steps[this.currentStep()].target;
+    const target = document.querySelector<HTMLElement>(`[data-tour-target="${targetName}"]`);
+    if (!bubble || !arrow || !target || !this.visible()) return;
+
+    const bubbleRect = bubble.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const targetCenterX = targetRect.left + targetRect.width / 2;
+    const targetCenterY = targetRect.top + targetRect.height / 2;
+    const bubbleCenterX = bubbleRect.left + bubbleRect.width / 2;
+    const bubbleCenterY = bubbleRect.top + bubbleRect.height / 2;
+    const angle = Math.atan2(targetCenterY - bubbleCenterY, targetCenterX - bubbleCenterX) * 180 / Math.PI;
+    const arrowWidth = arrow.offsetWidth;
+    const arrowHeight = arrow.offsetHeight;
+    // The visible arrowhead is at approximately (819, 391) in the 840x778 source image.
+    const arrowTipX = arrowWidth * .975;
+    const arrowTipY = arrowHeight * .503;
+
+    arrow.style.left = `${targetCenterX - bubbleRect.left - arrowTipX}px`;
+    arrow.style.top = `${targetCenterY - bubbleRect.top - arrowTipY}px`;
+    arrow.style.transform = `rotate(${angle}deg)`;
   }
 }

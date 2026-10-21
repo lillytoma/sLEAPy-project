@@ -1,9 +1,10 @@
 @if (visible()) {
   <div class="onboarding-backdrop" role="presentation">
-    <section class="onboarding-cloud"
+    <section #tourBubble class="onboarding-cloud"
       [class]="'onboarding-cloud onboarding-cloud-' + steps[currentStep()].target"
       role="dialog" aria-modal="true" aria-labelledby="tour-title" aria-describedby="tour-description">
       <img class="onboarding-bubble-art" src="/assets/cloudspeechbubble.png" alt="" aria-hidden="true">
+      <img #tourArrow class="onboarding-arrow" src="/assets/hand-drawn-arrow-transparent.png" alt="" aria-hidden="true">
       <div class="onboarding-stars" aria-hidden="true"></div>
       <div class="onboarding-cloud-inner">
         <div class="onboarding-icon" aria-hidden="true">

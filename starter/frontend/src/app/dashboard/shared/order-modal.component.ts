@@ -8,6 +8,11 @@ import { Subscription } from 'rxjs';
 
 type ChartRange = '6mo' | '1mo' | '2wk' | '1wk' | '3d';
 
+interface PricePoint {
+  date: string;
+  value: number;
+}
+
 @Component({
   selector: 'app-order-modal',
   standalone: true,
@@ -43,6 +48,18 @@ export class OrderModalComponent {
   error = signal<string | null>(null);
 
   quickSellPcts = [25, 50, 75, 100];
+  chartRanges = [
+    { value: '6mo', label: '6M' },
+    { value: '1mo', label: '1M' },
+    { value: '2wk', label: '2W' },
+    { value: '1wk', label: '1W' },
+    { value: '3d', label: '3D' }
+  ] as const;
+  selectedChartRange = signal<ChartRange>('1mo');
+  livePrice = signal<number | null>(null);
+  priceHistory = signal<PricePoint[]>([]);
+  hoveredChartIndex = signal<number | null>(null);
+  private priceSubscription?: Subscription;
 
   constructor(
     private portfolioService: PortfolioService,
@@ -146,8 +163,6 @@ export class OrderModalComponent {
     };
   });
 
-  effectivePrice = computed(() => this.stock?.price ?? 0);
-
   // Buy computed properties
   calculatedBuyShares = computed(() => {
     if (this.inputMode() === 'shares') {
@@ -176,6 +191,58 @@ export class OrderModalComponent {
   });
 
   estimatedSellProceeds = computed(() => this.calculatedSellShares() * this.effectivePrice());
+
+  onChartHover(event: MouseEvent, svg: Element): void {
+    const rect = svg.getBoundingClientRect();
+    const chart = this.stockChart();
+    if (rect.width === 0 || chart.coords.length === 0) return;
+
+    const relativeX = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+    const chartX = chart.plot.left + relativeX * chart.width;
+    let nearestIndex = 0;
+    let nearestDistance = Infinity;
+
+    chart.coords.forEach((point, index) => {
+      const distance = Math.abs(point.x - chartX);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestIndex = index;
+      }
+    });
+
+    this.hoveredChartIndex.set(nearestIndex);
+  }
+
+  onChartLeave(): void {
+    this.hoveredChartIndex.set(null);
+  }
+
+  chartTooltipX(x: number): number {
+    return Math.max(2, Math.min(this.stockChart().width - 72, x - 35));
+  }
+
+  chartTooltipY(y: number): number {
+    return Math.max(2, y - 26);
+  }
+
+  chartTooltipTextX(x: number): number {
+    return this.chartTooltipX(x) + 35;
+  }
+
+  chartTooltipTextY(y: number): number {
+    return this.chartTooltipY(y) + 13;
+  }
+
+  formatChartPrice(value: number): string {
+    return `$${value.toFixed(2)}`;
+  }
+
+  formatChartDate(value: string): string {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+      ? ''
+      : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
 
   switchMode(newMode: 'buy' | 'sell'): void {
     this.mode.set(newMode);
