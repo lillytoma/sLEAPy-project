@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 
 type Tile = number | null;
+type WordleLetterState = 'correct' | 'present' | 'absent' | 'empty';
 
 interface ConnectionCard {
   word: string;
@@ -33,12 +34,17 @@ const CONNECTION_CARDS: ConnectionCard[] = [
   templateUrl: './games.component.html'
 })
 export class GamesComponent {
-  readonly activeGame = signal<'connections' | 'puzzle'>('puzzle');
+  readonly activeGame = signal<'connections' | 'puzzle' | 'wordle'>('wordle');
   readonly connectionCards = signal<ConnectionCard[]>([]);
   readonly selectedConnections = signal<number[]>([]);
   readonly solvedConnectionGroups = signal<string[]>([]);
   readonly connectionMistakes = signal(0);
   readonly maxConnectionMistakes = 4;
+  readonly wordleAnswer = 'SHARE';
+  readonly wordleGuesses = signal<string[]>([]);
+  readonly wordleInput = signal('');
+  readonly wordleMaxGuesses = 6;
+  readonly wordleMessage = signal('');
 
   readonly puzzleSizes = [3, 6, 8] as const;
   readonly puzzleSize = signal<number>(8);
@@ -54,8 +60,58 @@ export class GamesComponent {
     this.newGame();
   }
 
-  selectGame(game: 'connections' | 'puzzle'): void {
+  selectGame(game: 'connections' | 'puzzle' | 'wordle'): void {
     this.activeGame.set(game);
+  }
+
+  submitWordleGuess(): void {
+    const guess = this.wordleInput().trim().toUpperCase();
+    if (!/^[A-Z]{5}$/.test(guess)) {
+      this.wordleMessage.set('Enter a five-letter word.');
+      return;
+    }
+    if (this.wordleGuesses().includes(guess)) {
+      this.wordleMessage.set('You already tried that word.');
+      return;
+    }
+    if (this.wordleGuesses().length >= this.wordleMaxGuesses || this.wordleComplete()) return;
+
+    this.wordleGuesses.update(guesses => [...guesses, guess]);
+    this.wordleInput.set('');
+    this.wordleMessage.set('');
+  }
+
+  resetWordle(): void {
+    this.wordleGuesses.set([]);
+    this.wordleInput.set('');
+    this.wordleMessage.set('');
+  }
+
+  wordleComplete(): boolean {
+    return this.wordleGuesses().includes(this.wordleAnswer);
+  }
+
+  wordleFinished(): boolean {
+    return this.wordleComplete() || this.wordleGuesses().length >= this.wordleMaxGuesses;
+  }
+
+  wordleLetterState(guess: string, index: number): WordleLetterState {
+    if (!guess[index]) return 'empty';
+    if (guess[index] === this.wordleAnswer[index]) return 'correct';
+    if (this.wordleAnswer.includes(guess[index])) return 'present';
+    return 'absent';
+  }
+
+  wordleKeyboardState(letter: string): WordleLetterState {
+    const guesses = this.wordleGuesses();
+    if (guesses.some(guess => guess.split('').some((value, index) => value === letter && this.wordleLetterState(guess, index) === 'correct'))) return 'correct';
+    if (guesses.some(guess => guess.split('').some((value, index) => value === letter && this.wordleLetterState(guess, index) === 'present'))) return 'present';
+    if (guesses.some(guess => guess.includes(letter))) return 'absent';
+    return 'empty';
+  }
+
+  updateWordleInput(value: string): void {
+    this.wordleInput.set(value.replace(/[^a-z]/gi, '').slice(0, 5).toUpperCase());
   }
 
   selectPuzzleSize(size: number): void {

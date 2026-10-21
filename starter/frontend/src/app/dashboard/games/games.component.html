@@ -18,6 +18,20 @@
       type="button"
       role="tab"
       class="games-tab"
+      [class.is-active]="activeGame() === 'wordle'"
+      [attr.aria-selected]="activeGame() === 'wordle'"
+      aria-controls="wordle-game"
+      (click)="selectGame('wordle')">
+      <span class="games-tab-icon">W</span>
+      <span>
+        <strong>Market Wordle</strong>
+        <small>Guess the stock word</small>
+      </span>
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="games-tab"
       [class.is-active]="activeGame() === 'puzzle'"
       [attr.aria-selected]="activeGame() === 'puzzle'"
       aria-controls="ceo-puzzle-game"
@@ -29,6 +43,70 @@
       </span>
     </button>
   </div>
+
+  @if (activeGame() === 'wordle') {
+  <article class="wordle-card" id="wordle-game" role="tabpanel">
+    <div class="wordle-heading">
+      <div>
+        <p class="eyebrow">Daily market brainteaser</p>
+        <h2>Market Wordle</h2>
+        <p class="wordle-subtitle">Guess the five-letter stock word in six tries.</p>
+      </div>
+      <span class="wordle-counter">{{ wordleGuesses().length }} / {{ wordleMaxGuesses }}</span>
+    </div>
+
+    <div class="wordle-board" aria-label="Market Wordle guesses">
+      @for (guess of wordleGuesses(); track $index) {
+        <div class="wordle-row">
+          @for (letter of guess.split(''); track $index) {
+            <span class="wordle-tile" [class]="'wordle-' + wordleLetterState(guess, $index)">{{ letter }}</span>
+          }
+        </div>
+      }
+      @for (row of [].constructor(wordleMaxGuesses - wordleGuesses().length); track $index) {
+        <div class="wordle-row">
+          @for (tile of [0, 1, 2, 3, 4]; track tile) {
+            <span class="wordle-tile wordle-empty"></span>
+          }
+        </div>
+      }
+    </div>
+
+    @if (wordleComplete()) {
+      <div class="wordle-result wordle-win" role="status">Market mastered in {{ wordleGuesses().length }} {{ wordleGuesses().length === 1 ? 'try' : 'tries' }}!</div>
+    } @else if (wordleFinished()) {
+      <div class="wordle-result" role="status">The word was <strong>{{ wordleAnswer }}</strong>. Start a new game to try again.</div>
+    } @else if (wordleMessage()) {
+      <div class="wordle-message" role="alert">{{ wordleMessage() }}</div>
+    }
+
+    <form class="wordle-form" (submit)="$event.preventDefault(); submitWordleGuess()">
+      <label class="sr-only" for="wordle-guess">Five-letter guess</label>
+      <input
+        id="wordle-guess"
+        type="text"
+        maxlength="5"
+        autocomplete="off"
+        [value]="wordleInput()"
+        [disabled]="wordleFinished()"
+        (input)="updateWordleInput($any($event.target).value)"
+        placeholder="GUESS"
+        aria-label="Five-letter guess">
+      <button type="submit" class="button button-primary" [disabled]="wordleInput().length !== 5 || wordleFinished()">Submit</button>
+      <button type="button" class="button wordle-new" (click)="resetWordle()">New game</button>
+    </form>
+
+    <div class="wordle-keyboard" aria-label="Letter feedback">
+      @for (row of [['Q','W','E','R','T','Y','U','I','O','P'], ['A','S','D','F','G','H','J','K','L'], ['Z','X','C','V','B','N','M']]; track $index) {
+        <div class="wordle-keyboard-row">
+          @for (letter of row; track letter) {
+            <span class="wordle-key" [class]="'wordle-' + wordleKeyboardState(letter)">{{ letter }}</span>
+          }
+        </div>
+      }
+    </div>
+  </article>
+  }
 
   @if (activeGame() === 'connections') {
   <article class="connections-card" id="connections-game" role="tabpanel">
