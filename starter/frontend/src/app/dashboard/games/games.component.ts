@@ -33,6 +33,7 @@ const CONNECTION_CARDS: ConnectionCard[] = [
   templateUrl: './games.component.html'
 })
 export class GamesComponent {
+  readonly activeGame = signal<'connections' | 'puzzle'>('puzzle');
   readonly connectionCards = signal<ConnectionCard[]>([]);
   readonly selectedConnections = signal<number[]>([]);
   readonly solvedConnectionGroups = signal<string[]>([]);
@@ -48,6 +49,10 @@ export class GamesComponent {
   constructor() {
     this.newConnectionsGame();
     this.newGame();
+  }
+
+  selectGame(game: 'connections' | 'puzzle'): void {
+    this.activeGame.set(game);
   }
 
   newConnectionsGame(): void {

@@ -1,5 +1,37 @@
 <section class="games-page">
-  <article class="connections-card">
+  <div class="games-tabs" role="tablist" aria-label="Games">
+    <button
+      type="button"
+      role="tab"
+      class="games-tab"
+      [class.is-active]="activeGame() === 'connections'"
+      [attr.aria-selected]="activeGame() === 'connections'"
+      aria-controls="connections-game"
+      (click)="selectGame('connections')">
+      <span class="games-tab-icon">▦</span>
+      <span>
+        <strong>Market Connections</strong>
+        <small>Find the four groups</small>
+      </span>
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="games-tab"
+      [class.is-active]="activeGame() === 'puzzle'"
+      [attr.aria-selected]="activeGame() === 'puzzle'"
+      aria-controls="ceo-puzzle-game"
+      (click)="selectGame('puzzle')">
+      <span class="games-tab-icon">▧</span>
+      <span>
+        <strong>CEO Puzzle</strong>
+        <small>Reveal the portrait</small>
+      </span>
+    </button>
+  </div>
+
+  @if (activeGame() === 'connections') {
+  <article class="connections-card" id="connections-game" role="tabpanel">
     <div class="connections-heading">
       <div>
         <p class="eyebrow">Daily market brainteaser</p>
@@ -54,7 +86,10 @@
       <button type="button" class="button connections-new" (click)="newConnectionsGame()">New game</button>
     </div>
   </article>
+  }
 
+  @if (activeGame() === 'puzzle') {
+  <div id="ceo-puzzle-game" role="tabpanel">
   <div class="games-intro">
     <div>
       <p class="eyebrow">CEO challenge</p>
@@ -128,4 +163,6 @@
       </div>
     </aside>
   </div>
+  </div>
+  }
 </section>

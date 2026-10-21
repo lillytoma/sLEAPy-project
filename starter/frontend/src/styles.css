@@ -147,6 +147,15 @@ body {
 .dashboard-content-full { max-width: 1440px; margin: 0 auto; padding: 32px 40px 56px; min-width: 0; }
 
 /* CEO puzzle room */
+.games-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 7px; border: 1.5px solid var(--border); border-radius: 16px; background: var(--muted); }
+.games-tab { display: flex; align-items: center; justify-content: center; gap: 11px; min-height: 64px; padding: 10px 16px; border: 0; border-radius: 11px; background: transparent; color: var(--muted-foreground); cursor: pointer; text-align: left; transition: .15s ease; }
+.games-tab:hover { color: var(--primary); }
+.games-tab.is-active { background: var(--card); color: var(--primary); box-shadow: 2px 2px 0 var(--frog-ink); }
+.games-tab-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: var(--primary); color: var(--primary-foreground); font-size: 20px; line-height: 1; }
+.games-tab strong, .games-tab small { display: block; }
+.games-tab strong { font-size: 13px; }
+.games-tab small { margin-top: 3px; color: var(--muted-foreground); font-size: 11px; }
+.games-tab.is-active small { color: var(--primary); }
 .connections-card { padding: 26px; border: 1.5px solid var(--border); border-radius: 18px; background: var(--card); box-shadow: var(--card-shadow); }
 .connections-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
 .connections-heading h2 { margin-top: 5px; color: var(--foreground); font: 400 30px/1 var(--font-display); }
@@ -348,6 +357,11 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
   .games-note { padding: 18px; }
   .games-stats div { padding: 12px 10px; }
   .connections-card { padding: 18px; }
+  .games-tabs { gap: 5px; }
+  .games-tab { min-height: 58px; padding: 8px 6px; gap: 6px; }
+  .games-tab-icon { width: 26px; height: 26px; font-size: 16px; }
+  .games-tab strong { font-size: 11px; }
+  .games-tab small { font-size: 9px; }
   .connections-heading h2 { font-size: 26px; }
   .connections-grid { gap: 6px; }
   .connection-card { min-height: 62px; font-size: 11px; }
