@@ -28,7 +28,6 @@ interface Transaction {
   standalone: true,
   imports: [FrogMascotComponent],
   templateUrl: './history.component.html'
-
 })
 export class HistoryComponent implements OnInit {
   transactions: Transaction[] = [];

@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal, computed } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { PortfolioService, OrderRequest } from '../../services/portfolio.service';
@@ -12,13 +12,18 @@ interface PricePoint {
   value: number;
 }
 
+interface PricePoint {
+  date: string;
+  value: number;
+}
+
 @Component({
   selector: 'app-order-modal',
   standalone: true,
   imports: [FormsModule, HttpClientModule],
   templateUrl: './order-modal.component.html'
 })
-export class OrderModalComponent {
+export class OrderModalComponent implements OnInit, OnDestroy {
   @Input() stock!: MarketStock;
   @Input() availableCash = 0;
   @Input() sharesOwned = 0;
@@ -45,7 +50,6 @@ export class OrderModalComponent {
   confirmedShares = signal(0);
   confirmedTotal = signal(0);
   error = signal<string | null>(null);
-
   quickSellPcts = [25, 50, 75, 100];
   livePrice = signal<number | null>(null);
   priceHistory = signal<PricePoint[]>([]);
@@ -64,6 +68,8 @@ export class OrderModalComponent {
     private portfolioService: PortfolioService,
     private marketDataService: MarketDataService
   ) {}
+
+  effectivePrice = computed(() => this.livePrice() ?? this.stock?.price ?? 0);
 
   ngOnInit(): void {
     this.mode.set(this.initialMode === 'sell' && this.sharesOwned > 0 ? 'sell' : 'buy');
@@ -90,8 +96,6 @@ export class OrderModalComponent {
   ngOnDestroy(): void {
     this.priceSubscription?.unsubscribe();
   }
-
-  effectivePrice = computed(() => this.livePrice() ?? this.stock?.price ?? 0);
 
   selectChartRange(range: ChartRange): void {
     this.selectedChartRange.set(range);
@@ -192,28 +196,55 @@ export class OrderModalComponent {
   estimatedSellProceeds = computed(() => this.calculatedSellShares() * this.effectivePrice());
 
   onChartHover(event: MouseEvent, svg: Element): void {
-    const chart = this.stockChart();
     const rect = svg.getBoundingClientRect();
-    if (!rect.width || !chart.coords.length) return;
-    const x = ((event.clientX - rect.left) / rect.width) * chart.width;
-    let nearest = 0;
+    const chart = this.stockChart();
+    if (rect.width === 0 || chart.coords.length === 0) return;
+
+    const relativeX = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+    const chartX = chart.plot.left + relativeX * chart.width;
+    let nearestIndex = 0;
+    let nearestDistance = Infinity;
+
     chart.coords.forEach((point, index) => {
-      if (Math.abs(point.x - x) < Math.abs(chart.coords[nearest].x - x)) nearest = index;
+      const distance = Math.abs(point.x - chartX);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestIndex = index;
+      }
     });
-    this.hoveredChartIndex.set(nearest);
+
+    this.hoveredChartIndex.set(nearestIndex);
   }
 
   onChartLeave(): void {
     this.hoveredChartIndex.set(null);
   }
 
-  chartTooltipX(x: number): number { return Math.max(0, Math.min(250, x - 35)); }
-  chartTooltipY(y: number): number { return Math.max(0, y - 28); }
-  chartTooltipTextX(x: number): number { return this.chartTooltipX(x) + 35; }
-  chartTooltipTextY(y: number): number { return this.chartTooltipY(y) + 14; }
-  formatChartPrice(value: number): string { return `$${value.toFixed(2)}`; }
+  chartTooltipX(x: number): number {
+    return Math.max(2, Math.min(this.stockChart().width - 72, x - 35));
+  }
+
+  chartTooltipY(y: number): number {
+    return Math.max(2, y - 26);
+  }
+
+  chartTooltipTextX(x: number): number {
+    return this.chartTooltipX(x) + 35;
+  }
+
+  chartTooltipTextY(y: number): number {
+    return this.chartTooltipY(y) + 13;
+  }
+
+  formatChartPrice(value: number): string {
+    return `$${value.toFixed(2)}`;
+  }
+
   formatChartDate(value: string): string {
-    return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+      ? ''
+      : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 
   switchMode(newMode: 'buy' | 'sell'): void {
