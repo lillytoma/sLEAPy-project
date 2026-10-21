@@ -1,4 +1,60 @@
 <section class="games-page">
+  <article class="connections-card">
+    <div class="connections-heading">
+      <div>
+        <p class="eyebrow">Daily market brainteaser</p>
+        <h2>Market Connections</h2>
+        <p class="connections-subtitle">Find four groups of four related financial terms.</p>
+      </div>
+      <div class="connections-mistakes" aria-live="polite">
+        <span>Mistakes</span>
+        <strong>{{ connectionMistakes() }}/{{ maxConnectionMistakes }}</strong>
+      </div>
+    </div>
+
+    <div class="connections-groups">
+      @for (group of solvedConnectionGroups(); track group) {
+        <div class="connection-solved-group" [class]="'connection-group-' + group">
+          <strong>{{ connectionCategory(group) }}</strong>
+          <span>{{ connectionWords(group) }}</span>
+        </div>
+      }
+    </div>
+
+    <div class="connections-grid" aria-label="Market Connections cards">
+      @for (card of connectionCards(); track $index) {
+        @if (!isConnectionSolved($index)) {
+          <button
+            type="button"
+            class="connection-card"
+            [class.is-selected]="selectedConnections().includes($index)"
+            [attr.aria-pressed]="selectedConnections().includes($index)"
+            (click)="toggleConnection($index)">
+            {{ card.word }}
+          </button>
+        }
+      }
+    </div>
+
+    @if (connectionComplete()) {
+      <div class="connections-complete" role="status">
+        <span class="success-mark">✓</span>
+        <strong>Market mastered. Nice work!</strong>
+      </div>
+    } @else if (connectionMistakes() >= maxConnectionMistakes) {
+      <div class="connections-complete connections-game-over" role="status">
+        <strong>Out of guesses.</strong>
+        <span>Start a new board and try again.</span>
+      </div>
+    }
+
+    <div class="connections-actions">
+      <span class="connections-selected">{{ selectedConnections().length }} / 4 selected</span>
+      <button type="button" class="button connections-submit" [disabled]="selectedConnections().length !== 4 || connectionMistakes() >= maxConnectionMistakes" (click)="submitConnection()">Submit</button>
+      <button type="button" class="button connections-new" (click)="newConnectionsGame()">New game</button>
+    </div>
+  </article>
+
   <div class="games-intro">
     <div>
       <p class="eyebrow">CEO challenge</p>
@@ -18,7 +74,7 @@
           <p class="eyebrow">Today’s portrait</p>
           <h2>Who is this CEO?</h2>
         </div>
-        <span class="puzzle-level">3 × 3</span>
+        <span class="puzzle-level">16 × 16</span>
       </div>
 
       <div class="puzzle-board" aria-label="Sliding picture puzzle">
