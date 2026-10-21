@@ -1,7 +1,7 @@
 <div class="dashboard-shell">
   <header class="dashboard-header">
     <div class="dashboard-header-inner">
-      <a routerLink="home" class="dashboard-brand" aria-label="sLEAPy dashboard home">
+      <a routerLink="home" class="dashboard-brand" data-tour-target="brand" aria-label="sLEAPy dashboard home">
         <app-frog-mascot [size]="40" />
         <span>sLEAPy Stocks</span>
       </a>
@@ -15,7 +15,7 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
           Portfolio
         </a>
-        <a routerLink="markets" routerLinkActive="is-active">
+        <a routerLink="markets" routerLinkActive="is-active" data-tour-target="markets">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
           Markets
         </a>
@@ -30,10 +30,10 @@
       </nav>
 
       <div class="dashboard-actions">
-        <span class="live-badge"><span class="status-dot"></span><span>Live</span></span>
+        <span class="live-badge" data-tour-target="live"><span class="status-dot"></span><span>Live</span></span>
 
         <div class="account-menu-wrap">
-          <button type="button" class="avatar-badge" (click)="accountMenuOpen.set(!accountMenuOpen())"
+          <button type="button" class="avatar-badge" data-tour-target="account" (click)="accountMenuOpen.set(!accountMenuOpen())"
             [attr.aria-expanded]="accountMenuOpen()" aria-haspopup="true" aria-label="Account menu">
             {{ authService.userInitials() || '?' }}
           </button>
@@ -58,6 +58,11 @@
                 <span class="account-menu-value">{{ themeService.dark() ? 'Dark' : 'Light' }}</span>
               </button>
 
+              <button type="button" class="account-menu-row-button" (click)="replayTour()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 4 3 10 9 10"/></svg>
+                Take the tour again
+              </button>
+
               <div class="account-menu-divider"></div>
 
               <a routerLink="/login" class="account-menu-danger" (click)="accountMenuOpen.set(false)">
@@ -74,4 +79,6 @@
   <main class="dashboard-content-full">
     <router-outlet></router-outlet>
   </main>
+
+  <app-onboarding-tour />
 </div>

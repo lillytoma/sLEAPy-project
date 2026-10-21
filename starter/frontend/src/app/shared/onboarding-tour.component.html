@@ -1,0 +1,59 @@
+@if (visible()) {
+  <div class="onboarding-backdrop" role="presentation">
+    <section class="onboarding-cloud"
+      [class]="'onboarding-cloud onboarding-cloud-' + steps[currentStep()].target"
+      role="dialog" aria-modal="true" aria-labelledby="tour-title" aria-describedby="tour-description">
+      <img class="onboarding-bubble-art" src="/assets/cloudspeechbubble.png" alt="" aria-hidden="true">
+      <div class="onboarding-stars" aria-hidden="true"></div>
+      <div class="onboarding-cloud-inner">
+        <div class="onboarding-icon" aria-hidden="true">
+          @switch (steps[currentStep()].icon) {
+            @case ('brand') {
+              <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4">
+                <path d="M13 31a8 8 0 0 1 1.7-15.8A11 11 0 0 1 35 19a6 6 0 0 1 0 12H13Z"/>
+                <path d="M19 25h.01M29 25h.01M21 31c1.5 1.5 4.5 1.5 6 0"/>
+              </svg>
+            }
+            @case ('nav') {
+              <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4">
+                <path d="M8 15h32M8 24h32M8 33h22" stroke-linecap="round"/>
+                <circle cx="37" cy="33" r="3"/>
+              </svg>
+            }
+            @case ('account') {
+              <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4">
+                <circle cx="24" cy="17" r="7"/><path d="M11 38c1.7-7 6-10 13-10s11.3 3 13 10"/>
+              </svg>
+            }
+            @case ('live') {
+              <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4">
+                <path d="M8 34 18 24l7 6 15-17" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M31 13h9v9" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            }
+          }
+        </div>
+
+        @if (steps[currentStep()].eyebrow) {
+          <p class="onboarding-eyebrow">{{ steps[currentStep()].eyebrow }}</p>
+        }
+        <h2 id="tour-title">{{ steps[currentStep()].title }}</h2>
+        <p id="tour-description" class="onboarding-description">{{ steps[currentStep()].description }}</p>
+
+        <div class="onboarding-footer">
+          <button type="button" class="onboarding-skip" (click)="skip()">Skip tour</button>
+          <div class="onboarding-controls">
+            <span class="onboarding-progress" aria-live="polite">{{ currentStep() + 1 }} / {{ steps.length }}</span>
+            @if (currentStep() > 0) {
+              <button type="button" class="onboarding-back" (click)="previous()">Back</button>
+            }
+            <button type="button" class="button button-primary onboarding-next" (click)="next()">
+              {{ currentStep() === steps.length - 1 ? 'Let’s go' : 'Next' }}
+              <span aria-hidden="true">→</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+}

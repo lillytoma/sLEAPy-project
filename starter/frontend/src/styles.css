@@ -144,6 +144,52 @@ body {
 .account-menu-danger:hover { background: rgba(196, 69, 58, 0.1); color: var(--error); }
 
 .dashboard-content-full { max-width: 1440px; margin: 0 auto; padding: 32px 40px 56px; min-width: 0; }
+
+/* New-user tour */
+.onboarding-backdrop { position: fixed; inset: 0; z-index: 100; pointer-events: none; background: rgba(42, 29, 20, .2); }
+.onboarding-cloud { position: fixed; width: min(100% - 32px, 570px); height: 570px; color: #111; isolation: isolate; pointer-events: auto; z-index: 101; }
+.onboarding-bubble-art { position: absolute; inset: -58px; z-index: 0; display: block; width: calc(100% + 116px); height: calc(100% + 116px); object-fit: contain; pointer-events: none; }
+.onboarding-cloud-brand { top: 88px; left: 28px; animation: onboarding-fade-brand .3s ease-out both; }
+.onboarding-cloud-markets { top: 88px; left: 50%; transform: translateX(-50%); animation: onboarding-fade-markets .3s ease-out both; }
+.onboarding-cloud-live { top: 88px; right: 126px; animation: onboarding-fade-live .3s ease-out both; }
+.onboarding-cloud-account { top: 88px; right: 20px; animation: onboarding-fade-account .3s ease-out both; }
+.onboarding-cloud-inner { position: relative; z-index: 1; width: 330px; margin: 0 auto; padding: 135px 0 58px; transform: translateX(-36px); }
+.onboarding-stars { display: none; }
+.onboarding-icon { display: grid; place-items: center; width: 52px; height: 52px; margin: 0 auto 12px; border: 3px solid #090909; border-radius: 50%; background: var(--accent); color: #111; box-shadow: 3px 3px 0 #090909; }
+.onboarding-icon svg { width: 29px; height: 29px; }
+.onboarding-eyebrow { margin-bottom: 6px; color: var(--primary); font-size: 9px; font-weight: 800; letter-spacing: .12em; text-align: center; text-transform: uppercase; }
+.onboarding-cloud h2 { max-width: 310px; margin: 0 auto; font-family: var(--font-display); font-size: clamp(22px, 3.5vw, 30px); line-height: 1.05; text-align: center; overflow-wrap: anywhere; }
+.onboarding-description { max-width: 330px; margin: 10px auto 19px; color: var(--muted-foreground); font-size: 12px; line-height: 1.4; text-align: center; }
+.onboarding-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.onboarding-skip, .onboarding-back { border: 0; background: none; color: var(--foreground); cursor: pointer; font: 700 10px var(--font-body); }
+.onboarding-skip:hover, .onboarding-back:hover { color: var(--primary); }
+.onboarding-controls { display: flex; align-items: center; gap: 8px; }
+.onboarding-progress { color: var(--muted-foreground); font-size: 11px; font-weight: 700; }
+.onboarding-next { padding: 9px 14px; font-size: 12px; }
+.onboarding-next span { margin-left: 5px; }
+@keyframes onboarding-fade-brand { from { opacity: 0; } to { opacity: 1; } }
+@keyframes onboarding-fade-markets { from { opacity: 0; } to { opacity: 1; } }
+@keyframes onboarding-fade-live { from { opacity: 0; } to { opacity: 1; } }
+@keyframes onboarding-fade-account { from { opacity: 0; } to { opacity: 1; } }
+.dark .onboarding-cloud { color: #101b36; }
+.dark .onboarding-stars { display: block; position: absolute; inset: 0; z-index: 0; opacity: .8; background-image: radial-gradient(circle at 14% 24%, #fff5b5 0 1px, transparent 1.8px), radial-gradient(circle at 83% 19%, #fff 0 1.2px, transparent 2px), radial-gradient(circle at 73% 65%, #fff5b5 0 1px, transparent 1.8px), radial-gradient(circle at 20% 78%, #fff 0 1px, transparent 1.8px), radial-gradient(circle at 92% 86%, #fff5b5 0 1px, transparent 1.8px); }
+
+@media (max-width: 560px) {
+  .onboarding-cloud-brand, .onboarding-cloud-markets, .onboarding-cloud-live, .onboarding-cloud-account { top: 70px; left: 50%; right: auto; width: min(100% - 8px, 470px); height: 470px; transform: translateX(-50%); }
+  .onboarding-bubble-art { inset: -42px; width: calc(100% + 84px); height: calc(100% + 84px); }
+  .onboarding-cloud-inner { width: min(100% - 112px, 298px); padding: 112px 0 42px; transform: translateX(-24px); }
+  .onboarding-icon { width: 44px; height: 44px; margin-bottom: 8px; }
+  .onboarding-icon svg { width: 25px; height: 25px; }
+  .onboarding-eyebrow { margin-bottom: 5px; font-size: 9px; }
+  .onboarding-cloud h2 { max-width: 270px; font-size: 22px; }
+  .onboarding-description { max-width: 270px; margin: 8px auto 16px; font-size: 11px; line-height: 1.35; }
+  .onboarding-footer { gap: 4px; }
+  .onboarding-skip, .onboarding-back, .onboarding-progress { font-size: 10px; }
+  .onboarding-controls { gap: 5px; }
+  .onboarding-next { padding: 7px 11px; font-size: 10px; }
+  .onboarding-footer { align-items: flex-end; }
+  .onboarding-controls { flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+}
 .dashboard-home { display: flex; flex-direction: column; gap: 26px; }
 .page-intro { display: flex; align-items: end; justify-content: space-between; gap: 24px; }
 .page-intro h1 { margin: 5px 0 4px; font-family: var(--font-display); font-size: clamp(32px, 4vw, 46px); font-weight: 700; letter-spacing: -.02em; line-height: 1; }
@@ -407,25 +453,27 @@ html[data-font-size='large'] .dashboard-shell { zoom: 1.1; }
 
 /* Old-film overlay: vignette (::before) + jittering grain (::after).
    Both ignore the mouse, so nothing underneath is blocked. */
-body::before, body::after {
-  content: '';
+.landing-film {
+  position: relative;
+  display: block;
+  isolation: isolate;
+}
+.landing-film-video {
   position: fixed;
-  pointer-events: none;
-  z-index: 2147483000;
-}
-body::before {
   inset: 0;
-  background: radial-gradient(ellipse at center, transparent 55%, var(--film-vignette) 100%);
-  animation: film-flicker 5s steps(1) infinite;
-}
-body::after {
-  inset: -50%;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.13 0 0 0 0 0.07 0 0 0 1.6 -0.55'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  opacity: .32;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  opacity: .45;
   mix-blend-mode: multiply;
-  animation: film-grain .8s steps(1) infinite;
 }
-.dark body::after { mix-blend-mode: screen; opacity: .1; }
+.landing-film header, .landing-film main {
+  position: relative;
+  z-index: 1;
+}
+.dark .landing-film-video { mix-blend-mode: screen; opacity: .2; }
 
 @keyframes film-grain {
   0%   { transform: translate(0, 0); }
@@ -445,7 +493,6 @@ body::after {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body::before, body::after { animation: none; }
   .button { transition: none; }
 }
 
