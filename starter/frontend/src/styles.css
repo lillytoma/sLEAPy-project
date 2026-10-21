@@ -186,6 +186,10 @@ body {
 .color-vision-protanopia .onboarding-arrow { filter: brightness(0) saturate(100%) invert(29%) sepia(93%) saturate(1800%) hue-rotate(211deg) brightness(84%); }
 .color-vision-deuteranopia .onboarding-arrow { filter: brightness(0) saturate(100%) invert(23%) sepia(30%) saturate(1300%) hue-rotate(144deg) brightness(78%); }
 .color-vision-tritanopia .onboarding-arrow { filter: brightness(0) saturate(100%) invert(22%) sepia(46%) saturate(2600%) hue-rotate(294deg) brightness(77%); }
+.dark .onboarding-arrow,
+.dark.color-vision-protanopia .onboarding-arrow,
+.dark.color-vision-deuteranopia .onboarding-arrow,
+.dark.color-vision-tritanopia .onboarding-arrow { filter: brightness(0) invert(1); }
 
 @media (max-width: 560px) {
   .onboarding-cloud-brand, .onboarding-cloud-markets, .onboarding-cloud-live, .onboarding-cloud-account { top: 70px; left: 50%; right: auto; width: min(100% - 8px, 470px); height: 470px; transform: translateX(-50%); }
