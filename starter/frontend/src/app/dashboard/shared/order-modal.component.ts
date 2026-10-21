@@ -7,6 +7,10 @@ import { MarketDataService } from '../../services/market-data.service';
 import { Subscription } from 'rxjs';
 
 type ChartRange = '6mo' | '1mo' | '2wk' | '1wk' | '3d';
+interface PricePoint {
+  date: string;
+  value: number;
+}
 
 @Component({
   selector: 'app-order-modal',
@@ -43,6 +47,18 @@ export class OrderModalComponent {
   error = signal<string | null>(null);
 
   quickSellPcts = [25, 50, 75, 100];
+  livePrice = signal<number | null>(null);
+  priceHistory = signal<PricePoint[]>([]);
+  priceSubscription?: Subscription;
+  chartRanges = [
+    { value: '6mo', label: '6M' },
+    { value: '1mo', label: '1M' },
+    { value: '2wk', label: '2W' },
+    { value: '1wk', label: '1W' },
+    { value: '3d', label: '3D' }
+  ] as const;
+  selectedChartRange = signal<ChartRange>('6mo');
+  hoveredChartIndex = signal<number | null>(null);
 
   constructor(
     private portfolioService: PortfolioService,
@@ -146,8 +162,6 @@ export class OrderModalComponent {
     };
   });
 
-  effectivePrice = computed(() => this.stock?.price ?? 0);
-
   // Buy computed properties
   calculatedBuyShares = computed(() => {
     if (this.inputMode() === 'shares') {
@@ -176,6 +190,31 @@ export class OrderModalComponent {
   });
 
   estimatedSellProceeds = computed(() => this.calculatedSellShares() * this.effectivePrice());
+
+  onChartHover(event: MouseEvent, svg: Element): void {
+    const chart = this.stockChart();
+    const rect = svg.getBoundingClientRect();
+    if (!rect.width || !chart.coords.length) return;
+    const x = ((event.clientX - rect.left) / rect.width) * chart.width;
+    let nearest = 0;
+    chart.coords.forEach((point, index) => {
+      if (Math.abs(point.x - x) < Math.abs(chart.coords[nearest].x - x)) nearest = index;
+    });
+    this.hoveredChartIndex.set(nearest);
+  }
+
+  onChartLeave(): void {
+    this.hoveredChartIndex.set(null);
+  }
+
+  chartTooltipX(x: number): number { return Math.max(0, Math.min(250, x - 35)); }
+  chartTooltipY(y: number): number { return Math.max(0, y - 28); }
+  chartTooltipTextX(x: number): number { return this.chartTooltipX(x) + 35; }
+  chartTooltipTextY(y: number): number { return this.chartTooltipY(y) + 14; }
+  formatChartPrice(value: number): string { return `$${value.toFixed(2)}`; }
+  formatChartDate(value: string): string {
+    return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
 
   switchMode(newMode: 'buy' | 'sell'): void {
     this.mode.set(newMode);
