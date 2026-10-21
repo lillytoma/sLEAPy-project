@@ -7,7 +7,7 @@
 
       @if (watchlistItems().length === 0) {
         <!-- Empty state -->
-        <div class="rounded-xl border p-16 text-center flex flex-col items-center gap-3" style="background-color:var(--card);border-color:var(--border)">
+        <div class="panel p-16 text-center flex flex-col items-center gap-3">
           <app-frog-mascot variant="scene" [size]="110" />
           <h3 class="font-serif text-lg font-bold" style="color:var(--foreground)">Your watchlist is still snoozing</h3>
           <p class="text-sm" style="color:var(--muted-foreground)">
@@ -16,7 +16,7 @@
         </div>
       } @else {
         <!-- Watchlist Table -->
-        <div class="rounded-xl border overflow-hidden" style="background-color:var(--card);border-color:var(--border)">
+        <div class="panel overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead>
@@ -50,21 +50,14 @@
                       </div>
                     </td>
                     <td class="px-4 py-3 text-right font-mono" style="color:var(--foreground)">${{ item.price.toFixed(2) }}</td>
-                    <td class="px-4 py-3">
-                      <div class="flex items-center gap-2 justify-end">
-                        <button (click)="openBuy(item)"
-                          class="button button-primary"
-                          style="padding:8px 16px;font-size:12px;">
-                          Buy
-                        </button>
-                        @if (portfolioService.getHolding(item.symbol)) {
-                          <button (click)="openSell(item)"
-                            class="px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap"
-                            style="background-color:var(--error-tint);color:var(--error)">
-                            Sell
-                          </button>
-                        }
-                      </div>
+                    <td class="px-4 py-3 text-right">
+                      <!-- One button for every row; the order popup has its own Buy/Sell switch. -->
+                      <button (click)="openTrade(item)"
+                        [title]="'Buy or sell ' + item.symbol"
+                        class="button button-primary"
+                        style="padding:8px 16px;font-size:12px;min-width:96px;">
+                        Trade
+                      </button>
                     </td>
                   </tr>
                 }

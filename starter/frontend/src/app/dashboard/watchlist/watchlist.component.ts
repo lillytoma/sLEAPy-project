@@ -56,22 +56,12 @@ export class WatchlistComponent implements OnInit, OnDestroy {
     this.portfolioService.toggleWatchlist(symbol);
   }
 
-  openBuy(item: WatchlistStock): void {
+  openTrade(item: WatchlistStock): void {
     const instrument = this.marketDataService.instruments().find((s) => s.symbol === item.symbol);
     if (instrument) {
       const live = this.livePrices().get(item.symbol);
       const stock = this.toMarketStock(instrument, live?.currentPrice == null ? item.price : Number(live.currentPrice));
       this.orderModal.set({ stock, mode: 'buy' });
-    }
-  }
-
-  openSell(item: WatchlistStock): void {
-    const h = this.portfolioService.getHolding(item.symbol);
-    const instrument = this.marketDataService.instruments().find((s) => s.symbol === item.symbol);
-    if (h && instrument) {
-      const live = this.livePrices().get(item.symbol);
-      const price = live?.currentPrice == null ? h.current : Number(live.currentPrice);
-      this.orderModal.set({ stock: this.toMarketStock(instrument, price), mode: 'sell' });
     }
   }
 

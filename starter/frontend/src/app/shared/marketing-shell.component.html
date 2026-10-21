@@ -20,7 +20,7 @@
       <span class="font-serif text-xl font-bold" style="color:var(--foreground)">sLEAPy Stocks</span>
     </a>
     <button (click)="themeService.toggleDark()"
-      class="p-2.5 rounded-full border"
+      class="p-2.5 rounded-full outlined"
       style="background-color:var(--background);border-color:var(--border);color:var(--foreground)"
       [title]="themeService.dark() ? 'Switch to light mode' : 'Switch to dark mode'">
       @if (themeService.dark()) {

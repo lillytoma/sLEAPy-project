@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnDestroy, OnInit, signal, computed } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { PortfolioService, OrderRequest } from '../../services/portfolio.service';
@@ -14,7 +14,7 @@ type ChartRange = '6mo' | '1mo' | '2wk' | '1wk' | '3d';
   imports: [FormsModule, HttpClientModule],
   templateUrl: './order-modal.component.html'
 })
-export class OrderModalComponent implements OnInit, OnDestroy {
+export class OrderModalComponent {
   @Input() stock!: MarketStock;
   @Input() availableCash = 0;
   @Input() sharesOwned = 0;
@@ -41,18 +41,6 @@ export class OrderModalComponent implements OnInit, OnDestroy {
   confirmedShares = signal(0);
   confirmedTotal = signal(0);
   error = signal<string | null>(null);
-  private priceSubscription?: Subscription;
-  private livePrice = signal<number | null>(null);
-  private priceHistory = signal<{ date: string; value: number }[]>([]);
-  hoveredChartIndex = signal<number | null>(null);
-  selectedChartRange = signal<ChartRange>('1mo');
-  chartRanges: { value: ChartRange; label: string }[] = [
-    { value: '6mo', label: '6M' },
-    { value: '1mo', label: '1M' },
-    { value: '2wk', label: '2W' },
-    { value: '1wk', label: '1W' },
-    { value: '3d', label: '3D' }
-  ];
 
   quickSellPcts = [25, 50, 75, 100];
 
@@ -158,47 +146,7 @@ export class OrderModalComponent implements OnInit, OnDestroy {
     };
   });
 
-  onChartHover(event: MouseEvent, svg: Element): void {
-    const chart = this.stockChart();
-    const rect = svg.getBoundingClientRect();
-    if (!rect.width || !chart.coords.length) return;
-    const x = ((event.clientX - rect.left) / rect.width) * chart.width;
-    const index = Math.max(0, Math.min(chart.coords.length - 1,
-      Math.round(((x - chart.plot.left) / chart.plotWidth) * (chart.coords.length - 1))));
-    this.hoveredChartIndex.set(index);
-  }
-
-  onChartLeave(): void {
-    this.hoveredChartIndex.set(null);
-  }
-
-  chartTooltipX(x: number): number {
-    return x > 240 ? x - 76 : x + 6;
-  }
-
-  chartTooltipTextX(x: number): number {
-    return x > 240 ? x - 41 : x + 41;
-  }
-
-  chartTooltipY(y: number): number {
-    return Math.max(y - 25, 2);
-  }
-
-  chartTooltipTextY(y: number): number {
-    return Math.max(y - 12, 15);
-  }
-
-  private formatChartPrice(value: number): string {
-    return `$${value.toFixed(value < 10 ? 2 : 0)}`;
-  }
-
-  private formatChartDate(value: string): string {
-    const date = new Date(value);
-    if (this.selectedChartRange() === '3d') {
-      return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    }
-    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-  }
+  effectivePrice = computed(() => this.stock?.price ?? 0);
 
   // Buy computed properties
   calculatedBuyShares = computed(() => {

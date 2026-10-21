@@ -34,6 +34,32 @@ export interface Holding {
   sector: string;
 }
 
+const STOCK_SECTORS: Record<string, string> = {
+  AAPL: 'Technology',
+  MSFT: 'Technology',
+  NVDA: 'Technology',
+  AMZN: 'Consumer Discretionary',
+  GOOG: 'Communication Services',
+  GOOGL: 'Communication Services',
+  META: 'Communication Services',
+  NFLX: 'Communication Services',
+  TSLA: 'Consumer Discretionary',
+  JPM: 'Financials',
+  V: 'Financials',
+  'BRK.B': 'Financials',
+  XOM: 'Energy',
+  SPY: 'Exchange-Traded Funds',
+  QQQ: 'Exchange-Traded Funds',
+  IWM: 'Exchange-Traded Funds',
+  BTC: 'Cryptocurrency',
+  ETH: 'Cryptocurrency',
+  US10Y: 'Fixed Income'
+};
+
+export function getSectorForSymbol(symbol: string, fallback = 'Other'): string {
+  return STOCK_SECTORS[symbol.trim().toUpperCase()] ?? fallback;
+}
+
 export interface PortfolioPoint {
   date: string;
   value: number;

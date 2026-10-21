@@ -25,7 +25,6 @@ interface DashboardTransaction {
 })
 
 export class HomeComponent implements OnInit, OnDestroy {
-  transactions = signal<DashboardTransaction[]>([]);
   private orderHistory = signal<TransactionResponse[]>([]);
   orderModal = signal<{ stock: MarketStock; mode: 'buy' | 'sell' } | null>(null);
   today = new Date();
@@ -33,6 +32,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   private livePrices = signal<Map<string, any>>(new Map());
   private priceSubscription?: Subscription;
   private transactionRefreshSubscription?: Subscription;
+  private clockSubscription?: Subscription;
 
   constructor(
     public portfolioService: PortfolioService,
@@ -47,6 +47,13 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (!raw) return 'there';
     const localPart = raw.split('@')[0];
     return localPart.charAt(0).toUpperCase() + localPart.slice(1);
+  });
+
+  // Ticks every minute so the greeting flips (e.g. morning → afternoon) without a reload.
+  private now = signal(new Date());
+  greeting = computed(() => {
+    const hour = this.now().getHours();
+    return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   });
 
   // Weekday-only approximation (no holiday/after-hours awareness) since the backend
@@ -73,20 +80,18 @@ export class HomeComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.priceSubscription?.unsubscribe();
     this.transactionRefreshSubscription?.unsubscribe();
+    this.clockSubscription?.unsubscribe();
   }
 
   refreshTransactions(): void {
     this.portfolioService.getTransactions().subscribe({
-      next: (records) => {
-        this.transactions.set(records.map((record) => ({
-          symbol: record.instrument.symbol,
-          status: record.status || 'Filled',
-          shares: Number(record.quantity) || 0,
-          total: (Number(record.quantity) || 0) * (Number(record.purchasePrice) || 0),
-          date: this.formatDate(record.timeOfPurchase)
-        })));
-        this.orderHistory.set(records.filter((record) => record.status !== 'REJECTED'));
-      },
+      next: (records) => this.transactions.set(records.map((record) => ({
+        symbol: record.instrument.symbol,
+        status: record.status || 'Filled',
+        shares: Number(record.quantity) || 0,
+        total: (Number(record.quantity) || 0) * (Number(record.purchasePrice) || 0),
+        date: this.formatDate(record.timeOfPurchase)
+      }))),
       error: (error) => console.error('Unable to load transaction history:', error)
     });
   }
@@ -98,12 +103,13 @@ export class HomeComponent implements OnInit, OnDestroy {
     const totalReturn = totalValue - totalCost;
     const returnPct = totalCost > 0 ? (totalReturn / totalCost) * 100 : 0;
     return [
-      { label: 'Portfolio Value', value: '$' + this.portfolioService.netWorth().toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: 'var(--foreground)', sub: '', subColor: 'var(--muted-foreground)' },
-      { label: 'Total Return', value: (returnPct >= 0 ? '+' : '') + returnPct.toFixed(1) + '%', color: totalReturn >= 0 ? 'var(--success)' : 'var(--error)', sub: '$' + totalReturn.toFixed(0), subColor: totalReturn >= 0 ? 'var(--success)' : 'var(--error)' },
+      { label: 'Portfolio Value', value: '$' + this.portfolioService.netWorth().toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: 'var(--foreground)', sub: '', subColor: '', subBg: '' },
+      // Sign goes before the "$" ("-$50.00", not "$-50") so losses read the way traders expect.
+      { label: 'Total G/L', value: (returnPct >= 0 ? '+' : '') + returnPct.toFixed(1) + '%', color: totalReturn >= 0 ? 'var(--success)' : 'var(--error)', sub: (totalReturn >= 0 ? '+' : '-') + '$' + Math.abs(totalReturn).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','), subColor: totalReturn >= 0 ? 'var(--success)' : 'var(--error)', subBg: totalReturn >= 0 ? 'var(--success-tint)' : 'var(--error-tint)' },
       // No backend-tracked daily open/close, so "Open Positions" stands in for a
       // "Today's Gain" card rather than a fabricated intraday number.
-      { label: 'Open Positions', value: h.length.toString(), color: 'var(--foreground)', sub: '', subColor: 'var(--muted-foreground)' },
-      { label: 'Cash Balance', value: '$' + this.portfolioService.availableCash().toFixed(2), color: 'var(--foreground)', sub: 'available to trade', subColor: 'var(--muted-foreground)' },
+      { label: 'Open Positions', value: h.length.toString(), color: 'var(--foreground)', sub: '', subColor: '', subBg: '' },
+      { label: 'Cash Balance', value: '$' + this.portfolioService.availableCash().toFixed(2), color: 'var(--foreground)', sub: '', subColor: '', subBg: '' },
     ];
   });
 

@@ -5,7 +5,7 @@
       </div>
       <!-- Search bar -->
       <div class="flex items-center gap-3">
-        <div class="flex rounded-md overflow-hidden border flex-shrink-0" style="border-color:var(--border)">
+        <div class="flex rounded-xl overflow-hidden flex-shrink-0 outlined">
           <button type="button" (click)="searchMode.set('ticker')"
             class="px-3 py-2.5 text-xs font-semibold transition-colors"
             [style.background-color]="searchMode() === 'ticker' ? 'var(--primary)' : 'var(--card)'"
@@ -27,14 +27,14 @@
             [ngModel]="searchQuery()" 
             (ngModelChange)="onSearch($event)"
             [placeholder]="searchMode() === 'ticker' ? 'Search by ticker' : 'Search by company name'"
-            class="w-full pl-9 pr-4 py-2.5 rounded-md text-sm border outline-none"
+            class="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm border outline-none"
             style="background-color:var(--card);color:var(--foreground);border-color:var(--border)" />
         </div>
         <span class="text-sm" style="color:var(--muted-foreground)">{{ filteredStocks().length }} stocks</span>
       </div>
 
       <!-- Table -->
-      <div class="rounded-xl border overflow-hidden" style="background-color:var(--card);border-color:var(--border)">
+      <div class="panel overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>

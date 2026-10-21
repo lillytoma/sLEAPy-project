@@ -28,9 +28,9 @@ export class PortfolioComponent implements OnInit {
     const pnl = totalValue - totalCost;
     const returnPct = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
     return [
-      { label: 'Total Value', value: '$' + this.portfolioService.netWorth().toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: 'var(--foreground)' },
-      { label: 'Total Cost', value: '$' + totalCost.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: 'var(--foreground)' },
-      { label: 'Overall Return', value: (returnPct >= 0 ? '+' : '') + returnPct.toFixed(2) + '%', color: returnPct >= 0 ? 'var(--success)' : 'var(--error)' },
+      { label: 'Portfolio Value', value: '$' + this.portfolioService.netWorth().toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: 'var(--foreground)' },
+      { label: 'Holdings Value', value: '$' + totalCost.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: 'var(--foreground)' },
+      { label: 'Overall G/L', value: (returnPct >= 0 ? '+' : '') + returnPct.toFixed(2) + '%', color: returnPct >= 0 ? 'var(--success)' : 'var(--error)' },
       { label: 'Cash Balance', value: '$' + this.portfolioService.availableCash().toFixed(2), color: 'var(--foreground)' },
     ];
   });
@@ -60,25 +60,57 @@ export class PortfolioComponent implements OnInit {
     return sectors.size;
   });
 
-  // Bars use the exact same per-holding return % as the holdings table below;
-  // gridlines are just evenly-spaced axis labels derived from that same max, for readability.
+  // Horizontal diverging bars: each holding's return since purchase (same % as the
+  // holdings table), growing right from 0% for gains and left for losses.
+  // Positions are percentages of the plot width so the chart scales with the card.
   barChart = computed(() => {
-    const h = this.portfolioService.holdings();
-    const maxH = 80;
-    const maxPct = Math.max(...h.map((x) => Math.abs(((x.current - x.avgCost) / x.avgCost) * 100)), 1);
-    const step = Math.max(Math.ceil(maxPct / 3 / 5) * 5, 5);
+    const rows = this.portfolioService.holdings()
+      .map((x) => {
+        const cost = x.shares * x.avgCost;
+        const gain = x.shares * x.current - cost;
+        const pct = x.avgCost > 0 ? ((x.current - x.avgCost) / x.avgCost) * 100 : 0;
+        return { symbol: x.symbol, name: x.name, shares: x.shares, avgCost: x.avgCost, current: x.current, pct, gain };
+      })
+      .sort((a, b) => b.pct - a.pct);
 
-    const bars = h.map((x) => {
-      const pct = ((x.current - x.avgCost) / x.avgCost) * 100;
-      return { symbol: x.symbol, pct, height: Math.abs(pct) / maxPct * maxH };
-    });
-    const gridlines = [step * 3, step * 2, step, 0, -step].map((value) => ({
-      value,
-      y: 100 - (value / maxPct) * maxH
+    // Domain always includes 0 so the baseline is visible, snapped to round steps.
+    const lo = Math.min(0, ...rows.map((r) => r.pct));
+    const hi = Math.max(0, ...rows.map((r) => r.pct));
+    const step = this.niceStep(Math.max(hi - lo, 1) / 4);
+    const domainMin = Math.floor(lo / step) * step;
+    const domainMax = Math.max(Math.ceil(hi / step) * step, domainMin + step);
+    const toX = (value: number) => ((value - domainMin) / (domainMax - domainMin)) * 100;
+    const zeroX = toX(0);
+
+    const bars = rows.map((r) => ({
+      ...r,
+      left: Math.min(toX(r.pct), zeroX),
+      width: Math.abs(toX(r.pct) - zeroX),
+      positive: r.pct >= 0
     }));
+    const ticks: { value: number; x: number; label: string }[] = [];
+    for (let value = domainMin; value <= domainMax + step / 2; value += step) {
+      const rounded = Math.round(value * 100) / 100;
+      ticks.push({ value: rounded, x: toX(rounded), label: (rounded > 0 ? '+' : '') + rounded + '%' });
+    }
 
-    return { bars, gridlines, maxH };
+    return { bars, ticks, zeroX, best: bars[0], worst: bars[bars.length - 1] };
   });
+
+  // Rounds a raw step up to 1, 2, 2.5 or 5 times a power of ten.
+  private niceStep(rawStep: number): number {
+    const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    const normalized = rawStep / magnitude;
+    return (normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 2.5 ? 2.5 : normalized <= 5 ? 5 : 10) * magnitude;
+  }
+
+  formatSignedPct(value: number): string {
+    return (value >= 0 ? '+' : '') + value.toFixed(2) + '%';
+  }
+
+  formatSignedDollar(value: number): string {
+    return (value >= 0 ? '+' : '-') + '$' + Math.abs(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
 
   openSell(symbol: string, shares: number, price: number): void {
     const holding = this.portfolioService.getHolding(symbol);
