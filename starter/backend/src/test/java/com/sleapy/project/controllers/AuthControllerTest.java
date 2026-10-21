@@ -109,4 +109,24 @@ class AuthControllerTest {
         );
     
     }
+
+    @Test
+    void refreshReturnsNewTokenForValidAuthorizationHeader() throws Exception {
+        when(jwtService.refreshToken("Bearer current-token")).thenReturn("refreshed-token");
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .header("Authorization", "Bearer current-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.jwtToken").value("refreshed-token"));
+    }
+
+    @Test
+    void refreshReturnsUnauthorizedWithoutAuthorizationHeader() throws Exception {
+        when(jwtService.refreshToken(null))
+            .thenThrow(new IllegalArgumentException("Authorization header is required"));
+
+        mockMvc.perform(post("/api/auth/refresh"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().string("Invalid or expired token"));
+    }
 }

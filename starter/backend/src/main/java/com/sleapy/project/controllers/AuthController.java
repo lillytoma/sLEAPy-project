@@ -1,12 +1,17 @@
 package com.sleapy.project.controllers;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import io.jsonwebtoken.JwtException;
+
+import java.util.Map;
 
 import com.sleapy.project.config.APIRouting;
 import com.sleapy.project.exceptions.InvalidEmailFormatException;
@@ -126,6 +131,17 @@ public class AuthController {
                 "Signup failed: " + errorMsg, 
                 HttpStatus.INTERNAL_SERVER_ERROR
             );
+        }
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(
+        @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader) {
+        try {
+            String jwtToken = jwtService.refreshToken(authorizationHeader);
+            return ResponseEntity.ok(Map.of("jwtToken", jwtToken));
+        } catch (JwtException | IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired token");
         }
     }
 }

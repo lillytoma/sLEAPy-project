@@ -2,6 +2,7 @@ package com.sleapy.project.services;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -36,8 +37,37 @@ public class JwtService {
     }
 
     public boolean verifyAuthorizationHeader(String authorizationHeader) {
-        if (authorizationHeader == null || authorizationHeader.isBlank()) {
+        try {
+            parseClaims(authorizationHeader);
+            return true;
+        } catch (JwtException | IllegalArgumentException ex) {
             return false;
+        }
+    }
+
+    /**
+     * Refresh a still-valid JWT using the identity claims from its Authorization header.
+     *
+     * @param authorizationHeader the current Bearer token
+     * @return a new JWT with a renewed expiration time
+     * @throws JwtException if the token is invalid or expired
+     * @throws IllegalArgumentException if the header or required claims are missing
+     */
+    public String refreshToken(String authorizationHeader) {
+        Claims claims = parseClaims(authorizationHeader);
+        String email = claims.getSubject();
+        Number userId = claims.get("userId", Number.class);
+
+        if (email == null || email.isBlank() || userId == null) {
+            throw new IllegalArgumentException("JWT is missing required claims");
+        }
+
+        return generateToken(email, userId.longValue());
+    }
+
+    private Claims parseClaims(String authorizationHeader) {
+        if (authorizationHeader == null || authorizationHeader.isBlank()) {
+            throw new IllegalArgumentException("Authorization header is required");
         }
 
         String token = authorizationHeader;
@@ -46,18 +76,14 @@ public class JwtService {
         }
 
         if (token.isEmpty()) {
-            return false;
+            throw new IllegalArgumentException("Bearer token is required");
         }
 
-        try {
-            Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token);
-            return true;
-        } catch (JwtException | IllegalArgumentException ex) {
-            return false;
-        }
+        return Jwts.parser()
+            .verifyWith(getSigningKey())
+            .build()
+            .parseSignedClaims(token)
+            .getPayload();
     }
 
     private SecretKey getSigningKey() {

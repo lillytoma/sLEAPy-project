@@ -15,4 +15,4 @@ mybatis:
 
 jwt:
   secret: test_secret_key_for_jwt_signing_which_is_long_enough_32_chars
-  expiration: 86400000
+  expiration: 300000
