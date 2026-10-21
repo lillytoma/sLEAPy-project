@@ -26,6 +26,7 @@ interface DashboardTransaction {
 
 export class HomeComponent implements OnInit, OnDestroy {
   private orderHistory = signal<TransactionResponse[]>([]);
+  transactions = signal<DashboardTransaction[]>([]);
   orderModal = signal<{ stock: MarketStock; mode: 'buy' | 'sell' } | null>(null);
   today = new Date();
 

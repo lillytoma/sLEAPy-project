@@ -49,4 +49,5 @@ export class DashboardComponent {
       this.accountMenuOpen.set(false);
     }
   }
+
 }
