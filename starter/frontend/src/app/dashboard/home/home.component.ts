@@ -86,13 +86,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   refreshTransactions(): void {
     this.portfolioService.getTransactions().subscribe({
-      next: (records) => this.transactions.set(records.map((record) => ({
-        symbol: record.instrument.symbol,
-        status: record.status || 'Filled',
-        shares: Number(record.quantity) || 0,
-        total: (Number(record.quantity) || 0) * (Number(record.purchasePrice) || 0),
-        date: this.formatDate(record.timeOfPurchase)
-      }))),
+      next: (records) => this.orderHistory.set(records),
       error: (error) => console.error('Unable to load transaction history:', error)
     });
   }
