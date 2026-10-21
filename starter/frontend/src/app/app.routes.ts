@@ -13,6 +13,7 @@ import { MarketsComponent } from './dashboard/markets/markets.component';
 import { WatchlistComponent } from './dashboard/watchlist/watchlist.component';
 import { HistoryComponent } from './dashboard/history/history.component';
 import { SettingsComponent } from './dashboard/settings/settings.component';
+import { GamesComponent } from './dashboard/games/games.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 
 
@@ -40,6 +41,7 @@ export const routes: Routes = [
       { path: 'portfolio', component: PortfolioComponent },
       { path: 'markets', component: MarketsComponent },
       { path: 'watchlist', component: WatchlistComponent },
+      { path: 'games', component: GamesComponent },
       
       { path: 'settings', component: SettingsComponent },
     ],

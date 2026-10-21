@@ -1,0 +1,75 @@
+<section class="games-page">
+  <div class="games-intro">
+    <div>
+      <p class="eyebrow">CEO challenge</p>
+      <h1>CEO puzzle room</h1>
+      <p class="games-subtitle">Slide the tiles back into place and reveal the leader behind the business.</p>
+    </div>
+    <div class="games-score" aria-live="polite">
+      <span class="games-score-label">Moves</span>
+      <strong>{{ moves() }}</strong>
+    </div>
+  </div>
+
+  <div class="games-layout">
+    <article class="puzzle-card">
+      <div class="puzzle-card-heading">
+        <div>
+          <p class="eyebrow">Today’s portrait</p>
+          <h2>Who is this CEO?</h2>
+        </div>
+        <span class="puzzle-level">3 × 3</span>
+      </div>
+
+      <div class="puzzle-board" aria-label="Sliding picture puzzle">
+        @for (tile of board(); track $index) {
+          @if (tile === null) {
+            <div class="puzzle-empty" aria-hidden="true"></div>
+          } @else {
+            <button
+              type="button"
+              class="game-tile"
+              [style.background-position]="tilePosition(tile)"
+              [attr.aria-label]="tileLabel(tile)"
+              [disabled]="isComplete()"
+              (click)="moveTile($index)">
+            </button>
+          }
+        }
+      </div>
+
+      @if (isComplete()) {
+        <div class="puzzle-success" role="status">
+          <span class="success-mark">✓</span>
+          <div>
+            <strong>Portrait complete!</strong>
+            <span>You solved it in {{ moves() }} moves.</span>
+          </div>
+        </div>
+      } @else {
+        <p class="puzzle-hint">Tap a tile next to the empty space to slide it.</p>
+      }
+
+      <button type="button" class="button button-primary puzzle-reset" (click)="newGame()">
+        <span>↻</span>
+        Shuffle again
+      </button>
+    </article>
+
+    <aside class="games-side-panel">
+      <div class="games-note">
+        <span class="games-note-icon">★</span>
+        <div>
+          <p class="eyebrow">The game plan</p>
+          <h2>Think two moves ahead</h2>
+          <p>Every shuffle is solvable. Use the open square to create a path, then line up the portrait from top left to bottom right.</p>
+        </div>
+      </div>
+      <div class="games-stats">
+        <div><span>Portrait</span><strong>01</strong></div>
+        <div><span>Difficulty</span><strong>Easy</strong></div>
+        <div><span>Best score</span><strong>—</strong></div>
+      </div>
+    </aside>
+  </div>
+</section>
