@@ -63,13 +63,15 @@ public class AuthController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
             // Step 4: Generate JWT token
-            String jwtToken = jwtService.generateToken(user.getEmail(), user.getId());
+            String accessToken = jwtService.generateAccessToken(user.getEmail(), user.getId());
+            String refreshToken = jwtService.generateRefreshToken(user.getEmail(), user.getId());
 
             // Step 5: Build response
             SignUpResponseDTO response = new SignUpResponseDTO(
                 "Login successful",
                 user.getId(),
-                jwtToken,
+                accessToken,
+                refreshToken,
                 clientService.isFrozen(user),
                 user.getFirstName(),
                 user.getLastName()
@@ -107,13 +109,15 @@ public class AuthController {
             ClientEntity newClient = clientService.signup(request);
             
             // Step 4: Generate JWT token
-            String jwtToken = jwtService.generateToken(newClient.getEmail(), newClient.getId());
+            String accessToken = jwtService.generateAccessToken(newClient.getEmail(), newClient.getId());
+            String refreshToken = jwtService.generateRefreshToken(newClient.getEmail(), newClient.getId());
             
             // Step 5: Build response
             SignUpResponseDTO response = new SignUpResponseDTO(
                 "Signup successful. Welcome!",
                 newClient.getId(),
-                jwtToken,
+                accessToken,
+                refreshToken,
                 false,
                 newClient.getFirstName(),
                 newClient.getLastName()
@@ -134,12 +138,13 @@ public class AuthController {
         }
     }
 
+    // curl -X POST http://localhost:8081/api/auth/refresh -H "Authorization: Bearer <refresh-token>"
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(
         @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader) {
         try {
-            String jwtToken = jwtService.refreshToken(authorizationHeader);
-            return ResponseEntity.ok(Map.of("jwtToken", jwtToken));
+            String accessToken = jwtService.refreshToken(authorizationHeader);
+            return ResponseEntity.ok(Map.of("jwtToken", accessToken));
         } catch (JwtException | IllegalArgumentException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired token");
         }

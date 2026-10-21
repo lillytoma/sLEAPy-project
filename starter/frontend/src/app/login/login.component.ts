@@ -38,6 +38,9 @@ export class LoginComponent {
       next: (response) => {
         // Store JWT token and user info
         localStorage.setItem('auth_token', response.jwtToken);
+        if (response.refreshToken) {
+          localStorage.setItem('refresh_token', response.refreshToken);
+        }
         localStorage.setItem('user_id', String(response.id));
         localStorage.setItem('user_email', this.email);
         localStorage.setItem('account_frozen', String(response.frozen === true));
@@ -78,4 +81,3 @@ export class LoginComponent {
     });
   }
 }
-

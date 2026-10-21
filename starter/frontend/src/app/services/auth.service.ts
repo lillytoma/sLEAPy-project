@@ -59,6 +59,15 @@ export class AuthService {
     return this.http.post(`${this.apiURL}/signup`, signupData);
   }
 
+  refreshToken(): Observable<{ jwtToken: string }> {
+    const refreshToken = localStorage.getItem('refresh_token');
+    return this.http.post<{ jwtToken: string }>(
+      `${this.apiURL}/refresh`,
+      {},
+      { headers: { Authorization: `Bearer ${refreshToken ?? ''}` } }
+    );
+  }
+
   getAccountStatus(clientId: number): Observable<{ frozen: boolean }> {
     return this.http.get<{ frozen: boolean }>(`${environment.apiUrl}/api/clients/${clientId}/account-status`);
   }
@@ -91,6 +100,7 @@ export class AuthService {
 
   logout(): void {
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('refresh_token');
     localStorage.removeItem('user_id');
     localStorage.removeItem('user_email');
     localStorage.removeItem('account_frozen');

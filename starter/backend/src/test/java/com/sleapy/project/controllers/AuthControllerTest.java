@@ -56,7 +56,8 @@ class AuthControllerTest {
 
         when(clientService.checkCredentials(anyString(), anyString())).thenReturn(true);
         when(clientMapper.findByEmail(request.getEmail())).thenReturn(Optional.of(user));
-        when(jwtService.generateToken(request.getEmail(), 1L)).thenReturn("mock-jwt-token");
+        when(jwtService.generateAccessToken(request.getEmail(), 1L)).thenReturn("mock-access-token");
+        when(jwtService.generateRefreshToken(request.getEmail(), 1L)).thenReturn("mock-refresh-token");
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -64,7 +65,8 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
             .andExpect(jsonPath("$.message").value("Login successful"))
             .andExpect(jsonPath("$.id").value(1))
-            .andExpect(jsonPath("$.jwtToken").value("mock-jwt-token"));
+            .andExpect(jsonPath("$.jwtToken").value("mock-access-token"))
+            .andExpect(jsonPath("$.refreshToken").value("mock-refresh-token"));
     }
 
     @Test

@@ -1,7 +1,7 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 
-const AUTH_EXCLUDED_PATHS = ['/api/auth/login', '/api/auth/signup'];
+const AUTH_EXCLUDED_PATHS = ['/api/auth/login', '/api/auth/signup', '/api/auth/refresh'];
 
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const isBaseApiRequest = request.url.startsWith(environment.apiUrl);

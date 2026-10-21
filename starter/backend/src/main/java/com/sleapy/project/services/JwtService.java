@@ -1,8 +1,8 @@
 package com.sleapy.project.services;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -11,50 +11,52 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
-@Service 
+@Service
 public class JwtService {
 
     @Value("${jwt.secret}")
     private String SECRET_KEY;
 
     @Value("${jwt.expiration}")
-    private long JWT_EXPIRATION;
+    private long ACCESS_TOKEN_EXPIRATION;
 
-    /**
-     * Generate a JWT token for a user after signup/login
-     * @param email the user's email (unique identifier)
-     * @param userId the user's ID from database
-     * @return JWT token as string
-     */
+    @Value("${jwt.refresh-expiration}")
+    private long REFRESH_TOKEN_EXPIRATION;
+
     public String generateToken(String email, Long userId) {
+        return generateAccessToken(email, userId);
+    }
+
+    public String generateAccessToken(String email, Long userId) {
+        return generateToken(email, userId, "access", ACCESS_TOKEN_EXPIRATION);
+    }
+
+    public String generateRefreshToken(String email, Long userId) {
+        return generateToken(email, userId, "refresh", REFRESH_TOKEN_EXPIRATION);
+    }
+
+    private String generateToken(String email, Long userId, String tokenType, long expiration) {
         return Jwts.builder()
             .subject(email)
             .claim("userId", userId)
+            .claim("type", tokenType)
             .issuedAt(new Date())
-            .expiration(new Date(System.currentTimeMillis() + JWT_EXPIRATION))
+            .expiration(new Date(System.currentTimeMillis() + expiration))
             .signWith(getSigningKey())
             .compact();
     }
 
     public boolean verifyAuthorizationHeader(String authorizationHeader) {
         try {
-            parseClaims(authorizationHeader);
+            parseClaims(authorizationHeader, "access");
             return true;
         } catch (JwtException | IllegalArgumentException ex) {
             return false;
         }
     }
 
-    /**
-     * Refresh a still-valid JWT using the identity claims from its Authorization header.
-     *
-     * @param authorizationHeader the current Bearer token
-     * @return a new JWT with a renewed expiration time
-     * @throws JwtException if the token is invalid or expired
-     * @throws IllegalArgumentException if the header or required claims are missing
-     */
     public String refreshToken(String authorizationHeader) {
-        Claims claims = parseClaims(authorizationHeader);
+        Claims claims = parseClaims(authorizationHeader, "refresh");
         String email = claims.getSubject();
         Number userId = claims.get("userId", Number.class);
 
@@ -62,10 +64,10 @@ public class JwtService {
             throw new IllegalArgumentException("JWT is missing required claims");
         }
 
-        return generateToken(email, userId.longValue());
+        return generateAccessToken(email, userId.longValue());
     }
 
-    private Claims parseClaims(String authorizationHeader) {
+    private Claims parseClaims(String authorizationHeader, String expectedType) {
         if (authorizationHeader == null || authorizationHeader.isBlank()) {
             throw new IllegalArgumentException("Authorization header is required");
         }
@@ -79,11 +81,17 @@ public class JwtService {
             throw new IllegalArgumentException("Bearer token is required");
         }
 
-        return Jwts.parser()
+        Claims claims = Jwts.parser()
             .verifyWith(getSigningKey())
             .build()
             .parseSignedClaims(token)
             .getPayload();
+
+        if (!expectedType.equals(claims.get("type", String.class))) {
+            throw new IllegalArgumentException("Invalid token type");
+        }
+
+        return claims;
     }
 
     private SecretKey getSigningKey() {

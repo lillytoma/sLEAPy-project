@@ -10,7 +10,8 @@ public class SignUpResponseDTO{
     
     private String message;    // Success/status message
     private Long id;           // User unique ID
-    private String jwtToken;   // JWT token
+    private String jwtToken;   // Short-lived access token
+    private String refreshToken;
     private boolean frozen;    // Whether the account is currently frozen
     private String firstName;  // Used by the frontend for the avatar initials
     private String lastName;
