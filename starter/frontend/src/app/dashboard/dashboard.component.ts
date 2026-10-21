@@ -1,13 +1,10 @@
 import { Component, ElementRef, HostListener, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../services/auth.service';
-import { MarketHoursService } from '../services/market-hours.service';
 import { OnboardingTourService } from '../services/onboarding-tour.service';
 import { PortfolioService } from '../services/portfolio.service';
 import { ThemeService } from '../services/theme.service';
 import { MarketHoursService } from '../services/market-hours.service';
-import { PortfolioService } from '../services/portfolio.service';
-import { FrogMascotComponent } from '../shared/frog-mascot.component';
 import { FrogMascotComponent } from '../shared/frog-mascot.component';
 import { OnboardingTourComponent } from '../shared/onboarding-tour.component';
 
