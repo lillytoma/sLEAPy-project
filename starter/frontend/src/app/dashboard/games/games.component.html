@@ -109,10 +109,27 @@
           <p class="eyebrow">Today’s portrait</p>
           <h2>Who is this CEO?</h2>
         </div>
-        <span class="puzzle-level">16 × 16</span>
+        <span class="puzzle-level">{{ puzzleSize() }} × {{ puzzleSize() }}</span>
       </div>
 
-      <div class="puzzle-board" aria-label="Sliding picture puzzle">
+      <div class="puzzle-size-picker" role="group" aria-label="Puzzle size">
+        <span>Difficulty</span>
+        @for (size of puzzleSizes; track size) {
+          <button
+            type="button"
+            class="puzzle-size-option"
+            [class.is-active]="puzzleSize() === size"
+            [attr.aria-pressed]="puzzleSize() === size"
+            (click)="selectPuzzleSize(size)">
+            {{ size }} × {{ size }}
+          </button>
+        }
+      </div>
+
+      <div
+        class="puzzle-board"
+        [style.grid-template-columns]="'repeat(' + puzzleSize() + ', minmax(0, 1fr))'"
+        aria-label="Sliding picture puzzle">
         @for (tile of board(); track $index) {
           @if (tile === null) {
             <div class="puzzle-empty" aria-hidden="true"></div>
@@ -121,6 +138,7 @@
               type="button"
               class="game-tile"
               [style.background-position]="tilePosition(tile)"
+              [style.background-size]="(puzzleSize() * 100) + '% ' + (puzzleSize() * 100) + '%'"
               [attr.aria-label]="tileLabel(tile)"
               [disabled]="isComplete()"
               (click)="moveTile($index)">

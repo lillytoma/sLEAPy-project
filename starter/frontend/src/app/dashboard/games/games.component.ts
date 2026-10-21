@@ -40,8 +40,11 @@ export class GamesComponent {
   readonly connectionMistakes = signal(0);
   readonly maxConnectionMistakes = 4;
 
-  readonly gridSize = 16;
-  readonly tileCount = this.gridSize * this.gridSize;
+  readonly puzzleSizes = [3, 6, 8] as const;
+  readonly puzzleSize = signal<number>(8);
+  get tileCount(): number {
+    return this.puzzleSize() * this.puzzleSize();
+  }
   readonly board = signal<Tile[]>([]);
   readonly moves = signal(0);
   readonly isComplete = signal(false);
@@ -53,6 +56,12 @@ export class GamesComponent {
 
   selectGame(game: 'connections' | 'puzzle'): void {
     this.activeGame.set(game);
+  }
+
+  selectPuzzleSize(size: number): void {
+    if (!this.puzzleSizes.includes(size as (typeof this.puzzleSizes)[number])) return;
+    this.puzzleSize.set(size);
+    this.newGame();
   }
 
   newConnectionsGame(): void {
@@ -107,7 +116,7 @@ export class GamesComponent {
     let shuffled = [...solved];
     let emptyIndex = shuffled.length - 1;
     let previousIndex = -1;
-    for (let step = 0; step < 500; step++) {
+    for (let step = 0; step < this.puzzleSize() * this.puzzleSize() * 2; step++) {
       const neighbors = this.neighborsOf(emptyIndex).filter(index => index !== previousIndex);
       const nextIndex = neighbors[Math.floor(Math.random() * neighbors.length)];
       [shuffled[emptyIndex], shuffled[nextIndex]] = [shuffled[nextIndex], shuffled[emptyIndex]];
@@ -139,20 +148,20 @@ export class GamesComponent {
   }
 
   tilePosition(tile: number): string {
-    const row = Math.floor(tile / this.gridSize);
-    const column = tile % this.gridSize;
-    const positionStep = 100 / (this.gridSize - 1);
+    const row = Math.floor(tile / this.puzzleSize());
+    const column = tile % this.puzzleSize();
+    const positionStep = 100 / (this.puzzleSize() - 1);
     return `${column * positionStep}% ${row * positionStep}%`;
   }
 
   private neighborsOf(index: number): number[] {
-    const row = Math.floor(index / this.gridSize);
-    const column = index % this.gridSize;
+    const row = Math.floor(index / this.puzzleSize());
+    const column = index % this.puzzleSize();
     const neighbors: number[] = [];
-    if (row > 0) neighbors.push(index - this.gridSize);
-    if (row < this.gridSize - 1) neighbors.push(index + this.gridSize);
+    if (row > 0) neighbors.push(index - this.puzzleSize());
+    if (row < this.puzzleSize() - 1) neighbors.push(index + this.puzzleSize());
     if (column > 0) neighbors.push(index - 1);
-    if (column < this.gridSize - 1) neighbors.push(index + 1);
+    if (column < this.puzzleSize() - 1) neighbors.push(index + 1);
     return neighbors;
   }
 
