@@ -148,7 +148,7 @@ body {
 
 /* New-user tour */
 .onboarding-backdrop { position: fixed; inset: 0; z-index: 100; pointer-events: none; background: rgba(42, 29, 20, .2); }
-.onboarding-cloud { position: fixed; width: min(100% - 32px, 570px); height: 570px; color: #111; isolation: isolate; pointer-events: auto; z-index: 101; }
+.onboarding-cloud { position: fixed; width: min(100% - 32px, 570px); height: 570px; color: var(--tour-ink, #111); isolation: isolate; pointer-events: auto; z-index: 101; }
 .onboarding-bubble-art { position: absolute; inset: -58px; z-index: 0; display: block; width: calc(100% + 116px); height: calc(100% + 116px); object-fit: contain; pointer-events: none; }
 .onboarding-arrow { position: absolute; z-index: 2; display: block; width: 140px; height: 110px; object-fit: contain; pointer-events: none; transform-origin: 97.5% 50.3%; }
 .onboarding-cloud-brand { top: 88px; left: 28px; animation: onboarding-fade-brand .3s ease-out both; }
@@ -161,9 +161,10 @@ body {
 .onboarding-icon svg { width: 29px; height: 29px; }
 .onboarding-eyebrow { margin-bottom: 6px; color: var(--primary); font-size: 9px; font-weight: 800; letter-spacing: .12em; text-align: center; text-transform: uppercase; }
 .onboarding-cloud h2 { max-width: 310px; margin: 0 auto; font-family: var(--font-display); font-size: clamp(22px, 3.5vw, 30px); line-height: 1.05; text-align: center; overflow-wrap: anywhere; }
-.onboarding-description { max-width: 330px; margin: 10px auto 19px; color: var(--muted-foreground); font-size: 12px; line-height: 1.4; text-align: center; }
+.onboarding-description { max-width: 330px; margin: 10px auto 19px; color: var(--tour-copy, var(--muted-foreground)); font-size: 12px; line-height: 1.4; text-align: center; }
 .onboarding-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .onboarding-skip, .onboarding-back { border: 0; background: none; color: var(--foreground); cursor: pointer; font: 700 10px var(--font-body); }
+.onboarding-skip { position: relative; padding: 6px 10px; border: 2px solid #090909; border-radius: 48% 52% 45% 55% / 55% 45% 55% 45%; background: #fffef8; box-shadow: 2px 2px 0 #090909; }
 .onboarding-skip:hover, .onboarding-back:hover { color: var(--primary); }
 .onboarding-controls { display: flex; align-items: center; gap: 8px; }
 .onboarding-progress { color: var(--muted-foreground); font-size: 11px; font-weight: 700; }
@@ -173,8 +174,18 @@ body {
 @keyframes onboarding-fade-markets { from { opacity: 0; } to { opacity: 1; } }
 @keyframes onboarding-fade-live { from { opacity: 0; } to { opacity: 1; } }
 @keyframes onboarding-fade-account { from { opacity: 0; } to { opacity: 1; } }
-.dark .onboarding-cloud { color: #101b36; }
+.dark .onboarding-cloud { --tour-ink: #101b36; --tour-copy: #4a3b22; }
+.dark .onboarding-eyebrow { color: #765700; }
+.dark .onboarding-icon { background: #b57d0b; }
+.dark .onboarding-skip, .dark .onboarding-back, .dark .onboarding-progress { color: var(--tour-copy); }
+.dark .onboarding-skip { border-color: #090909; background: #f3edda; box-shadow: 2px 2px 0 #090909; }
 .dark .onboarding-stars { display: block; position: absolute; inset: 0; z-index: 0; opacity: .8; background-image: radial-gradient(circle at 14% 24%, #fff5b5 0 1px, transparent 1.8px), radial-gradient(circle at 83% 19%, #fff 0 1.2px, transparent 2px), radial-gradient(circle at 73% 65%, #fff5b5 0 1px, transparent 1.8px), radial-gradient(circle at 20% 78%, #fff 0 1px, transparent 1.8px), radial-gradient(circle at 92% 86%, #fff5b5 0 1px, transparent 1.8px); }
+.color-vision-protanopia .onboarding-cloud { --tour-ink: #101a35; --tour-copy: #2457d6; }
+.color-vision-deuteranopia .onboarding-cloud { --tour-ink: #092f3a; --tour-copy: #005f73; }
+.color-vision-tritanopia .onboarding-cloud { --tour-ink: #32132c; --tour-copy: #c51b8a; }
+.color-vision-protanopia .onboarding-arrow { filter: brightness(0) saturate(100%) invert(29%) sepia(93%) saturate(1800%) hue-rotate(211deg) brightness(84%); }
+.color-vision-deuteranopia .onboarding-arrow { filter: brightness(0) saturate(100%) invert(23%) sepia(30%) saturate(1300%) hue-rotate(144deg) brightness(78%); }
+.color-vision-tritanopia .onboarding-arrow { filter: brightness(0) saturate(100%) invert(22%) sepia(46%) saturate(2600%) hue-rotate(294deg) brightness(77%); }
 
 @media (max-width: 560px) {
   .onboarding-cloud-brand, .onboarding-cloud-markets, .onboarding-cloud-live, .onboarding-cloud-account { top: 70px; left: 50%; right: auto; width: min(100% - 8px, 470px); height: 470px; transform: translateX(-50%); }
