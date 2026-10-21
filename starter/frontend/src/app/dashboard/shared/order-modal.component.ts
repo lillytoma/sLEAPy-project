@@ -46,19 +46,6 @@ export class OrderModalComponent implements OnInit, OnDestroy {
   confirmedShares = signal(0);
   confirmedTotal = signal(0);
   error = signal<string | null>(null);
-  private priceSubscription?: Subscription;
-  private livePrice = signal<number | null>(null);
-  private priceHistory = signal<{ date: string; value: number }[]>([]);
-  hoveredChartIndex = signal<number | null>(null);
-  selectedChartRange = signal<ChartRange>('1mo');
-  chartRanges: { value: ChartRange; label: string }[] = [
-    { value: '6mo', label: '6M' },
-    { value: '1mo', label: '1M' },
-    { value: '2wk', label: '2W' },
-    { value: '1wk', label: '1W' },
-    { value: '3d', label: '3D' }
-  ];
-
   quickSellPcts = [25, 50, 75, 100];
   chartRanges = [
     { value: '6mo', label: '6M' },
@@ -174,47 +161,6 @@ export class OrderModalComponent implements OnInit, OnDestroy {
       direction: values[values.length - 1] >= values[0] ? 'up' : 'down'
     };
   });
-
-  onChartHover(event: MouseEvent, svg: Element): void {
-    const chart = this.stockChart();
-    const rect = svg.getBoundingClientRect();
-    if (!rect.width || !chart.coords.length) return;
-    const x = ((event.clientX - rect.left) / rect.width) * chart.width;
-    const index = Math.max(0, Math.min(chart.coords.length - 1,
-      Math.round(((x - chart.plot.left) / chart.plotWidth) * (chart.coords.length - 1))));
-    this.hoveredChartIndex.set(index);
-  }
-
-  onChartLeave(): void {
-    this.hoveredChartIndex.set(null);
-  }
-
-  chartTooltipX(x: number): number {
-    return x > 240 ? x - 76 : x + 6;
-  }
-
-  chartTooltipTextX(x: number): number {
-    return x > 240 ? x - 41 : x + 41;
-  }
-
-  chartTooltipY(y: number): number {
-    return Math.max(y - 25, 2);
-  }
-
-  chartTooltipTextY(y: number): number {
-    return Math.max(y - 12, 15);
-  }
-
-  private formatChartPrice(value: number): string {
-    return `$${value.toFixed(value < 10 ? 2 : 0)}`;
-  }
-
-  private formatChartDate(value: string): string {
-    const date = new Date(value);
-    return this.selectedChartRange() === '3d'
-      ? date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-      : date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-  }
 
   // Buy computed properties
   calculatedBuyShares = computed(() => {
