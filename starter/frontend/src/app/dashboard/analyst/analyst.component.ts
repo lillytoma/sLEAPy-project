@@ -1,6 +1,6 @@
 import { Component, computed, OnDestroy, OnInit, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Subscription } from 'rxjs';
+import { Subscription, switchMap, timer } from 'rxjs';
 import { AnalystClient, AnalystService, AnalystSummary } from '../../services/analyst.service';
 import { AnalystProfileComponent } from '../../shared/analyst-profile.component';
 import { smoothChartPath } from '../shared/chart-path';
@@ -42,6 +42,8 @@ export class AnalystComponent implements OnInit, OnDestroy {
   readonly selectedActivityInstrument = signal('All instruments');
   readonly clientSearch = signal('');
   readonly clientResults = signal<AnalystClient[]>([]);
+  readonly activeClientIndex = signal(-1);
+  readonly clientSearchStatus = signal('');
   readonly selectedClient = signal<AnalystClient | null>(null);
 
   readonly periods = ['Current snapshot'];
@@ -55,6 +57,7 @@ export class AnalystComponent implements OnInit, OnDestroy {
   readonly symbolPage = signal(0);
   private subscriptions = new Subscription();
   private activityTimer?: ReturnType<typeof setInterval>;
+  private clientSearchSubscription?: Subscription;
 
   readonly instrumentOptions = ['All instruments', 'Stock', 'Crypto', 'ETF', 'Bond'];
 
@@ -211,6 +214,7 @@ export class AnalystComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.clientSearchSubscription?.unsubscribe();
     this.subscriptions.unsubscribe();
     if (this.activityTimer) clearInterval(this.activityTimer);
     this.analystService.disconnect();
@@ -248,28 +252,62 @@ export class AnalystComponent implements OnInit, OnDestroy {
     if (this.summary()) this.recordActivityPoint(this.activityValue());
   }
 
-  searchForClient(): void {
+  updateClientSearch(value: string): void {
+    this.clientSearch.set(value);
+    this.searchForClient(300);
+  }
+
+  dismissClientResults(): void {
+    this.clientSearchSubscription?.unsubscribe();
+    this.clientResults.set([]);
+    this.activeClientIndex.set(-1);
+    this.clientSearchStatus.set('');
+  }
+
+  onClientSearchKeydown(event: KeyboardEvent): void {
+    const clients = this.clientResults();
+    if (event.key === 'Escape') {
+      this.dismissClientResults();
+    } else if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && clients.length) {
+      event.preventDefault();
+      const direction = event.key === 'ArrowDown' ? 1 : -1;
+      this.activeClientIndex.update(index =>
+        (index + direction + clients.length) % clients.length);
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      const client = clients[this.activeClientIndex()];
+      if (client) this.selectClient(client);
+      else this.searchForClient();
+    }
+  }
+
+  searchForClient(delay = 0): void {
+    this.dismissClientResults();
     const search = this.clientSearch().trim();
     if (!search) {
-      this.clientResults.set([]);
-      this.dataError.set(null);
       return;
     }
-    this.analystService.searchClients(search).subscribe({
+    this.clientSearchStatus.set('Searching clients...');
+    this.clientSearchSubscription = timer(delay).pipe(
+      switchMap(() => this.analystService.searchClients(search))
+    ).subscribe({
       next: (clients) => {
         this.clientResults.set(clients);
-        this.dataError.set(clients.length === 0 ? 'Client not found.' : null);
+        this.clientSearchStatus.set(clients.length
+          ? `${clients.length} clients found. Use arrow keys to choose and Enter to select.`
+          : 'No matching clients.');
       },
       error: (error) => {
         console.error('Unable to search analyst clients:', error);
-        this.dataError.set('Client search is unavailable.');
+        this.clientSearchStatus.set('Client search is unavailable.');
       }
     });
   }
 
   selectClient(client: AnalystClient): void {
+    this.dismissClientResults();
+    this.clientSearch.set(client.username);
     this.selectedClient.set(client);
-    this.clientResults.set([]);
     this.analystService.getSummary(client.id).subscribe({
       next: (summary) => {
         this.summary.set(summary);
@@ -285,9 +323,9 @@ export class AnalystComponent implements OnInit, OnDestroy {
   }
 
   clearClient(): void {
+    this.dismissClientResults();
     this.selectedClient.set(null);
     this.clientSearch.set('');
-    this.clientResults.set([]);
     this.analystService.getSummary().subscribe({
       next: (summary) => {
         this.summary.set(summary);

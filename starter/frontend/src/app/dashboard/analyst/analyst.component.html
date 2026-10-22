@@ -35,12 +35,16 @@
         @for (instrument of instrumentOptions; track instrument) { <option [value]="instrument">{{ instrument }}</option> }
       </select>
     </label>
-    <div class="client-filter">
+    <div class="client-filter" (focusout)="!$any($event.currentTarget).contains($event.relatedTarget) && dismissClientResults()">
       <label class="select-filter">
         <span>Client</span>
-        <input type="search" [value]="clientSearch()" placeholder="Email or username"
-          (input)="clientSearch.set($any($event.target).value)"
-          (keyup.enter)="searchForClient()">
+        <input type="search" [value]="clientSearch()" placeholder="Search email or username"
+          role="combobox" aria-autocomplete="list" aria-controls="analyst-client-suggestions"
+          [attr.aria-expanded]="clientResults().length > 0"
+          [attr.aria-activedescendant]="activeClientIndex() >= 0 ? 'analyst-client-option-' + activeClientIndex() : null"
+          aria-describedby="analyst-client-search-status" autocomplete="off"
+          (input)="updateClientSearch($any($event.target).value)"
+          (keydown)="onClientSearchKeydown($event)">
       </label>
       <button type="button" class="filter-button" (click)="searchForClient()">Search</button>
       @if (selectedClient(); as client) {
@@ -49,12 +53,15 @@
         </button>
       }
       @if (clientResults().length) {
-        <div class="client-results">
-          @for (client of clientResults(); track client.id) {
-            <button type="button" (click)="selectClient(client)">
+        <div id="analyst-client-suggestions" class="client-results" role="listbox" aria-label="Matching clients">
+          @for (client of clientResults(); track client.id; let i = $index) {
+            <button type="button" role="option" [id]="'analyst-client-option-' + i"
+              [attr.aria-selected]="activeClientIndex() === i"
+              (click)="selectClient(client)">
               <strong>{{ client.username }}</strong><span>{{ client.email }}</span>
             </button>
           }
+          <span id="analyst-client-search-status" class="client-search-status" role="status">{{ clientSearchStatus() }}</span>
         </div>
       }
     </div>

@@ -1,0 +1,16 @@
+ALTER TABLE public.clients
+    ADD COLUMN IF NOT EXISTS first_name VARCHAR(100);
+ALTER TABLE public.clients
+    ADD COLUMN IF NOT EXISTS last_name VARCHAR(100);
+ALTER TABLE public.clients
+    ADD COLUMN IF NOT EXISTS dob DATE;
+ALTER TABLE public.clients
+    ADD COLUMN IF NOT EXISTS street_address VARCHAR(255);
+ALTER TABLE public.clients
+    ADD COLUMN IF NOT EXISTS city VARCHAR(100);
+ALTER TABLE public.clients
+    ADD COLUMN IF NOT EXISTS state_name VARCHAR(100);
+ALTER TABLE public.clients
+    ADD COLUMN IF NOT EXISTS zip_code VARCHAR(20);
+ALTER TABLE public.clients
+    ADD COLUMN IF NOT EXISTS region VARCHAR(100);

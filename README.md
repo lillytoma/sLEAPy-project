@@ -177,6 +177,13 @@ The analyst summary reads the ETL snapshot in
 need an `instrument_type` column. Missing instrument lookups are shown as `Other`.
 The analyst mapper explicitly maps the instrument name, type, trade count, and
 volume to API fields rather than relying on global underscore-to-camel-case mapping.
+Analyst client searches match usernames and emails case-insensitively and exclude
+any account marked as an admin or analyst. Legacy null role flags are treated as
+unset. Startup adds the admin role column if missing without changing existing
+role assignments.
+The analyst client field suggests matches after a short typing delay and cancels
+outdated searches. Select a suggestion to fill the field and filter analytics;
+Arrow keys and Enter select a match, and Escape dismisses suggestions.
 
 The aggregate trading activity chart uses the trader overview's smooth line,
 gradient fill, value axis, and hover tooltip. It plots session samples every five

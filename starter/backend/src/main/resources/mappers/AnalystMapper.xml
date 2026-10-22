@@ -57,8 +57,10 @@
           resultType="com.sleapy.project.models.dtos.AnalystClientDTO">
     SELECT client_id AS id, username, email
     FROM clients
-    WHERE LOWER(username) LIKE LOWER(CONCAT('%', #{search}, '%'))
-       OR LOWER(email) LIKE LOWER(CONCAT('%', #{search}, '%'))
+    WHERE is_admin IS NOT TRUE
+      AND is_analyst IS NOT TRUE
+      AND (LOWER(username) LIKE LOWER(CONCAT('%', #{search}, '%'))
+        OR LOWER(email) LIKE LOWER(CONCAT('%', #{search}, '%')))
     ORDER BY username
     LIMIT 20
   </select>

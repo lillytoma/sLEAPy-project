@@ -20,6 +20,7 @@ CREATE TABLE Clients (
     username VARCHAR(25) NOT NULL, 
     email VARCHAR(255) NOT NULL,
     is_analyst BOOLEAN NOT NULL DEFAULT FALSE,
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     password_hash VARCHAR(255) NOT NULL,
     phone_number VARCHAR(50),
     ssn VARCHAR(20) NOT NULL,

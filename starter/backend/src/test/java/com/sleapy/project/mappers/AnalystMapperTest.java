@@ -31,6 +31,19 @@ class AnalystMapperTest {
                 + "(client_id BIGINT, symbol TEXT, symbol_name TEXT, total_value TEXT, time_purchased TEXT)");
         jdbc.execute("CREATE TABLE public.instrument_type (instrumenttype_id BIGINT, instrumenttype TEXT)");
         jdbc.execute("CREATE TABLE public.instruments (symbol TEXT, instrumenttype_id BIGINT)");
+        jdbc.execute("CREATE TABLE public.clients "
+                + "(client_id BIGINT, username TEXT, email TEXT, is_admin BOOLEAN, is_analyst BOOLEAN)");
+        jdbc.update("INSERT INTO public.clients VALUES "
+                + "(1, 'customer-one', 'first@example.com', FALSE, FALSE), "
+                + "(2, 'second', 'customer-two@example.com', FALSE, FALSE), "
+                + "(3, 'customer-admin', 'admin@example.com', TRUE, FALSE), "
+                + "(4, 'admin', 'customer-admin@example.com', TRUE, FALSE), "
+                + "(5, 'customer-analyst', 'analyst@example.com', FALSE, TRUE), "
+                + "(6, 'analyst', 'customer-analyst@example.com', FALSE, TRUE), "
+                + "(7, 'customer-both', 'customer-both@example.com', TRUE, TRUE), "
+                + "(8, 'customer-legacy', 'legacy@example.com', NULL, NULL), "
+                + "(9, 'customer-null-admin', 'null-admin@example.com', NULL, TRUE), "
+                + "(10, 'customer-null-analyst', 'null-analyst@example.com', TRUE, NULL)");
         jdbc.update("INSERT INTO public.instrument_type VALUES (1, 'Stock')");
         jdbc.update("INSERT INTO public.instruments VALUES ('AAPL', 1)");
         jdbc.update("INSERT INTO sleapy_analytics.expensive_trades VALUES "
@@ -46,6 +59,27 @@ class AnalystMapperTest {
                     configuration.getSqlFragments()).parse();
         }
         sessionFactory = new SqlSessionFactoryBuilder().build(configuration);
+    }
+
+    @Test
+    void searchExcludesPrivilegedUsersForBothUsernameAndEmailMatches() {
+        try (var session = sessionFactory.openSession()) {
+            var results = session.getMapper(AnalystMapper.class).searchClients("CuStOmEr");
+            assertEquals(java.util.List.of(8L, 1L, 2L),
+                    results.stream().map(client -> client.getId()).toList());
+            assertEquals("customer-legacy", results.getFirst().getUsername());
+            assertEquals("legacy@example.com", results.getFirst().getEmail());
+        }
+    }
+
+    @Test
+    void exactPrivilegedEmailOrUsernameReturnsNoResults() {
+        try (var session = sessionFactory.openSession()) {
+            var mapper = session.getMapper(AnalystMapper.class);
+            for (String search : java.util.List.of("admin", "analyst", "customer-both")) {
+                assertTrue(mapper.searchClients(search).isEmpty(), search);
+            }
+        }
     }
 
     @Test

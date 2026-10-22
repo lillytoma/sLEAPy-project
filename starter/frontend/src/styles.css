@@ -336,12 +336,16 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
 .select-filter { display: flex; align-items: center; gap: 4px; }
 .select-filter select { border: 0; outline: 0; color: var(--foreground); background: transparent; font: 600 11px 'DM Sans', sans-serif; cursor: pointer; }
 
-.client-filter { position: relative; display: flex; align-items: center; gap: 4px; margin-left: auto; }
-.select-filter input { width: 150px; border: 0; outline: 0; color: var(--foreground); background: transparent; font: 600 11px 'DM Sans', sans-serif; }
+.client-filter { position: relative; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-left: auto; margin-right: 18px; }
+.client-filter .select-filter { min-height: 38px; }
+.select-filter input { width: 220px; max-width: 45vw; border: 0; outline: 0; color: var(--foreground); background: transparent; font: 600 12px 'DM Sans', sans-serif; }
+.client-filter input:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+.client-search-status { flex-basis: 100%; max-width: 330px; color: var(--muted-foreground); font-size: 11px; }
+.client-search-status:empty { display: none; }
 .select-filter input::placeholder { color: var(--muted-foreground); font-weight: 400; }
-.client-results { position: absolute; z-index: 5; top: calc(100% + 8px); right: 0; display: flex; flex-direction: column; width: 240px; border: 1px solid var(--border); border-radius: 7px; padding: 4px; background: var(--card); box-shadow: 0 8px 22px rgba(23, 34, 30, .12); }
+.client-results { position: absolute; z-index: 5; top: calc(100% + 8px); left: 0; display: flex; flex-direction: column; width: 100%; max-height: 280px; overflow-y: auto; border: 1px solid var(--border); border-radius: 7px; padding: 4px; background: var(--card); box-shadow: 0 8px 22px rgba(23, 34, 30, .12); }
 .client-results button { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; border: 0; border-radius: 4px; padding: 8px; color: var(--foreground); background: transparent; text-align: left; cursor: pointer; }
-.client-results button:hover { background: var(--muted); }
+.client-results button:hover, .client-results button[aria-selected='true'], .client-results button:focus-visible { background: var(--muted); }
 .client-results strong { font-size: 11px; }
 .client-results span { color: var(--muted-foreground); font-size: 10px; }
 .analyst-stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
