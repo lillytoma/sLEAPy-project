@@ -30,17 +30,14 @@ export const routes: Routes = [
   {
     path: 'dashboard',
     component: DashboardComponent,
-    // Auth guard disabled for local dev so every page is reachable without logging in.
-    // Put `canActivate: [authGuard]` back on this route to restore the login requirement.
+    canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'home', pathMatch: 'full' },
-        { path: 'history', component: HistoryComponent },
-
+      { path: 'history', component: HistoryComponent },
       { path: 'home', component: HomeComponent },
       { path: 'portfolio', component: PortfolioComponent },
       { path: 'markets', component: MarketsComponent },
       { path: 'watchlist', component: WatchlistComponent },
-      
       { path: 'settings', component: SettingsComponent },
     ],
   },
