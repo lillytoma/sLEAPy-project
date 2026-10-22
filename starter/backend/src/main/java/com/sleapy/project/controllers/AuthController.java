@@ -25,7 +25,7 @@ import lombok.AllArgsConstructor;
 @RestController
 @RequestMapping(APIRouting.AUTH_ENDPOINT)
 @AllArgsConstructor
-@CrossOrigin("http://localhost:4200")
+@CrossOrigin(origins = {"http://localhost:4200", "http://127.0.0.1:4200"})
 public class AuthController {
     //The ClientService is injected into the AuthController to handle authentication logic, 
     // such as checking user credentials against the database.
