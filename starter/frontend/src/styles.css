@@ -329,6 +329,11 @@ body {
 .chart-panel .eyebrow { font-size: 13px; }
 .panel-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .panel-heading h2 { margin-top: 3px; font-family: var(--font-display); font-size: 16px; font-weight: 700; }
+.chart-value-caption { margin: 3px 0 0; color: var(--muted-foreground); font-size: 11px; }
+.chart-x-axis { position: relative; height: 20px; margin-top: 6px; }
+.chart-x-axis-label { position: absolute; top: 0; transform: translateX(-50%); color: var(--muted-foreground); white-space: nowrap; }
+.chart-x-axis-label.is-first { transform: translateX(0); }
+.chart-x-axis-label.is-last { transform: translateX(-100%); }
 .period-pill { padding: 7px 14px; border-radius: 999px; color: var(--primary); background: var(--muted); font: 700 13px var(--font-mono); }
 .period-pill.is-active { background: var(--primary); color: var(--primary-foreground); }
 .order-chart-range, .order-option-button { cursor: pointer; transition: background-color .15s ease, border-color .15s ease, color .15s ease, transform .15s ease; }

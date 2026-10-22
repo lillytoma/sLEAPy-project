@@ -34,7 +34,8 @@
       </nav>
 
       <div class="dashboard-actions">
-        <span class="live-badge">
+        <span class="live-badge" role="status"
+          title="U.S. stock market regular session: 9:30 AM–4 PM Eastern Time; 1 PM close on scheduled early-close days. Closed on weekends and market holidays.">
           <span class="status-dot" [class.market-closed-dot]="!marketHoursService.isOpen()"></span>
           <span>{{ marketHoursService.isOpen() ? 'Market open' : 'Market closed' }}</span>
         </span>

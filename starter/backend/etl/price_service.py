@@ -146,11 +146,11 @@ def search(query: str):
 
 @app.get("/history/{symbol}")
 def get_history(symbol: str, period: str = "1mo"):
-    allowed_periods = {"6mo", "1mo", "2wk", "1wk", "3d"}
+    allowed_periods = {"6mo", "1mo", "2wk", "1wk", "3d", "1d"}
     if period not in allowed_periods:
         raise HTTPException(status_code=400, detail="Unsupported history period")
     try:
-        interval = "5m" if period == "3d" else "1d"
+        interval = "5m" if period == "3d" else ("1h" if period == "1d" else "1d")
         history = yf.Ticker(symbol.strip().upper()).history(period=period, interval=interval, auto_adjust=False)
         if history.empty:
             raise HTTPException(status_code=404, detail=f"No history available for {symbol}")

@@ -106,7 +106,7 @@ public class InstrumentController {
     public ResponseEntity<?> getPriceHistory(
             @PathVariable String symbol,
             @RequestParam(defaultValue = "1mo") String period) {
-        List<String> allowedPeriods = List.of("6mo", "1mo", "2wk", "1wk", "3d");
+        List<String> allowedPeriods = List.of("6mo", "1mo", "2wk", "1wk", "3d", "1d");
         if (!allowedPeriods.contains(period)) {
             return ResponseEntity.badRequest().body(Map.of("message", "Unsupported history period"));
         }
