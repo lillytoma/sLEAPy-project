@@ -66,8 +66,7 @@ public class AuthController {
                 user.getId(),
                 jwtToken,
                 clientService.isFrozen(user),
-                user.getFirstName(),
-                user.getLastName()
+                user.isAdmin()
             );
 
             //6. return the 200 status OK
@@ -110,8 +109,7 @@ public class AuthController {
                 newClient.getId(),
                 jwtToken,
                 false,
-                newClient.getFirstName(),
-                newClient.getLastName()
+                newClient.isAdmin()
             );
             
             // Step 6: Return 201 CREATED (RESTful standard)
