@@ -14,5 +14,6 @@ public class SignUpResponseDTO{
     private boolean frozen;    // Whether the account is currently frozen
     private String firstName;  // Used by the frontend for the avatar initials
     private String lastName;
+    private boolean analyst;  // Whether the user may access the analyst dashboard
 
 }

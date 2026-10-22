@@ -141,6 +141,13 @@ body {
 .account-menu a, .account-menu-row-button { display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px 12px; border: 0; border-radius: 9px; background: none; color: var(--foreground); font: 600 13px var(--font-body); cursor: pointer; text-align: left; }
 .account-menu a:hover, .account-menu a.is-active, .account-menu-row-button:hover { background: var(--muted); color: var(--primary); }
 .account-menu-value { margin-left: auto; color: var(--muted-foreground); font-size: 12px; font-weight: 600; }
+.analyst-account-menu { width: 280px; max-width: calc(100vw - 32px); max-height: calc(100dvh - 120px); overflow-y: auto; }
+.analyst-accessibility-options { padding: 10px 6px 0; }
+.analyst-preference-heading { margin: 10px 12px; }
+.analyst-accessibility-options > .analyst-preference-heading { margin: 0 6px 10px; }
+.analyst-preference-label { margin: 12px 6px 8px; color: var(--foreground); font-size: 12px; font-weight: 700; }
+.analyst-color-options { margin-top: 8px; }
+app-analyst-profile button:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
 .account-menu-danger { color: var(--error); }
 .account-menu-danger:hover { background: rgba(196, 69, 58, 0.1); color: var(--error); }
 
@@ -317,6 +324,9 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
 .analytics-live span, .refresh-dot { width: 6px; height: 6px; border-radius: 50%; background: #46a277; }
 .analyst-refresh { display: flex; align-items: center; gap: 7px; color: var(--muted-foreground); font-size: 11px; }
 .analyst-refresh button { border: 1px solid var(--border); border-radius: 6px; width: 28px; height: 28px; color: var(--primary); background: var(--card); cursor: pointer; font-size: 17px; }
+.analyst-actions { display: flex; align-items: center; gap: 12px; }
+.analyst-logout { display: inline-block; border: 2px solid var(--foreground); border-radius: 6px; padding: 8px 14px; color: var(--foreground); background: var(--card); cursor: pointer; font: 700 12px 'DM Sans', sans-serif; }
+.analyst-logout:hover { color: var(--primary-foreground); background: var(--primary); }
 .analytics-toolbar { display: flex; align-items: center; gap: 16px; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--card); }
 .analytics-error { border: 1px solid #e7c9c5; border-radius: 8px; padding: 10px 12px; color: var(--error); background: #fff7f6; font-size: 12px; }
 .filter-group { display: flex; align-items: center; gap: 4px; padding-right: 8px; border-right: 1px solid var(--border); }
@@ -357,13 +367,15 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
 .volume-chart { display: block; width: 100%; height: 220px; overflow: visible; }
 .customer-activity-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-top: 14px; }
 .customer-activity-heading strong { color: var(--foreground); font-size: 14px; }
-.customer-activity-chart { margin-top: 18px; }
-.customer-activity-area { fill: rgba(35, 122, 92, .12); stroke: none; }
-.customer-activity-line { fill: none; stroke: #237a5c; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; }
-.customer-activity-points circle { fill: var(--card); stroke: #237a5c; stroke-width: 3; }
-.activity-tooltip { position: absolute; top: 8px; right: 12px; display: flex; flex-direction: column; gap: 3px; border: 1px solid var(--border); border-radius: 6px; padding: 7px 9px; color: var(--muted-foreground); background: var(--card); box-shadow: 0 6px 16px rgba(23, 34, 30, .1); font-size: 10px; pointer-events: none; }
-.activity-tooltip strong { color: var(--foreground); font: 700 10px 'DM Mono', monospace; }
-.activity-tooltip span { color: var(--success); font: 700 11px 'DM Mono', monospace; }
+.activity-performance-chart { display: flex; gap: 8px; margin-top: 18px; }
+.activity-value-axis { display: flex; flex-direction: column; justify-content: space-between; height: 220px; color: var(--muted-foreground); font: 12px 'DM Mono', monospace; }
+.activity-plot-column { flex: 1; min-width: 0; }
+.activity-plot { position: relative; }
+.activity-performance-svg { display: block; width: 100%; height: 220px; cursor: crosshair; }
+.activity-time-axis { position: relative; height: 18px; margin-top: 6px; color: var(--muted-foreground); font: 11px 'DM Mono', monospace; }
+.activity-time-axis span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.activity-time-axis span:first-child:not(:only-child) { transform: none; }
+.activity-time-axis span:last-child:not(:only-child) { transform: translateX(-100%); }
 .chart-grid-lines line { stroke: var(--border); stroke-dasharray: 3 4; stroke-width: 1; }
 .chart-y-labels { position: absolute; top: 5px; bottom: 27px; left: 0; display: flex; flex-direction: column; justify-content: space-between; color: var(--muted-foreground); font: 10px 'DM Mono', monospace; }
 .chart-x-labels { display: flex; justify-content: space-between; padding: 0 3px; color: var(--muted-foreground); font: 10px 'DM Mono', monospace; }
@@ -528,8 +540,8 @@ input, select, textarea {
 .color-swatch-tritanopia { background: linear-gradient(135deg, #c51b8a 50%, #0077b6 50%); }
 
 /* Preferences apply to the whole dashboard. */
-html[data-font-size='small'] .dashboard-shell { zoom: .9; }
-html[data-font-size='large'] .dashboard-shell { zoom: 1.1; }
+html[data-font-size='small'] :is(.dashboard-shell, .analyst-page) { zoom: .9; }
+html[data-font-size='large'] :is(.dashboard-shell, .analyst-page) { zoom: 1.1; }
 .dark .dashboard-header { background: var(--card); }
 .dark .dashboard-nav a:hover, .dark .dashboard-nav a.is-active { background: var(--muted); }
 

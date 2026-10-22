@@ -58,7 +58,7 @@ public class AuthController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
             // Step 4: Generate JWT token
-            String jwtToken = jwtService.generateToken(user.getEmail(), user.getId());
+            String jwtToken = jwtService.generateToken(user.getEmail(), user.getId(), user.isAnalyst());
 
             // Step 5: Build response
             SignUpResponseDTO response = new SignUpResponseDTO(
@@ -67,7 +67,8 @@ public class AuthController {
                 jwtToken,
                 clientService.isFrozen(user),
                 user.getFirstName(),
-                user.getLastName()
+                user.getLastName(),
+                user.isAnalyst()
             );
 
             //6. return the 200 status OK
@@ -111,7 +112,8 @@ public class AuthController {
                 jwtToken,
                 false,
                 newClient.getFirstName(),
-                newClient.getLastName()
+                newClient.getLastName(),
+                false
             );
             
             // Step 6: Return 201 CREATED (RESTful standard)

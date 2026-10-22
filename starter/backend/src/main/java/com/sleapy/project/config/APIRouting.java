@@ -5,4 +5,5 @@ public class APIRouting {
     public static final String AUTH_ENDPOINT = "/api/auth";
     public static final String CLIENTS_ENDPOINT = "/api/clients";
     public static final String HOLDINGS_ENDPOINT = "/api/holdings";
+    public static final String ANALYST_ENDPOINT = "/api/analyst";
 }

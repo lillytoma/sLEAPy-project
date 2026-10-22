@@ -40,7 +40,7 @@ class AuthControllerTest {
 
     @MockitoBean
     private JwtService jwtService;
- 
+
     // Test cases will go here
     @Test
     void loginReturnsOKForValidCredentials() throws Exception {
@@ -56,7 +56,7 @@ class AuthControllerTest {
 
         when(clientService.checkCredentials(anyString(), anyString())).thenReturn(true);
         when(clientMapper.findByEmail(request.getEmail())).thenReturn(Optional.of(user));
-        when(jwtService.generateToken(request.getEmail(), 1L)).thenReturn("mock-jwt-token");
+        when(jwtService.generateToken(request.getEmail(), 1L, false)).thenReturn("mock-jwt-token");
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -8,10 +8,13 @@
       <h1>Activity at a glance<span class="intro-accent">.</span></h1>
       <p class="page-subtitle">Understand client activity, order flow, and market momentum in one place.</p>
     </div>
-    <div class="analyst-refresh">
-      <span class="refresh-dot"></span>
-      <span>{{ summary()?.updatedAt ? ('Updated ' + (summary()!.updatedAt | date:'shortTime')) : 'Waiting for analytics data' }}</span>
-      <button type="button" aria-label="Refresh analytics" (click)="analystService.connect()">↻</button>
+    <div class="analyst-actions">
+      <div class="analyst-refresh">
+        <span class="refresh-dot"></span>
+        <span>{{ summary()?.updatedAt ? ('Updated ' + (summary()!.updatedAt | date:'shortTime')) : 'Waiting for analytics data' }}</span>
+        <button type="button" aria-label="Refresh analytics" (click)="analystService.connect()">↻</button>
+      </div>
+      <app-analyst-profile />
     </div>
   </div>
 
@@ -80,38 +83,75 @@
       </div>
       <div class="customer-activity-heading">
         <div>
-          <strong>Customer activity throughout the day</strong>
+          <strong>Customer trading activity</strong>
           <p class="panel-helper">Live trade value sampled every 5 minutes.</p>
         </div>
         <span class="chart-summary">5-minute updates</span>
       </div>
-      <div class="line-chart-wrap customer-activity-chart">
-        <svg class="volume-chart" viewBox="0 0 800 220" role="img" aria-label="Customer trade value over time">
-          <g class="chart-grid-lines">
-            <line x1="0" y1="20" x2="800" y2="20"></line>
-            <line x1="0" y1="75" x2="800" y2="75"></line>
-            <line x1="0" y1="130" x2="800" y2="130"></line>
-            <line x1="0" y1="185" x2="800" y2="185"></line>
-          </g>
-          <polyline class="customer-activity-area" [attr.points]="chartArea()"></polyline>
-          <polyline class="customer-activity-line" [attr.points]="chartLine()"></polyline>
-          <g class="customer-activity-points">
-            @for (point of chartPoints(); track point.timestamp.toISOString()) {
-              <circle [attr.cx]="point.x" [attr.cy]="point.y" r="4"
-                (mouseenter)="hoveredActivityPoint.set(point)"
-                (mouseleave)="hoveredActivityPoint.set(null)"></circle>
+      <div class="activity-performance-chart">
+        <div class="activity-value-axis">
+          @for (gridline of activityChart().yGridlines.slice().reverse(); track gridline.value) {
+            <span>{{ gridline.label }}</span>
+          }
+        </div>
+        <div class="activity-plot-column">
+          <div class="activity-plot">
+            <svg #activitySvg
+              [attr.viewBox]="'0 0 ' + activityChart().width + ' ' + activityChart().height"
+              preserveAspectRatio="none" class="activity-performance-svg"
+              role="img" aria-label="Sampled customer trade value over time"
+              (mousemove)="onActivityHover($event, activitySvg)"
+              (mouseleave)="hoveredActivityPoint.set(null)">
+              <defs>
+                <linearGradient id="analystActivityFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="var(--success)" stop-opacity="0.25"/>
+                  <stop offset="100%" stop-color="var(--success)" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              @for (gridline of activityChart().yGridlines; track gridline.value) {
+                <line x1="0" [attr.y1]="gridline.y" [attr.x2]="activityChart().width" [attr.y2]="gridline.y"
+                  stroke="var(--border)" stroke-dasharray="3 3" stroke-width="1"/>
+              }
+              <path [attr.d]="activityChart().areaPath" fill="url(#analystActivityFill)" stroke="none"/>
+              <path [attr.d]="activityChart().linePath" fill="none" stroke="var(--success)"
+                stroke-width="2.5" vector-effect="non-scaling-stroke"/>
+              @if (activityChart().coords.length === 1 && !hoveredActivityPoint()) {
+                <circle [attr.cx]="activityChart().coords[0].x" [attr.cy]="activityChart().coords[0].y"
+                  r="4.5" fill="var(--success)" stroke="var(--card)" stroke-width="2"
+                  vector-effect="non-scaling-stroke"/>
+              }
+              @if (hoveredActivityPoint(); as point) {
+                <line [attr.x1]="point.x" y1="0" [attr.x2]="point.x" [attr.y2]="activityChart().height"
+                  stroke="var(--muted-foreground)" stroke-width="1" vector-effect="non-scaling-stroke"/>
+                <circle [attr.cx]="point.x" [attr.cy]="point.y" r="4.5" fill="var(--success)"
+                  stroke="var(--card)" stroke-width="2" vector-effect="non-scaling-stroke"/>
+              }
+            </svg>
+            @if (hoveredActivityPoint(); as point) {
+              <div class="chart-tooltip"
+                [style.left.%]="(point.x / activityChart().width) * 100"
+                [style.top.%]="(point.y / activityChart().height) * 100">
+                <p class="chart-tooltip-label">{{ point.timestamp | date:'short' }}</p>
+                <p class="chart-tooltip-value">Value: {{ formatCurrency(point.value) }}</p>
+              </div>
             }
-          </g>
-        </svg>
-        @if (hoveredActivityPoint(); as point) {
-          <div class="activity-tooltip">
-            <strong>{{ point.timestamp | date:'short' }}</strong>
-            <span>{{ formatCurrency(point.value) }}</span>
           </div>
-        }
-        <div class="chart-x-labels"><span>9 AM</span><span>11 AM</span><span>1 PM</span><span>3 PM</span><span>Close</span></div>
+          <div class="activity-time-axis">
+            @for (point of activityChart().labels; track point.timestamp.toISOString()) {
+              <span [style.left.%]="(point.x / activityChart().width) * 100">{{ point.timestamp | date:'shortTime' }}</span>
+            }
+          </div>
+        </div>
       </div>
-      <div class="chart-footnote"><span class="trend-up">● Live</span> refreshed from the analytics view every 10 seconds</div>
+      <div class="chart-footnote">
+        @if (activityChart().coords.length === 0) {
+          Waiting for analytics data.
+        } @else if (activityChart().coords.length === 1) {
+          First sample recorded. The trend appears as more 5-minute samples arrive.
+        } @else {
+          <span class="trend-up">● Live</span> Trade value sampled every 5 minutes during this session.
+        }
+      </div>
     </section>
 
   </div>

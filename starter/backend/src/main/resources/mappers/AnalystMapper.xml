@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sleapy.project.mappers.AnalystMapper">
+  <resultMap id="instrumentActivity"
+             type="com.sleapy.project.models.dtos.AnalystInstrumentActivityDTO">
+    <result column="symbol" property="symbol" />
+    <result column="symbol_name" property="symbolName" />
+    <result column="instrument_type" property="instrumentType" />
+    <result column="total_trades" property="totalTrades" />
+    <result column="trade_volume" property="tradeVolume" />
+  </resultMap>
+
+  <select id="findTradeVolume" resultType="java.math.BigDecimal">
+    SELECT COALESCE(SUM(NULLIF(total_value::text, '')::numeric), 0)
+    FROM sleapy_analytics.expensive_trades
+    <where>
+      <if test="clientId != null">client_id = #{clientId}</if>
+    </where>
+  </select>
+
+  <select id="countTrades" resultType="long">
+    SELECT COUNT(*)
+    FROM sleapy_analytics.expensive_trades
+    <where>
+      <if test="clientId != null">client_id = #{clientId}</if>
+    </where>
+  </select>
+
+  <select id="findLatestTradeTime" resultType="java.lang.String">
+    SELECT MAX(NULLIF(time_purchased::text, '')::timestamp)::text
+    FROM sleapy_analytics.expensive_trades
+    <where>
+      <if test="clientId != null">client_id = #{clientId}</if>
+    </where>
+  </select>
+
+  <select id="findMostActiveInstruments"
+          resultMap="instrumentActivity">
+    SELECT trades.symbol,
+           trades.symbol_name,
+           COALESCE(types.instrumenttype, 'Other') AS instrument_type,
+           COUNT(*) AS total_trades,
+           COALESCE(SUM(NULLIF(trades.total_value::text, '')::numeric), 0) AS trade_volume
+    FROM sleapy_analytics.expensive_trades trades
+    LEFT JOIN public.instruments instruments ON instruments.symbol = trades.symbol
+    LEFT JOIN public.instrument_type types
+      ON types.instrumenttype_id = instruments.instrumenttype_id
+    <where>
+      <if test="clientId != null">trades.client_id = #{clientId}</if>
+    </where>
+    GROUP BY trades.symbol, trades.symbol_name, types.instrumenttype
+    ORDER BY total_trades DESC, trade_volume DESC
+  </select>
+
+  <select id="searchClients"
+          resultType="com.sleapy.project.models.dtos.AnalystClientDTO">
+    SELECT client_id AS id, username, email
+    FROM clients
+    WHERE LOWER(username) LIKE LOWER(CONCAT('%', #{search}, '%'))
+       OR LOWER(email) LIKE LOWER(CONCAT('%', #{search}, '%'))
+    ORDER BY username
+    LIMIT 20
+  </select>
+</mapper>

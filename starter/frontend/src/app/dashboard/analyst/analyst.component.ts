@@ -2,6 +2,8 @@ import { Component, computed, OnDestroy, OnInit, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { AnalystClient, AnalystService, AnalystSummary } from '../../services/analyst.service';
+import { AnalystProfileComponent } from '../../shared/analyst-profile.component';
+import { smoothChartPath } from '../shared/chart-path';
 
 interface InstrumentActivity {
   type: string;
@@ -32,7 +34,7 @@ interface CustomerActivityPoint {
   selector: 'app-analyst',
   standalone: true,
   templateUrl: './analyst.component.html',
-  imports: [DatePipe, DecimalPipe]
+  imports: [DatePipe, DecimalPipe, AnalystProfileComponent]
 })
 export class AnalystComponent implements OnInit, OnDestroy {
   readonly selectedPeriod = signal('Current snapshot');
@@ -152,23 +154,45 @@ export class AnalystComponent implements OnInit, OnDestroy {
   );
 
   readonly totalTrades = computed(() => this.summary()?.totalTrades ?? 0);
-  readonly chartPoints = computed(() => {
+  readonly activityChart = computed(() => {
     const points = this.activityPoints();
-    const max = Math.max(...points.map((point) => point.value), 1);
-    const min = Math.min(...points.map((point) => point.value), 0);
-    const range = Math.max(max - min, 1);
-    return points.map((point, index) => ({
+    const values = points.map((point) => point.value);
+    const max = points.length ? Math.max(...values) : 1;
+    const min = points.length ? Math.min(...values) : 0;
+    const span = max - min || Math.max(Math.abs(max), 1);
+    const padding = span * 0.08;
+    const chartMin = Math.max(0, min - padding);
+    const chartMax = max + padding;
+    const range = chartMax - chartMin;
+    const width = 600;
+    const height = 220;
+    const coords = points.map((point, index) => ({
       ...point,
-      x: points.length > 1 ? (index / (points.length - 1)) * 800 : 400,
-      y: 185 - ((point.value - min) / range) * 145
+      x: points.length > 1 ? (index / (points.length - 1)) * width : width / 2,
+      y: height - ((point.value - chartMin) / range) * height
     }));
+    const linePath = smoothChartPath(coords);
+    const areaPath = coords.length > 1
+      ? `${linePath} L ${width} ${height} L 0 ${height} Z`
+      : '';
+    const yGridlines = Array.from({ length: 5 }, (_, index) => {
+      const value = chartMin + (range * index) / 4;
+      return { value, y: height - (index / 4) * height, label: this.formatCompactCurrency(value) };
+    });
+    const labels = coords.filter((_, index) =>
+      index === 0 || index === coords.length - 1 || index % Math.max(1, Math.ceil((coords.length - 1) / 4)) === 0);
+    return { coords, linePath, areaPath, yGridlines, labels, width, height };
   });
-  readonly chartLine = computed(() => this.chartPoints().map((point) => `${point.x},${point.y}`).join(' '));
-  readonly chartArea = computed(() => {
-    const points = this.chartPoints();
-    if (!points.length) return '';
-    return `0,185 ${this.chartLine()} 800,185`;
-  });
+
+  onActivityHover(event: MouseEvent, svg: Element): void {
+    const rect = svg.getBoundingClientRect();
+    if (rect.width === 0) return;
+    const x = ((event.clientX - rect.left) / rect.width) * this.activityChart().width;
+    const nearest = this.activityChart().coords.reduce<CustomerActivityPoint | null>(
+      (closest, point) => !closest || Math.abs(point.x - x) < Math.abs(closest.x - x) ? point : closest,
+      null);
+    this.hoveredActivityPoint.set(nearest);
+  }
 
   constructor(public readonly analystService: AnalystService) {}
 
@@ -291,6 +315,7 @@ export class AnalystComponent implements OnInit, OnDestroy {
   }
 
   private recordActivityPoint(value: number): void {
+    this.hoveredActivityPoint.set(null);
     this.activityPoints.update((points) => [...points, { timestamp: new Date(), value, x: 0, y: 0 }].slice(-24));
   }
 

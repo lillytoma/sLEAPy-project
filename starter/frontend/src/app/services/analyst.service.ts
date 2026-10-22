@@ -92,6 +92,12 @@ export class AnalystService {
 
   private reportError(error: unknown): void {
     console.error('Unable to load analyst summary:', error);
-    this.errorSubject.next('Analyst data could not be loaded. Check the analytics database connection.');
+    const httpError = error as { status?: number; error?: { error?: string; message?: string } };
+    const detail = httpError.error?.error ?? httpError.error?.message;
+    this.errorSubject.next(
+      detail
+        ? `Analyst data could not be loaded (${httpError.status ?? 'HTTP'}): ${detail}`
+        : `Analyst data could not be loaded (HTTP ${httpError.status ?? 'unknown'}). Check the analytics database connection.`
+    );
   }
 }

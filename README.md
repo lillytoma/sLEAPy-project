@@ -62,6 +62,10 @@ POSTGRES_USER=[username]
 POSTGRES_PASSWORD=[password]
 POSTGRES_DB=[db_name]
 
+The backend also accepts `POSTGRES_HOST` (default `localhost`) and
+`POSTGRES_PORT` (default `8101`). For a database accessed through an SSH tunnel,
+these must identify the tunnel's **local** listening address and port.
+
 ### Starting the Database
 
 1. Navigate to the `starter` directory:
@@ -81,7 +85,31 @@ POSTGRES_DB=[db_name]
    ```
    You should see `sleapy-postgres` with status `Up`.
 
+4. If you already had a PostgreSQL volume from an older checkout, refresh the analytics schema used by the analyst dashboard:
+   ```bash
+   psql -h localhost -U postgres -d sleapy_db -p 8101 -f database/analystSchema.sql
+   ```
+
 ### Testing the Connection Locally
+
+The backend automatically applies the non-destructive analyst-role and client-profile migrations on
+startup, including for existing database volumes. Existing accounts default to
+non-analyst access; existing analyst roles are preserved. PostgreSQL must already
+contain the operational tables, and the configured database user must be able to
+alter `public.clients`. Missing profile fields on legacy accounts remain null
+until supplied; existing profile values and legacy addresses are not overwritten.
+
+To apply the same login fix to an already-running backend without restarting it,
+run this from `starter` using your configured database credentials:
+
+```bash
+psql -h localhost -U postgres -d sleapy_db -p 8101 -v ON_ERROR_STOP=1 \
+  -f backend/src/main/resources/db/migrations/001-add-analyst-role.sql \
+  -f backend/src/main/resources/db/migrations/002-add-client-profile.sql
+```
+
+Do not rerun the mock-data seed or delete the database volume to fix a missing
+column; those operations can erase existing accounts and trades.
 
 From the EC2 instance, test the connection:
 ```bash
@@ -108,6 +136,60 @@ To access PostgreSQL from your Windows machine securely:
    - **Password:**
 
    The SSH tunnel transparently routes your connection through the encrypted SSH channel.
+
+### Running the app against an existing remote database
+
+Do not start the local PostgreSQL container when your accounts live in a remote
+database reached through port `8101`. Both Docker and SSH cannot own that port;
+an empty local database will reject otherwise correct account credentials.
+
+If the local container is occupying the tunnel port, stop it without deleting
+its data:
+
+```bash
+docker stop sleapy-postgres
+```
+
+Then open a new tunnel and leave it running:
+
+```bash
+ssh -N -o ExitOnForwardFailure=yes \
+  -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
+  -L 127.0.0.1:8101:localhost:8101 ec2-user@YOUR_DATABASE_HOST
+```
+
+If an older SSH session failed to bind the port, restart that session after
+stopping Docker; it will not automatically acquire the freed port.
+Verify the connection before starting the backend:
+
+```bash
+psql -h localhost -U postgres -d sleapy_db -p 8101 -W \
+  -c 'SELECT current_database(), COUNT(*) AS accounts FROM public.clients;'
+```
+
+Restart the backend after restoring or changing the database target so pooled
+connections cannot keep pointing at the previous instance. Do not reseed the
+database or reset passwords to repair a tunnel/port conflict.
+
+The analyst summary reads the ETL snapshot in
+`sleapy_analytics.expensive_trades`. Instrument types are looked up from
+`public.instruments` and `public.instrument_type`; the ETL snapshot does not
+need an `instrument_type` column. Missing instrument lookups are shown as `Other`.
+The analyst mapper explicitly maps the instrument name, type, trade count, and
+volume to API fields rather than relying on global underscore-to-camel-case mapping.
+
+The aggregate trading activity chart uses the trader overview's smooth line,
+gradient fill, value axis, and hover tooltip. It plots session samples every five
+minutes with their actual timestamps, not historical intraday data. The first
+sample appears as a dot; subsequent samples form the trend. Changing the chart's
+instrument or client filter starts a new sample series.
+
+The analyst header's account avatar includes sign out and the shared persistent
+appearance, text-size, and color-vision preferences. Controls support keyboard
+navigation; Escape closes the panel and restores focus to the avatar.
+Night mode is available under Appearance. Text-size scaling applies to both the
+trader dashboard and the analyst page; color-vision palettes are grouped under
+the Color themes heading.
 
 ---
 

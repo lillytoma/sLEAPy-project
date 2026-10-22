@@ -11,6 +11,7 @@
     <!-- Client fields -->
     <result column="username" property="username" />
     <result column="email" property="email" />
+    <result column="is_analyst" property="analyst" />
     <result column="cash_balance" property="cashBalance" />
     <result column="password_hash" property="passwordHash" />
     <result column="first_name" property="firstName" />
@@ -33,7 +34,7 @@
 
   <!-- Find client by ID with status lookup -->
   <select id="findById" parameterType="Long" resultMap="ClientResultMap">
-    SELECT c.Client_ID, c.username, c.email, c.cash_balance, c.password_hash, 
+    SELECT c.Client_ID, c.username, c.email, c.is_analyst, c.cash_balance, c.password_hash,
            c.first_name, c.last_name, c.dob, c.street_address, c.city, c.state_name, c.zip_code, c.region,
            c.phone_number, c.ssn, c.ClientStatus_ID, cs.ClientStatus_Name
     FROM Clients c
@@ -43,7 +44,7 @@
 
   <!-- Find client by email with status lookup -->
   <select id="findByEmail" parameterType="String" resultMap="ClientResultMap">
-    SELECT c.Client_ID, c.username, c.email, c.cash_balance, c.password_hash, 
+    SELECT c.Client_ID, c.username, c.email, c.is_analyst, c.cash_balance, c.password_hash,
            c.first_name, c.last_name, c.dob, c.street_address, c.city, c.state_name, c.zip_code, c.region,
            c.phone_number, c.ssn, c.ClientStatus_ID, cs.ClientStatus_Name
     FROM Clients c
@@ -53,7 +54,7 @@
 
   <!-- Retrieve all clients with status lookup -->
   <select id="findAll" resultMap="ClientResultMap">
-    SELECT c.Client_ID, c.username, c.email, c.cash_balance, c.password_hash, 
+    SELECT c.Client_ID, c.username, c.email, c.is_analyst, c.cash_balance, c.password_hash,
            c.first_name, c.last_name, c.dob, c.street_address, c.city, c.state_name, c.zip_code, c.region,
            c.phone_number, c.ssn, c.ClientStatus_ID, cs.ClientStatus_Name
     FROM Clients c
@@ -62,8 +63,8 @@
 
   <!-- Insert new client (auto-generated ID) -->
   <insert id="save" parameterType="com.sleapy.project.models.entities.ClientEntity" useGeneratedKeys="true" keyProperty="id">
-    INSERT INTO Clients (username, email, cash_balance, password_hash, first_name, last_name, dob, street_address, city, state_name, zip_code, region, phone_number, ssn, ClientStatus_ID)
-    VALUES (#{username}, #{email}, #{cashBalance}, #{passwordHash}, #{firstName}, #{lastName}, #{dob}, #{streetAddress}, #{city}, #{stateName}, #{zipCode}, #{region}, #{phoneNumber}, #{ssn}, #{clientStatus.id})
+    INSERT INTO Clients (username, email, is_analyst, cash_balance, password_hash, first_name, last_name, dob, street_address, city, state_name, zip_code, region, phone_number, ssn, ClientStatus_ID)
+    VALUES (#{username}, #{email}, #{analyst}, #{cashBalance}, #{passwordHash}, #{firstName}, #{lastName}, #{dob}, #{streetAddress}, #{city}, #{stateName}, #{zipCode}, #{region}, #{phoneNumber}, #{ssn}, #{clientStatus.id})
   </insert>
 
   <!-- Update existing client -->

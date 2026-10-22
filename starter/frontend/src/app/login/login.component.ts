@@ -41,6 +41,7 @@ export class LoginComponent {
         localStorage.setItem('user_id', String(response.id));
         localStorage.setItem('user_email', this.email);
         localStorage.setItem('account_frozen', String(response.frozen === true));
+        localStorage.setItem('is_analyst', String(response.analyst === true));
         this.authService.setUserNames(response.firstName, response.lastName);
         
         const userId = response?.userID ?? response?.userId;
@@ -55,12 +56,13 @@ export class LoginComponent {
         }
 
         this.authService.isLoggedIn.set(true);
+        this.authService.isAnalyst.set(response.analyst === true);
         this.isLoading.set(false);
         this.authService.userName.set(response.userName || this.email);
         const initials = response.userInitials || this.email.slice(0, 2).toUpperCase();
         this.authService.userInitials.set(initials);
 
-        void this.router.navigateByUrl('/dashboard/home');
+        void this.router.navigateByUrl(response.analyst === true ? '/analyst' : '/dashboard/home');
       },
       error: (err) => {
         this.isLoading.set(false);
@@ -78,4 +80,3 @@ export class LoginComponent {
     });
   }
 }
-

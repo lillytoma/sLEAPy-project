@@ -20,22 +20,28 @@ import { AnalystComponent } from './dashboard/analyst/analyst.component';
 const authGuard = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
-  if (auth.isLoggedIn()) return true;
-  return router.createUrlTree(['/login']);
+  if (!auth.isLoggedIn()) return router.createUrlTree(['/login']);
+  if (auth.hasAnalystAccess()) return router.createUrlTree(['/analyst']);
+  return true;
+};
+
+const analystGuard = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (!auth.isLoggedIn()) return router.createUrlTree(['/login']);
+  if (auth.hasAnalystAccess()) return true;
+  return router.createUrlTree(['/dashboard/home']);
 };
 
 export const routes: Routes = [
   { path: '', component: LandingComponent },
   { path: 'login', component: LoginComponent },
   { path: 'signup', component: SignupComponent },
-  // Temporary analyst access for UI testing. Replace with an analyst role guard
-  // once analyst identities are represented by the authentication response.
-  { path: 'analyst', component: AnalystComponent },
+  { path: 'analyst', component: AnalystComponent, canActivate: [analystGuard] },
   {
     path: 'dashboard',
     component: DashboardComponent,
-    // Auth guard disabled for local dev so every page is reachable without logging in.
-    // Put `canActivate: [authGuard]` back on this route to restore the login requirement.
+    canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'home', pathMatch: 'full' },
         { path: 'history', component: HistoryComponent },
