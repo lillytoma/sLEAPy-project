@@ -2,6 +2,7 @@ package com.sleapy.project.controllers;
 
 import com.sleapy.project.models.dtos.InstrumentWithPriceDTO;
 import com.sleapy.project.models.dtos.YahooSearchResultDTO;
+import com.sleapy.project.models.dtos.PriceHistoryPointDTO;
 import com.sleapy.project.services.InstrumentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,7 +18,7 @@ import java.util.Optional;
  * Endpoints:
  * - GET /api/instruments - all instruments with current prices
  * - GET /api/instruments/{symbol} - single instrument by symbol
- * - GET /api/instruments/search?q=query - search by symbol or name
+ * - GET /api/instruments/search?q=query&field=ticker|company - search by ticker or company name
  */
 @RestController
 @RequestMapping("/api/instruments")
@@ -70,15 +71,15 @@ public class InstrumentController {
     }
 
     /**
-     * Search instruments by symbol or name (case-insensitive, partial match).
-     * Usage: GET /api/instruments/search?q=apple
-     *        GET /api/instruments/search?q=AAPL
+     * Search instruments by ticker or company name (case-insensitive, partial match).
      * 
      * @param query search term (symbol or company name)
      * @return List of matching InstrumentWithPriceDTO objects
      */
     @GetMapping("/search")
-    public ResponseEntity<?> searchInstruments(@RequestParam(name = "q", required = false) String query) {
+    public ResponseEntity<?> searchInstruments(
+            @RequestParam(name = "q", required = false) String query,
+            @RequestParam(name = "field", defaultValue = "ticker") String field) {
         try {
             if (query == null || query.trim().isEmpty()) {
                 return ResponseEntity
@@ -86,12 +87,34 @@ public class InstrumentController {
                         .body(Map.of("message", "Search query parameter 'q' is required"));
             }
 
-            List<InstrumentWithPriceDTO> results = instrumentService.searchInstruments(query);
+            if (!field.equals("ticker") && !field.equals("company")) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("message", "Search field must be 'ticker' or 'company'"));
+            }
+
+            List<InstrumentWithPriceDTO> results = instrumentService.searchInstruments(query, field);
             return ResponseEntity.ok(results);
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Error searching instruments: " + e.getMessage()));
+        }
+
+    }
+
+    @GetMapping("/{symbol}/history")
+    public ResponseEntity<?> getPriceHistory(
+            @PathVariable String symbol,
+            @RequestParam(defaultValue = "1mo") String period) {
+        List<String> allowedPeriods = List.of("6mo", "1mo", "2wk", "1wk", "3d");
+        if (!allowedPeriods.contains(period)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Unsupported history period"));
+        }
+        try {
+            return ResponseEntity.ok(instrumentService.getPriceHistory(symbol.toUpperCase(), period));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                    .body(Map.of("message", "Unable to retrieve price history"));
         }
     }
 

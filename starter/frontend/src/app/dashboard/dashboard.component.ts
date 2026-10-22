@@ -1,61 +1,53 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, HostListener, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+import { MarketHoursService } from '../services/market-hours.service';
+import { OnboardingTourService } from '../services/onboarding-tour.service';
 import { PortfolioService } from '../services/portfolio.service';
+import { ThemeService } from '../services/theme.service';
+import { FrogMascotComponent } from '../shared/frog-mascot.component';
+import { OnboardingTourComponent } from '../shared/onboarding-tour.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
-  template: `
-    <div class="dashboard-shell">
-      <header class="dashboard-header">
-        <div class="dashboard-header-inner">
-          <a routerLink="home" class="dashboard-brand" aria-label="sLEAPy dashboard home">
-            <span class="brand-mark">S</span>
-            <span>sLEAPy</span>
-          </a>
-          <div class="dashboard-actions">
-            <div class="cash-balance">
-              <span class="eyebrow">Available cash</span>
-              <strong>{{ '$' }}{{ portfolioService.availableCash().toFixed(2) }}</strong>
-            </div>
-            <div class="cash-balance">
-              <span class="eyebrow">Net worth</span>
-              <strong>{{ '$' }}{{ portfolioService.netWorth().toFixed(2) }}</strong>
-            </div>
-            <a routerLink="/login" class="sign-out">Sign out</a>
-          </div>
-        </div>
-      </header>
-
-      <div class="dashboard-layout">
-        <nav class="dashboard-nav" aria-label="Dashboard navigation">
-          <div class="nav-heading">Workspace</div>
-          <ul>
-            <li><a routerLink="home" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }"><span class="nav-icon">↗</span>Overview</a></li>
-            <li><a routerLink="portfolio" routerLinkActive="is-active"><span class="nav-icon">▦</span>Portfolio</a></li>
-            <li><a routerLink="markets" routerLinkActive="is-active"><span class="nav-icon">⌁</span>Markets</a></li>
-            <li><a routerLink="watchlist" routerLinkActive="is-active"><span class="nav-icon">☆</span>Watchlist</a></li>
-            <li><a routerLink="history" routerLinkActive="is-active"><span class="nav-icon">◷</span>History</a></li>
-          </ul>
-          <div class="nav-heading nav-heading-secondary">Account</div>
-          <ul>
-            <li><a routerLink="settings" routerLinkActive="is-active"><span class="nav-icon">⚙</span>Settings</a></li>
-          </ul>
-          <div class="nav-footer">
-            <span class="status-dot"></span>
-            <span>Markets live</span>
-          </div>
-        </nav>
-
-        <main class="dashboard-content">
-          <router-outlet></router-outlet>
-        </main>
-      </div>
-
-    </div>
-  `
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    FrogMascotComponent,
+    OnboardingTourComponent
+  ],
+  templateUrl: './dashboard.component.html'
 })
 export class DashboardComponent {
-  constructor(public portfolioService: PortfolioService) {}
+  accountMenuOpen = signal(false);
+  userEmail = localStorage.getItem('user_email') || '';
+
+  constructor(
+    public authService: AuthService,
+    public themeService: ThemeService,
+    public marketHoursService: MarketHoursService,
+    private onboardingTourService: OnboardingTourService,
+    portfolioService: PortfolioService,
+    private elementRef: ElementRef<HTMLElement>
+  ) {
+    portfolioService.loadWatchlist();
+  }
+
+  replayTour(): void {
+    this.accountMenuOpen.set(false);
+    this.onboardingTourService.requestReplay();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.accountMenuOpen()) return;
+
+    const menuWrap = this.elementRef.nativeElement.querySelector('.account-menu-wrap');
+    if (menuWrap && !menuWrap.contains(event.target as Node)) {
+      this.accountMenuOpen.set(false);
+    }
+  }
+
 }

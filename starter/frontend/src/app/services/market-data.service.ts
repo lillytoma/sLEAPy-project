@@ -52,17 +52,23 @@ export class MarketDataService {
     return this.http.get<any>(`${this.apiBaseUrl}/${symbol.toUpperCase()}`);
   }
 
+  getPriceHistory(symbol: string, period: string): Observable<{ date: string; close: number }[]> {
+    return this.http.get<{ date: string; close: number }[]>(
+      `${this.apiBaseUrl}/${symbol.toUpperCase()}/history`,
+      { params: { period } }
+    );
+  }
+
   /**
-   * Search instruments by symbol or name.
-   * REST call: GET /api/instruments/search?q=query
-   * Case-insensitive, partial match on symbol or company name.
+   * Search instruments by ticker or company name.
+   * REST call: GET /api/instruments/search?q=query&field=ticker|company
    *
    * @param query - Search term (e.g., "apple" or "AAPL")
    * @return Observable of matching InstrumentWithPriceDTO list
    */
-  searchInstruments(query: string): Observable<any[]> {
+  searchInstruments(query: string, field: 'ticker' | 'company' = 'ticker'): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiBaseUrl}/search`, {
-      params: { q: query }
+      params: { q: query, field }
     });
   }
 

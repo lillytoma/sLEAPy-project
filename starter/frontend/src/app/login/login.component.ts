@@ -2,13 +2,13 @@ import { Component, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../services/auth.service';
-import { ThemeService } from '../services/theme.service';
-// Component for handling user login, including email and password input and dark mode toggle.
+import { MarketingShellComponent } from '../shared/marketing-shell.component';
+// Component for handling user login, including email and password input.
 @Component({
   selector: 'app-login',
   standalone: true,
   templateUrl: './login.component.html',
-  imports: [RouterLink, FormsModule]
+  imports: [RouterLink, FormsModule, MarketingShellComponent]
 })
 export class LoginComponent {
   loginError = signal(false);
@@ -20,7 +20,6 @@ export class LoginComponent {
 
   constructor(
     private authService: AuthService,
-    public themeService: ThemeService,
     private router: Router
   ) {}
 
@@ -42,6 +41,7 @@ export class LoginComponent {
         localStorage.setItem('user_id', String(response.id));
         localStorage.setItem('user_email', this.email);
         localStorage.setItem('account_frozen', String(response.frozen === true));
+        this.authService.setUserNames(response.firstName, response.lastName);
         
         const userId = response?.userID ?? response?.userId;
         const token = response?.token;

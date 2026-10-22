@@ -1,0 +1,87 @@
+<div class="dashboard-shell">
+  <header class="dashboard-header">
+    <div class="dashboard-header-inner">
+      <a routerLink="home" class="dashboard-brand" data-tour-target="brand" aria-label="sLEAPy dashboard home">
+        <app-frog-mascot [size]="40" />
+        <span>sLEAPy Stocks</span>
+      </a>
+
+      <nav class="dashboard-nav-top" aria-label="Dashboard navigation">
+        <a routerLink="home" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          Dashboard
+        </a>
+        <a routerLink="portfolio" routerLinkActive="is-active">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+          Portfolio
+        </a>
+        <a routerLink="markets" routerLinkActive="is-active" data-tour-target="markets">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          Markets
+        </a>
+        <a routerLink="watchlist" routerLinkActive="is-active">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Watchlist
+        </a>
+        <a routerLink="history" routerLinkActive="is-active">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          History
+        </a>
+      </nav>
+
+      <div class="dashboard-actions">
+        <span class="live-badge">
+          <span class="status-dot" [class.market-closed-dot]="!marketHoursService.isOpen()"></span>
+          <span>{{ marketHoursService.isOpen() ? 'Market open' : 'Market closed' }}</span>
+        </span>
+
+        <div class="account-menu-wrap">
+          <button type="button" class="avatar-badge" data-tour-target="account" (click)="accountMenuOpen.set(!accountMenuOpen())"
+            [attr.aria-expanded]="accountMenuOpen()" aria-haspopup="true" aria-label="Account menu">
+            {{ authService.userInitials() || '?' }}
+          </button>
+          @if (accountMenuOpen()) {
+            <div class="account-menu">
+              <div class="account-menu-header">
+                <p class="account-menu-name">{{ authService.userName() || userEmail || 'Account' }}</p>
+                @if (userEmail) {
+                  <p class="account-menu-email">{{ userEmail }}</p>
+                }
+              </div>
+              <div class="account-menu-divider"></div>
+
+              <a routerLink="settings" routerLinkActive="is-active" (click)="accountMenuOpen.set(false)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Settings
+              </a>
+
+              <button type="button" class="account-menu-row-button" (click)="themeService.toggleDark()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                Appearance
+                <span class="account-menu-value">{{ themeService.dark() ? 'Dark' : 'Light' }}</span>
+              </button>
+
+              <button type="button" class="account-menu-row-button" (click)="replayTour()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 4 3 10 9 10"/></svg>
+                Take the tour again
+              </button>
+
+              <div class="account-menu-divider"></div>
+
+              <a routerLink="/login" class="account-menu-danger" (click)="accountMenuOpen.set(false)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Sign out
+              </a>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="dashboard-content-full">
+    <router-outlet></router-outlet>
+  </main>
+
+  <app-onboarding-tour />
+</div>

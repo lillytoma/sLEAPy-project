@@ -22,6 +22,6 @@ dist/
 # OS
 .DS_Store
 
-backend/
-etl/
 .venv
+__pycache__
+*.csv
