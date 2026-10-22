@@ -11,6 +11,19 @@ import java.util.List;
  */
 @Mapper
 public interface OrderStatusMapper {
+    @org.apache.ibatis.annotations.Insert("""
+        INSERT INTO Order_Status (OrderStatus_Name)
+        SELECT #{name} WHERE NOT EXISTS (
+            SELECT 1 FROM Order_Status WHERE LOWER(OrderStatus_Name) = LOWER(#{name})
+        )
+        """)
+    void ensureStatus(String name);
+
+    @org.apache.ibatis.annotations.Select("""
+        SELECT OrderStatus_ID AS id, OrderStatus_Name AS name FROM Order_Status
+        WHERE LOWER(OrderStatus_Name) = LOWER(#{name}) ORDER BY OrderStatus_ID LIMIT 1
+        """)
+    Optional<OrderStatus> findByName(String name);
     /**
      * Find an order status by ID.
      * @param id the status ID

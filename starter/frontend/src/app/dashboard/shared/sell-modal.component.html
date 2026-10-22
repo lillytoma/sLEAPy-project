@@ -156,12 +156,12 @@
               }
             </div>
             <h3 class="text-xl font-semibold mb-2" style="color:var(--foreground)">
-              {{ orderStatus() === 'REJECTED' ? 'Order Rejected' : 'Order Placed!' }}
+              {{ orderStatus() === 'QUEUED' ? 'Order Queued' : (orderStatus() === 'REJECTED' ? 'Order Rejected' : 'Order Placed!') }}
             </h3>
             <p class="text-sm mb-1" style="color:var(--muted-foreground)">
               {{ orderMessage() }}
             </p>
-            @if (orderStatus() !== 'REJECTED') {
+            @if (orderStatus() === 'FILLED') {
               <p class="text-sm mb-1" style="color:var(--muted-foreground)">
                 Sold {{ confirmedShares() }} shares of <strong>{{ symbol }}</strong>
               </p>

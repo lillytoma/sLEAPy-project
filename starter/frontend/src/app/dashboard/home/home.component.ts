@@ -289,6 +289,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       cutoff.setDate(cutoff.getDate() - rangeDays);
     }
     const sortedOrders = orders
+      .filter((order) => !order.status || order.status.toUpperCase() === 'FILLED')
       .map((order) => ({ order, date: new Date(order.timeFilled || order.timeOfPurchase) }))
       .filter((entry) => !Number.isNaN(entry.date.getTime()))
       .sort((a, b) => a.date.getTime() - b.date.getTime());

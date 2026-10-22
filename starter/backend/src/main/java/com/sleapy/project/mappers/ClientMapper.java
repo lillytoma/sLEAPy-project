@@ -14,6 +14,8 @@ import java.math.BigDecimal;
  */
 @Mapper
 public interface ClientMapper {
+    @org.apache.ibatis.annotations.Select("SELECT Client_ID FROM Clients WHERE Client_ID = #{id} FOR UPDATE")
+    Long lockForTrading(Long id);
     
     /**
      * Find a client by ID.

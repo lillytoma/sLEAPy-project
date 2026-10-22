@@ -23,7 +23,7 @@ export class BuyModalComponent {
   success = signal(false);
   loading = signal(false);
   orderMessage = signal('');
-  orderStatus = signal<'PENDING' | 'ACCEPTED' | 'FILLED' | 'REJECTED' | null>(null);
+  orderStatus = signal<'PENDING' | 'ACCEPTED' | 'QUEUED' | 'FILLED' | 'REJECTED' | null>(null);
   confirmedShares = signal(0);
   confirmedTotal = signal(0);
   error = signal<string | null>(null);
@@ -70,9 +70,9 @@ export class BuyModalComponent {
         this.orderMessage.set(response.message);
         this.orderStatus.set(response.status);
         
-        if (response.success && response.status === 'FILLED') {
+        if (response.success && (response.status === 'FILLED' || response.status === 'QUEUED')) {
           this.confirmedShares.set(quantity);
-          this.confirmedTotal.set(total);
+          this.confirmedTotal.set(response.totalAmount ?? total);
           this.success.set(true);
         } else if (response.status === 'REJECTED') {
           this.error.set(response.error || response.message);

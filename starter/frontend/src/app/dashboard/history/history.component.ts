@@ -4,6 +4,8 @@ import { environment } from '../../../environments/environment';
 import { FrogMascotComponent } from '../../shared/frog-mascot.component';
 
 interface OrderApiResponse {
+  status?: string | null;
+  purchasePrice?: number | null;
   timeOfPurchase: string;
   timeFilled: string | null;
   quantity: number;
@@ -15,12 +17,13 @@ interface OrderApiResponse {
 }
 
 interface Transaction {
+  status: string;
   date: string;
   type: 'BUY' | 'SELL';
   symbol: string;
   shares: number;
-  price: number;
-  total: number;
+  price: number | null;
+  total: number | null;
 }
 
 @Component({
@@ -103,16 +106,18 @@ export class HistoryComponent implements OnInit {
     const rawQuantity = Number(order.quantity ?? 0);
     const shares = Math.abs(rawQuantity);
     const type = this.resolveTradeType(order.tradeType);
-    const rawPrice = Number(order.instrument?.currentPrice ?? 0);
-    const price = Number.isFinite(rawPrice) ? rawPrice : 0;
+    const status = order.status ?? 'Unknown';
+    const rawPrice = order.purchasePrice == null ? null : Number(order.purchasePrice);
+    const price = status.toUpperCase() === 'FILLED' && rawPrice !== null && Number.isFinite(rawPrice) ? rawPrice : null;
 
     return {
+      status,
       date: order.timeFilled ?? order.timeOfPurchase ?? '',
       type,
       symbol: order.instrument?.symbol ?? 'N/A',
       shares,
       price,
-      total: shares * price
+      total: price === null ? null : shares * price
     };
   }
 

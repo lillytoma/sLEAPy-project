@@ -1,4 +1,5 @@
-import { Component, ElementRef, HostListener, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, signal } from '@angular/core';
+import { Subscription, timer } from 'rxjs';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { MarketHoursService } from '../services/market-hours.service';
@@ -20,7 +21,8 @@ import { OnboardingTourComponent } from '../shared/onboarding-tour.component';
   ],
   templateUrl: './dashboard.component.html'
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnDestroy {
+  private readonly portfolioRefresh: Subscription;
   accountMenuOpen = signal(false);
   userEmail = localStorage.getItem('user_email') || '';
 
@@ -33,6 +35,14 @@ export class DashboardComponent {
     private elementRef: ElementRef<HTMLElement>
   ) {
     portfolioService.loadWatchlist();
+    this.portfolioRefresh = timer(30000, 30000).subscribe(() => {
+      portfolioService.refreshCashBalance();
+      portfolioService.refreshHoldings();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.portfolioRefresh.unsubscribe();
   }
 
   replayTour(): void {

@@ -42,7 +42,7 @@ export class OrderModalComponent implements OnInit, OnDestroy {
   success = signal(false);
   loading = signal(false);
   orderMessage = signal('');
-  orderStatus = signal<'PENDING' | 'ACCEPTED' | 'FILLED' | 'REJECTED' | null>(null);
+  orderStatus = signal<'PENDING' | 'ACCEPTED' | 'QUEUED' | 'FILLED' | 'REJECTED' | null>(null);
   confirmedShares = signal(0);
   confirmedTotal = signal(0);
   error = signal<string | null>(null);
@@ -291,9 +291,9 @@ export class OrderModalComponent implements OnInit, OnDestroy {
         this.orderMessage.set(response.message);
         this.orderStatus.set(response.status);
 
-        if (response.success && response.status === 'FILLED') {
+        if (response.success && (response.status === 'FILLED' || response.status === 'QUEUED')) {
           this.confirmedShares.set(quantity);
-          this.confirmedTotal.set(total);
+          this.confirmedTotal.set(response.totalAmount ?? total);
           this.success.set(true);
           this.orderCompleted.emit();
         } else if (response.status === 'REJECTED') {
@@ -334,9 +334,9 @@ export class OrderModalComponent implements OnInit, OnDestroy {
         this.orderMessage.set(response.message);
         this.orderStatus.set(response.status);
 
-        if (response.success && response.status === 'FILLED') {
+        if (response.success && (response.status === 'FILLED' || response.status === 'QUEUED')) {
           this.confirmedShares.set(quantity);
-          this.confirmedTotal.set(total);
+          this.confirmedTotal.set(response.totalAmount ?? total);
           this.success.set(true);
           this.orderCompleted.emit();
         } else if (response.status === 'REJECTED') {

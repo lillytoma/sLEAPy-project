@@ -14,7 +14,16 @@ import com.sleapy.project.records.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestControllerAdvice 
+@lombok.extern.slf4j.Slf4j
 public class GlobalExceptionHandler {
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    ResponseEntity<ErrorResponse> handleUnreadableRequest(
+            org.springframework.http.converter.HttpMessageNotReadableException e, HttpServletRequest request) {
+        log.warn("Rejected invalid request body at {}: {}", request.getRequestURI(), e.getMostSpecificCause().getMessage());
+        String message = e.getMostSpecificCause() instanceof IllegalArgumentException
+                ? e.getMostSpecificCause().getMessage() : "Invalid request body";
+        return ResponseEntity.badRequest().body(ErrorResponse.of(400, "Bad Request", message, request.getRequestURI()));
+    }
 
     /**
      * Handles validation errors when API request parameters fail Jakarta validation constraints.

@@ -19,6 +19,20 @@ import java.util.List;
  */
 @Mapper
 public interface OrderMapper {
+    @Select("""
+        SELECT o.Order_ID FROM Orders o JOIN Order_Status s ON s.OrderStatus_ID = o.Status
+        WHERE s.OrderStatus_Name = 'Queued' ORDER BY o.Order_ID LIMIT 100
+        """)
+    List<Long> findQueuedIds();
+
+    @Select("""
+        SELECT Order_ID FROM Orders
+        WHERE Order_ID = #{id} AND Status IN (
+            SELECT OrderStatus_ID FROM Order_Status WHERE OrderStatus_Name = 'Queued'
+        )
+        FOR UPDATE SKIP LOCKED
+        """)
+    Long lockQueued(Long id);
     
     /**
      * Find an order by ID.
@@ -47,6 +61,7 @@ public interface OrderMapper {
                o.Time_purchased,
                o.Time_filled,
                o.Purchase_Price,
+               o.trade_type,
                o.Status AS OrderStatus_ID,
                os.OrderStatus_Name,
                c.Client_ID,
@@ -72,6 +87,7 @@ public interface OrderMapper {
         @Result(column = "Time_purchased", property = "timeOfPurchase"),
         @Result(column = "Time_filled", property = "timeFilled"),
         @Result(column = "Purchase_Price", property = "purchasePrice"),
+        @Result(column = "trade_type", property = "tradeType"),
         @Result(column = "OrderStatus_ID", property = "status.id"),
         @Result(column = "OrderStatus_Name", property = "status.name"),
         @Result(column = "Client_ID", property = "client.id"),

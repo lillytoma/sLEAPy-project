@@ -28,11 +28,15 @@ public class OrderBusinessRuleValidationService {
     private final MarketHoursService marketHoursService;
 
     public BuyValidation validateBuy(Long clientId, Long instrumentId, BigDecimal quantity) {
+        return validateBuy(clientId, instrumentId, quantity, true);
+    }
+
+    public BuyValidation validateBuy(Long clientId, Long instrumentId, BigDecimal quantity, boolean requireOpen) {
         BigDecimal normalizedQuantity = normalizeQuantity(quantity);
-        validateMarketHours();
+        if (requireOpen) validateMarketHours();
         ClientEntity client = findActiveClient(clientId);
         InstrumentEntity instrument = findInstrument(instrumentId);
-        BigDecimal price = resolveCurrentPrice(instrument);
+        BigDecimal price = resolveCurrentPrice(instrument, requireOpen);
         BigDecimal total = price.multiply(normalizedQuantity);
         BigDecimal cash = BigDecimal.valueOf(client.getCashBalance());
 
@@ -47,8 +51,12 @@ public class OrderBusinessRuleValidationService {
     }
 
     public SellValidation validateSell(Long clientId, Long instrumentId, BigDecimal quantity) {
+        return validateSell(clientId, instrumentId, quantity, true);
+    }
+
+    public SellValidation validateSell(Long clientId, Long instrumentId, BigDecimal quantity, boolean requireOpen) {
             BigDecimal normalizedQuantity = normalizeQuantity(quantity);
-        validateMarketHours();
+        if (requireOpen) validateMarketHours();
         ClientEntity client = findActiveClient(clientId);
         InstrumentEntity instrument = findInstrument(instrumentId);
         HoldingEntity holding = holdingMapper.findByClientIdAndInstrumentId(clientId, instrumentId)
@@ -60,7 +68,7 @@ public class OrderBusinessRuleValidationService {
                 + (owned == null ? BigDecimal.ZERO : owned) + ", Attempting to sell: " + normalizedQuantity);
         }
 
-        BigDecimal price = resolveCurrentPrice(instrument);
+        BigDecimal price = resolveCurrentPrice(instrument, requireOpen);
         log.info("Order validation accepted: clientId={}, instrumentId={}, side=SELL, quantity={}",
                 clientId, instrumentId, normalizedQuantity);
             return new SellValidation(client, instrument, holding, normalizedQuantity, price, price.multiply(normalizedQuantity));
@@ -103,14 +111,14 @@ public class OrderBusinessRuleValidationService {
         return new OrderValidationException(rule, message);
     }
 
-    private BigDecimal resolveCurrentPrice(InstrumentEntity instrument) {
+    private BigDecimal resolveCurrentPrice(InstrumentEntity instrument, boolean requireLivePrice) {
         BigDecimal price;
         try {
             price = priceService.getCurrentPrice(instrument.getSymbol());
         } catch (UnsupportedOperationException ex) {
             price = null;
         }
-        if (price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
+        if (!requireLivePrice && (price == null || price.compareTo(BigDecimal.ZERO) <= 0)) {
             price = marketPriceMapper.findBySymbol(instrument.getSymbol())
                     .map(marketPrice -> marketPrice.getCurrentPrice()).orElse(instrument.getCurrentPrice());
         }

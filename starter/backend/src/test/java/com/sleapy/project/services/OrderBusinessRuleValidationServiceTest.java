@@ -52,7 +52,7 @@ class OrderBusinessRuleValidationServiceTest {
 
     @Test
     void rejectsBuyWhenCashBalanceIsInsufficient() {
-        when(priceService.getCurrentPrice("ABC")).thenThrow(new UnsupportedOperationException());
+        when(priceService.getCurrentPrice("ABC")).thenReturn(BigDecimal.TEN);
 
         OrderValidationException exception = assertThrows(OrderValidationException.class,
                 () -> validationService.validateBuy(1L, 2L, BigDecimal.valueOf(11)));
@@ -62,7 +62,7 @@ class OrderBusinessRuleValidationServiceTest {
 
     @Test
     void roundsFractionalQuantityToThreeDecimalPlaces() {
-        when(priceService.getCurrentPrice("ABC")).thenThrow(new UnsupportedOperationException());
+        when(priceService.getCurrentPrice("ABC")).thenReturn(BigDecimal.TEN);
 
         OrderBusinessRuleValidationService.BuyValidation validation =
                 validationService.validateBuy(1L, 2L, BigDecimal.valueOf(0.1236));

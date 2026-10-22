@@ -23,7 +23,7 @@ export class SellModalComponent {
   success = signal(false);
   loading = signal(false);
   orderMessage = signal('');
-  orderStatus = signal<'PENDING' | 'ACCEPTED' | 'FILLED' | 'REJECTED' | null>(null);
+  orderStatus = signal<'PENDING' | 'ACCEPTED' | 'QUEUED' | 'FILLED' | 'REJECTED' | null>(null);
   confirmedShares = signal(0);
   confirmedProceeds = signal(0);
   error = signal<string | null>(null);
@@ -57,6 +57,8 @@ export class SellModalComponent {
 
   executeSell(): void {
     if (this.calculatedShares() < 0.001 || this.calculatedShares() > this.sharesOwned) return;
+    const quantity = this.calculatedShares();
+    const total = this.estimatedProceeds();
 
     this.loading.set(true);
     this.error.set(null);
@@ -65,7 +67,7 @@ export class SellModalComponent {
 
     const orderRequest: OrderRequest = {
       symbol: this.symbol,
-      quantity: this.calculatedShares(),
+      quantity,
       price: this.effectivePrice(),
       side: 'sell'
     };
@@ -76,9 +78,9 @@ export class SellModalComponent {
         this.orderMessage.set(response.message);
         this.orderStatus.set(response.status);
 
-        if (response.success && response.status === 'FILLED') {
-          this.confirmedShares.set(this.calculatedShares());
-          this.confirmedProceeds.set(this.estimatedProceeds());
+        if (response.success && (response.status === 'FILLED' || response.status === 'QUEUED')) {
+          this.confirmedShares.set(quantity);
+          this.confirmedProceeds.set(response.totalAmount ?? total);
           this.success.set(true);
         } else if (response.status === 'REJECTED') {
           this.error.set(response.error || response.message);

@@ -16,7 +16,8 @@ export interface OrderResponse {
   success: boolean;
   orderId?: string | number;
   message: string;
-  status: 'PENDING' | 'ACCEPTED' | 'FILLED' | 'REJECTED';
+  status: 'PENDING' | 'ACCEPTED' | 'QUEUED' | 'FILLED' | 'REJECTED';
+  totalAmount?: number | null;
   error?: string;
 }
 
@@ -38,7 +39,8 @@ interface TradeResponse {
   tradeType: 'BUY' | 'SELL';
   quantity: number;
   pricePerShare: number;
-  totalAmount: number;
+  totalAmount: number | null;
+  status: 'QUEUED' | 'FILLED';
   timestamp: string;
   message: string;
 }
@@ -159,16 +161,17 @@ export class PortfolioService {
       }),
       switchMap((tradeRequest) => this.http.post<TradeResponse>(`${this.apiBaseUrl}/trades/${side}`, tradeRequest)),
       tap((response) => {
-        this.availableCash.update((cash) => side === 'buy'
-          ? cash - response.totalAmount
-          : cash + response.totalAmount);
-        this.refreshHoldings();
+        if (response.status === 'FILLED') {
+          this.refreshCashBalance();
+          this.refreshHoldings();
+        }
       }),
       map((response) => ({
         success: true,
         orderId: response.orderId,
         message: response.message,
-        status: 'FILLED' as const
+        status: response.status,
+        totalAmount: response.totalAmount
       }))
     );
   }

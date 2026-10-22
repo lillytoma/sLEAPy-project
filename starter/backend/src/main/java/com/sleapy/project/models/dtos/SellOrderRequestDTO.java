@@ -13,6 +13,20 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SellOrderRequestDTO {
+    @com.fasterxml.jackson.annotation.JsonSetter("orderType")
+    public void setOrderType(String type) {
+        if (!"MARKET".equalsIgnoreCase(type)) {
+            throw new IllegalArgumentException("Only MARKET orders are supported");
+        }
+    }
+
+    @com.fasterxml.jackson.annotation.JsonSetter("session")
+    public void setSession(String session) {
+        if (!"REGULAR".equalsIgnoreCase(session)) {
+            throw new IllegalArgumentException("Only REGULAR session orders are supported; closed-session orders are queued");
+        }
+    }
+
     private Long clientId;              // Client making the sale
     private Long instrumentId;          // Stock/instrument to sell
     private BigDecimal quantity;        // Number of shares to sell
