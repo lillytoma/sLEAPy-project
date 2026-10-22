@@ -15,6 +15,8 @@ import { HistoryComponent } from './dashboard/history/history.component';
 import { SettingsComponent } from './dashboard/settings/settings.component';
 import { GamesComponent } from './dashboard/games/games.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
+import { AdminComponent } from './dashboard/admin/admin.component';
+import { AdminDashboardComponent } from './dashboard/admin/admin-dashboard.component';
 
 
 const authGuard = () => {
@@ -24,10 +26,25 @@ const authGuard = () => {
   return router.createUrlTree(['/login']);
 };
 
+const adminGuard = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  return auth.isAdmin() ? true : router.createUrlTree(['/dashboard/home']);
+};
+
 export const routes: Routes = [
   { path: '', component: LandingComponent },
   { path: 'login', component: LoginComponent },
   { path: 'signup', component: SignupComponent },
+  {
+    path: 'dashboard/admin',
+    component: AdminDashboardComponent,
+    canActivate: [authGuard, adminGuard],
+    children: [
+      { path: '', component: AdminComponent },
+      { path: 'settings', component: SettingsComponent },
+    ],
+  },
   {
     path: 'dashboard',
     component: DashboardComponent,

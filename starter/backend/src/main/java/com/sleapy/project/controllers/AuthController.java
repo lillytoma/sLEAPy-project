@@ -25,7 +25,7 @@ import lombok.AllArgsConstructor;
 @RestController
 @RequestMapping(APIRouting.AUTH_ENDPOINT)
 @AllArgsConstructor
-@CrossOrigin("http://localhost:4200")
+@CrossOrigin(origins = {"http://localhost:4200", "http://127.0.0.1:4200"})
 public class AuthController {
     //The ClientService is injected into the AuthController to handle authentication logic, 
     // such as checking user credentials against the database.
@@ -66,8 +66,7 @@ public class AuthController {
                 user.getId(),
                 jwtToken,
                 clientService.isFrozen(user),
-                user.getFirstName(),
-                user.getLastName()
+                user.isAdmin()
             );
 
             //6. return the 200 status OK
@@ -110,8 +109,7 @@ public class AuthController {
                 newClient.getId(),
                 jwtToken,
                 false,
-                newClient.getFirstName(),
-                newClient.getLastName()
+                newClient.isAdmin()
             );
             
             // Step 6: Return 201 CREATED (RESTful standard)
