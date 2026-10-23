@@ -1,0 +1,264 @@
+<section class="games-page">
+  <div class="games-tabs" role="tablist" aria-label="Games">
+    <button
+      type="button"
+      role="tab"
+      class="games-tab"
+      [class.is-active]="activeGame() === 'connections'"
+      [attr.aria-selected]="activeGame() === 'connections'"
+      aria-controls="connections-game"
+      (click)="selectGame('connections')">
+      <span class="games-tab-icon">▦</span>
+      <span>
+        <strong>Market Connections</strong>
+        <small>Find the four groups</small>
+      </span>
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="games-tab"
+      [class.is-active]="activeGame() === 'wordle'"
+      [attr.aria-selected]="activeGame() === 'wordle'"
+      aria-controls="wordle-game"
+      (click)="selectGame('wordle')">
+      <span class="games-tab-icon">W</span>
+      <span>
+        <strong>Market Wordle</strong>
+        <small>Guess the stock word</small>
+      </span>
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="games-tab"
+      [class.is-active]="activeGame() === 'puzzle'"
+      [attr.aria-selected]="activeGame() === 'puzzle'"
+      aria-controls="ceo-puzzle-game"
+      (click)="selectGame('puzzle')">
+      <span class="games-tab-icon">▧</span>
+      <span>
+        <strong>CEO Puzzle</strong>
+        <small>Reveal the portrait</small>
+      </span>
+    </button>
+  </div>
+
+  @if (activeGame() === 'wordle') {
+  <article class="wordle-card" id="wordle-game" role="tabpanel">
+    <div class="wordle-heading">
+      <div>
+        <p class="eyebrow">Daily market brainteaser</p>
+        <h2>Market Wordle</h2>
+        <p class="wordle-subtitle">Guess the five-letter stock word in six tries.</p>
+      </div>
+      <span class="wordle-counter">{{ wordleGuesses().length }} / {{ wordleMaxGuesses }}</span>
+    </div>
+
+    <div class="wordle-board" aria-label="Market Wordle guesses">
+      @for (guess of wordleGuesses(); track $index) {
+        <div class="wordle-row">
+          @for (letter of guess.split(''); track $index) {
+            <span class="wordle-tile" [class]="'wordle-' + wordleLetterState(guess, $index)">{{ letter }}</span>
+          }
+        </div>
+      }
+      @for (row of [].constructor(wordleMaxGuesses - wordleGuesses().length); track $index) {
+        <div class="wordle-row">
+          @for (tile of [0, 1, 2, 3, 4]; track tile) {
+            <span class="wordle-tile wordle-empty"></span>
+          }
+        </div>
+      }
+    </div>
+
+    @if (wordleComplete()) {
+      <div class="wordle-result wordle-win" role="status">Market mastered in {{ wordleGuesses().length }} {{ wordleGuesses().length === 1 ? 'try' : 'tries' }}!</div>
+    } @else if (wordleFinished()) {
+      <div class="wordle-result" role="status">The word was <strong>{{ wordleAnswer }}</strong>. Start a new game to try again.</div>
+    } @else if (wordleMessage()) {
+      <div class="wordle-message" role="alert">{{ wordleMessage() }}</div>
+    }
+
+    <form class="wordle-form" (submit)="$event.preventDefault(); submitWordleGuess()">
+      <label class="sr-only" for="wordle-guess">Five-letter guess</label>
+      <input
+        id="wordle-guess"
+        type="text"
+        maxlength="5"
+        autocomplete="off"
+        [value]="wordleInput()"
+        [disabled]="wordleFinished()"
+        (input)="updateWordleInput($any($event.target).value)"
+        placeholder="GUESS"
+        aria-label="Five-letter guess">
+      <button type="submit" class="button button-primary" [disabled]="wordleInput().length !== 5 || wordleFinished()">Submit</button>
+      <button type="button" class="button wordle-new" (click)="resetWordle()">New game</button>
+    </form>
+
+    <div class="wordle-keyboard" aria-label="Letter feedback">
+      @for (row of [['Q','W','E','R','T','Y','U','I','O','P'], ['A','S','D','F','G','H','J','K','L'], ['Z','X','C','V','B','N','M']]; track $index) {
+        <div class="wordle-keyboard-row">
+          @for (letter of row; track letter) {
+            <span class="wordle-key" [class]="'wordle-' + wordleKeyboardState(letter)">{{ letter }}</span>
+          }
+        </div>
+      }
+    </div>
+  </article>
+  }
+
+  @if (activeGame() === 'connections') {
+  <article class="connections-card" id="connections-game" role="tabpanel">
+    <div class="connections-heading">
+      <div>
+        <p class="eyebrow">Daily market brainteaser</p>
+        <h2>Market Connections</h2>
+        <p class="connections-subtitle">Find four groups of four related financial terms.</p>
+      </div>
+      <div class="connections-mistakes" aria-live="polite">
+        <span>Mistakes</span>
+        <strong>{{ connectionMistakes() }}/{{ maxConnectionMistakes }}</strong>
+      </div>
+    </div>
+
+    <div class="connections-groups">
+      @for (group of solvedConnectionGroups(); track group) {
+        <div class="connection-solved-group" [class]="'connection-group-' + group">
+          <strong>{{ connectionCategory(group) }}</strong>
+          <span>{{ connectionWords(group) }}</span>
+        </div>
+      }
+    </div>
+
+    <div class="connections-grid" aria-label="Market Connections cards">
+      @for (card of connectionCards(); track $index) {
+        @if (!isConnectionSolved($index)) {
+          <button
+            type="button"
+            class="connection-card"
+            [class.is-selected]="selectedConnections().includes($index)"
+            [attr.aria-pressed]="selectedConnections().includes($index)"
+            (click)="toggleConnection($index)">
+            {{ card.word }}
+          </button>
+        }
+      }
+    </div>
+
+    @if (connectionComplete()) {
+      <div class="connections-complete" role="status">
+        <span class="success-mark">✓</span>
+        <strong>Market mastered. Nice work!</strong>
+      </div>
+    } @else if (connectionMistakes() >= maxConnectionMistakes) {
+      <div class="connections-complete connections-game-over" role="status">
+        <strong>Out of guesses.</strong>
+        <span>Start a new board and try again.</span>
+      </div>
+    }
+
+    <div class="connections-actions">
+      <span class="connections-selected">{{ selectedConnections().length }} / 4 selected</span>
+      <button type="button" class="button connections-submit" [disabled]="selectedConnections().length !== 4 || connectionMistakes() >= maxConnectionMistakes" (click)="submitConnection()">Submit</button>
+      <button type="button" class="button connections-new" (click)="newConnectionsGame()">New game</button>
+    </div>
+  </article>
+  }
+
+  @if (activeGame() === 'puzzle') {
+  <div id="ceo-puzzle-game" role="tabpanel">
+  <div class="games-intro">
+    <div>
+      <p class="eyebrow">CEO challenge</p>
+      <h1>CEO puzzle room</h1>
+      <p class="games-subtitle">Slide the tiles back into place and reveal the leader behind the business.</p>
+    </div>
+    <div class="games-score" aria-live="polite">
+      <span class="games-score-label">Moves</span>
+      <strong>{{ moves() }}</strong>
+    </div>
+  </div>
+
+  <div class="games-layout">
+    <article class="puzzle-card">
+      <div class="puzzle-card-heading">
+        <div>
+          <p class="eyebrow">Today’s portrait</p>
+          <h2>Who is this CEO?</h2>
+        </div>
+        <span class="puzzle-level">{{ puzzleSize() }} × {{ puzzleSize() }}</span>
+      </div>
+
+      <div class="puzzle-size-picker" role="group" aria-label="Puzzle size">
+        <span>Difficulty</span>
+        @for (size of puzzleSizes; track size) {
+          <button
+            type="button"
+            class="puzzle-size-option"
+            [class.is-active]="puzzleSize() === size"
+            [attr.aria-pressed]="puzzleSize() === size"
+            (click)="selectPuzzleSize(size)">
+            {{ size }} × {{ size }}
+          </button>
+        }
+      </div>
+
+      <div
+        class="puzzle-board"
+        [style.grid-template-columns]="'repeat(' + puzzleSize() + ', minmax(0, 1fr))'"
+        aria-label="Sliding picture puzzle">
+        @for (tile of board(); track $index) {
+          @if (tile === null) {
+            <div class="puzzle-empty" aria-hidden="true"></div>
+          } @else {
+            <button
+              type="button"
+              class="game-tile"
+              [style.background-position]="tilePosition(tile)"
+              [style.background-size]="(puzzleSize() * 100) + '% ' + (puzzleSize() * 100) + '%'"
+              [attr.aria-label]="tileLabel(tile)"
+              [disabled]="isComplete()"
+              (click)="moveTile($index)">
+            </button>
+          }
+        }
+      </div>
+
+      @if (isComplete()) {
+        <div class="puzzle-success" role="status">
+          <span class="success-mark">✓</span>
+          <div>
+            <strong>Portrait complete!</strong>
+            <span>You solved it in {{ moves() }} moves.</span>
+          </div>
+        </div>
+      } @else {
+        <p class="puzzle-hint">Tap a tile next to the empty space to slide it.</p>
+      }
+
+      <button type="button" class="button button-primary puzzle-reset" (click)="newGame()">
+        <span>↻</span>
+        Shuffle again
+      </button>
+    </article>
+
+    <aside class="games-side-panel">
+      <div class="games-note">
+        <span class="games-note-icon">★</span>
+        <div>
+          <p class="eyebrow">The game plan</p>
+          <h2>Think two moves ahead</h2>
+          <p>Every shuffle is solvable. Use the open square to create a path, then line up the portrait from top left to bottom right.</p>
+        </div>
+      </div>
+      <div class="games-stats">
+        <div><span>Portrait</span><strong>01</strong></div>
+        <div><span>Difficulty</span><strong>Easy</strong></div>
+        <div><span>Best score</span><strong>—</strong></div>
+      </div>
+    </aside>
+  </div>
+  </div>
+  }
+</section>

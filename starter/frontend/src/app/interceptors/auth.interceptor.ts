@@ -4,7 +4,9 @@ import { environment } from '../../environments/environment';
 const AUTH_EXCLUDED_PATHS = ['/api/auth/login', '/api/auth/signup'];
 
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
-  const isBaseApiRequest = request.url.startsWith(environment.apiUrl);
+  const isBaseApiRequest = environment.apiUrl
+    ? request.url.startsWith(environment.apiUrl)
+    : request.url.startsWith('/api/');
   const isExcludedAuthRequest = AUTH_EXCLUDED_PATHS.some((path) =>
     request.url.startsWith(`${environment.apiUrl}${path}`)
   );
@@ -21,8 +23,8 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   return next(
     request.clone({
       setHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
+        Authorization: 'Bearer ' + token
+      }
     })
   );
 };

@@ -27,12 +27,13 @@
         <div class="panel-heading">
           <div>
             <p class="eyebrow">Performance</p>
-            <h2 class="font-mono" style="font-size:22px">${{ portfolioService.netWorth().toFixed(2) }}</h2>
+            <h2 class="font-mono" style="font-size:22px">{{ formatDollar(portfolioService.holdingsValue()) }}</h2>
+            <p class="chart-value-caption">Current holdings market value</p>
           </div>
-          <div class="flex gap-1.5">
+          <div class="flex flex-wrap gap-1.5">
             @for (range of chartRanges; track range) {
               <button type="button" class="period-pill" [class.is-active]="selectedRange() === range"
-                (click)="selectedRange.set(range)"
+                (click)="selectRange(range)"
                 style="border:none;cursor:pointer"
                 title="Trend shape is illustrative — the backend doesn't track real historical portfolio value yet">{{ range }}</button>
             }
@@ -51,13 +52,29 @@
             <div style="position:relative">
               <svg #perfSvg [attr.viewBox]="'0 0 ' + performanceChart().width + ' ' + performanceChart().height"
                 preserveAspectRatio="none" style="width:100%;height:220px;display:block;cursor:crosshair"
+                role="img" aria-label="Holdings value performance chart. Hover for exact values."
                 (mousemove)="onChartHover($event, perfSvg)" (mouseleave)="onChartLeave()">
                 <defs>
                   <linearGradient id="perfFill" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stop-color="var(--success)" stop-opacity="0.25"/>
                     <stop offset="100%" stop-color="var(--success)" stop-opacity="0"/>
                   </linearGradient>
+                  <linearGradient id="preMarketFade" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="var(--muted)" stop-opacity="0.65"/>
+                    <stop offset="100%" stop-color="var(--muted)" stop-opacity="0.2"/>
+                  </linearGradient>
+                  <linearGradient id="afterMarketFade" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="var(--muted)" stop-opacity="0.2"/>
+                    <stop offset="100%" stop-color="var(--muted)" stop-opacity="0.65"/>
+                  </linearGradient>
                 </defs>
+                @if (performanceChart().marketSession; as session) {
+                  <rect x="0" y="0" [attr.width]="session.preMarketWidth" [attr.height]="performanceChart().height"
+                    fill="url(#preMarketFade)" />
+                  <rect [attr.x]="session.afterMarketX" y="0"
+                    [attr.width]="performanceChart().width - session.afterMarketX"
+                    [attr.height]="performanceChart().height" fill="url(#afterMarketFade)" />
+                }
                 @for (g of performanceChart().yGridlines; track g.value) {
                   <line x1="0" [attr.y1]="g.y" [attr.x2]="performanceChart().width" [attr.y2]="g.y"
                     stroke="var(--border)" stroke-dasharray="3 3" stroke-width="1"/>
@@ -75,13 +92,16 @@
                   [style.left.%]="(hp.coord.x / performanceChart().width) * 100"
                   [style.top.%]="(hp.coord.y / performanceChart().height) * 100">
                   <p class="chart-tooltip-label">{{ hp.point.label }}</p>
-                  <p class="chart-tooltip-value">Value: ${{ hp.point.value.toFixed(2) }}</p>
+                  <p class="chart-tooltip-value">Value: {{ formatDollar(hp.point.value) }}</p>
                 </div>
               }
             </div>
-            <div class="flex items-center justify-between" style="margin-top:6px">
-              @for (point of performanceChart().points; track $index) {
-                <span class="text-xs font-mono" style="color:var(--muted-foreground)">{{ point.label }}</span>
+            <div class="chart-x-axis" aria-hidden="true">
+              @for (tick of performanceChart().axisLabels; track $index) {
+                  <span class="chart-x-axis-label text-xs font-mono"
+                    [style.left.%]="tick.position"
+                    [class.is-first]="$first"
+                    [class.is-last]="$last">{{ tick.label }}</span>
               }
             </div>
           </div>

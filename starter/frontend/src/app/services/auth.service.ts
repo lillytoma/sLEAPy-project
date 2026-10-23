@@ -9,6 +9,7 @@ import { environment } from '../../environments/environment';
 export class AuthService {
   isLoggedIn = signal<boolean>(this.hasValidToken());
   isAnalyst = signal<boolean>(this.hasAnalystRole());
+  isAdmin = signal<boolean>(this.readAdminFlag());
   userName = signal<string>('');
   userInitials = signal<string>('');
   private apiURL = `${environment.apiUrl}/api/auth`;
@@ -25,6 +26,7 @@ export class AuthService {
       if (email) {
         this.userName.set(email);
       }
+      this.isAdmin.set(this.readAdminFlag());
       this.userInitials.set(this.buildInitials(
         localStorage.getItem('user_first_name'),
         localStorage.getItem('user_last_name'),
@@ -100,11 +102,13 @@ export class AuthService {
     localStorage.removeItem('user_id');
     localStorage.removeItem('user_email');
     localStorage.removeItem('account_frozen');
+    localStorage.removeItem('is_admin');
     localStorage.removeItem('user_first_name');
     localStorage.removeItem('user_last_name');
     localStorage.removeItem('is_analyst');
     this.isLoggedIn.set(false);
     this.isAnalyst.set(false);
+    this.isAdmin.set(false);
     this.userName.set('');
     this.userInitials.set('');
     this.router.navigate(['/']);
@@ -120,5 +124,9 @@ export class AuthService {
 
   hasAnalystAccess(): boolean {
     return this.isLoggedIn() && this.isAnalyst();
+  }
+  
+  private readAdminFlag(): boolean {
+    return localStorage.getItem('is_admin') === 'true';
   }
 }

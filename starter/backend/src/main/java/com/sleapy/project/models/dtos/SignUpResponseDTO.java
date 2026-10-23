@@ -15,5 +15,6 @@ public class SignUpResponseDTO{
     private String firstName;  // Used by the frontend for the avatar initials
     private String lastName;
     private boolean analyst;  // Whether the user may access the analyst dashboard
+    private boolean admin;     // Whether the authenticated user is an administrator
 
 }

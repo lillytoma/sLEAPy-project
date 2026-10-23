@@ -60,6 +60,10 @@ export class PortfolioService {
   watchlistedSymbols = signal<string[]>([]);
   holdings = signal<Holding[]>([]);
   availableCash = signal(0);
+  holdingsValue = computed(() => this.holdings().reduce(
+    (total, holding) => total + holding.shares * holding.current,
+    0
+  ));
   netWorth = computed(() => this.availableCash() + this.holdings().reduce(
     (total, holding) => total + holding.shares * holding.current,
     0

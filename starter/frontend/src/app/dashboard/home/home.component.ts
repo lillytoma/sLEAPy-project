@@ -1,10 +1,11 @@
 import { Component, computed, OnDestroy, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { Subscription, timer } from 'rxjs';
+import { forkJoin, Subscription, timer } from 'rxjs';
 import { RouterLink } from '@angular/router';
 import { PortfolioService } from '../../services/portfolio.service';
 import { TransactionResponse } from '../../services/portfolio.service';
 import { MarketDataService } from '../../services/market-data.service';
+import { MarketHoursService } from '../../services/market-hours.service';
 import { AuthService } from '../../services/auth.service';
 import { MarketStock } from '../../data/mock-data';
 import { OrderModalComponent } from '../shared/order-modal.component';
@@ -18,6 +19,13 @@ interface DashboardTransaction {
   date: string;
 }
 
+type ChartRange = 'Today' | '3D' | '1M' | '3M' | '6M' | '1Y';
+interface ChartPoint {
+  label: string;
+  value: number;
+  timestamp: number;
+}
+
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -27,6 +35,7 @@ interface DashboardTransaction {
 
 export class HomeComponent implements OnInit, OnDestroy {
   private orderHistory = signal<TransactionResponse[]>([]);
+  private backendHistory = signal<{ range: ChartRange; points: ChartPoint[] } | null>(null);
   transactions = signal<DashboardTransaction[]>([]);
   orderModal = signal<{ stock: MarketStock; mode: 'buy' | 'sell' } | null>(null);
   today = new Date();
@@ -39,6 +48,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   constructor(
     public portfolioService: PortfolioService,
     private marketDataService: MarketDataService,
+    private marketHoursService: MarketHoursService,
     public authService: AuthService
   ) {}
 
@@ -58,18 +68,15 @@ export class HomeComponent implements OnInit, OnDestroy {
     return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   });
 
-  // Weekday-only approximation (no holiday/after-hours awareness) since the backend
-  // doesn't expose real market-hours data.
-  marketsStatusLabel = computed(() => {
-    const day = this.today.getDay();
-    return day === 0 || day === 6 ? 'Markets closed' : 'Markets open';
-  });
+  marketsStatusLabel = computed(() => this.marketHoursService.isOpen() ? 'Markets open' : 'Markets closed');
 
   ngOnInit(): void {
+    this.clockSubscription = timer(0, 60000).subscribe(() => this.now.set(new Date()));
     this.marketDataService.connectWebSocket();
     this.priceSubscription = this.marketDataService.priceUpdates$.subscribe((updates) => {
       this.livePrices.set(new Map(updates));
     });
+    this.loadPerformanceHistory('1Y');
     this.transactionRefreshSubscription = timer(0, 30000).subscribe(() => this.refreshTransactions());
   }
 
@@ -110,16 +117,24 @@ export class HomeComponent implements OnInit, OnDestroy {
   });
 
   hoveredIndex = signal<number | null>(null);
-  chartRanges = ['1M', '3M', '6M', '1Y'] as const;
-  selectedRange = signal<'1M' | '3M' | '6M' | '1Y'>('1Y');
+  chartRanges: ChartRange[] = ['Today', '3D', '1M', '3M', '6M', '1Y'];
+  selectedRange = signal<ChartRange>('1Y');
 
   performanceChart = computed(() => {
     const range = this.selectedRange();
-    const points = this.buildOrderSeries(range, this.orderHistory());
+    const now = this.now();
+    const dayStart = new Date(now);
+    dayStart.setHours(0, 0, 0, 0);
+    const backendHistory = this.backendHistory();
+    const series = backendHistory?.range === range
+      ? backendHistory.points
+      : this.buildOrderSeries(range, this.orderHistory());
+    const points = series.filter((point) => point.timestamp <= now.getTime()
+      && (range !== 'Today' || point.timestamp >= dayStart.getTime()));
 
     const values = points.map((p) => p.value);
-    const max = Math.max(...values);
-    const min = Math.min(...values);
+    const max = values.length ? Math.max(...values) : 0;
+    const min = values.length ? Math.min(...values) : 0;
     const valueSpan = max - min || Math.max(Math.abs(max), 1);
     // Keep the series away from the SVG edges so the stroke and smoothed control
     // points remain visible when the series reaches its minimum or maximum.
@@ -130,13 +145,35 @@ export class HomeComponent implements OnInit, OnDestroy {
     const width = 600;
     const height = 220;
     const stepX = points.length > 1 ? width / (points.length - 1) : width;
+    const marketSession = range === 'Today'
+      ? {
+        preMarketWidth: width * (9.5 / 24),
+        regularMarketX: width * (9.5 / 24),
+        regularMarketWidth: width * (6.5 / 24),
+        afterMarketX: width * (16 / 24)
+      }
+      : null;
 
     const coords = points.map((p, i) => ({
-      x: i * stepX,
+      x: range === 'Today' ? this.dayPosition(p.timestamp) * width : i * stepX,
       y: height - ((p.value - chartMin) / chartSpan) * height
     }));
-    const linePath = smoothChartPath(coords);
-    const areaPath = `${linePath} L ${width} ${height} L 0 ${height} Z`;
+    const linePath = this.smoothPath(coords);
+    const areaPath = coords.length
+      ? `${linePath} L ${coords[coords.length - 1].x} ${height} L ${coords[0].x} ${height} Z`
+      : '';
+    const axisLabels = range === 'Today'
+      ? Array.from({ length: 9 }, (_, i) => {
+        const hour = i * 3;
+        return {
+          label: `${hour % 12 || 12} ${hour >= 12 && hour < 24 ? 'PM' : 'AM'}`,
+          position: hour / 24 * 100
+        };
+      })
+      : points.map((point, i) => ({
+        label: point.label,
+        position: points.length > 1 ? i / (points.length - 1) * 100 : 0
+      })).filter((_, i) => range !== '3D' || i % 12 === 0 || i === points.length - 1);
 
     const gridlineSteps = 4;
     const yGridlines = Array.from({ length: gridlineSteps + 1 }, (_, i) => {
@@ -144,25 +181,114 @@ export class HomeComponent implements OnInit, OnDestroy {
       return { value, y: height - (i / gridlineSteps) * height, label: this.formatCompactDollar(value) };
     });
 
-    return { points, coords, linePath, areaPath, yGridlines, width, height };
+    return { points, coords, linePath, areaPath, yGridlines, width, height, marketSession, axisLabels };
   });
 
-  private buildOrderSeries(range: '1M' | '3M' | '6M' | '1Y', orders: TransactionResponse[]): { label: string; value: number }[] {
+  private dayPosition(timestamp: number): number {
+    const date = new Date(timestamp);
+    return (date.getHours() + date.getMinutes() / 60 + date.getSeconds() / 3600) / 24;
+  }
+
+  selectRange(range: ChartRange): void {
+    this.now.set(new Date());
+    this.hoveredIndex.set(null);
+    this.selectedRange.set(range);
+    this.loadPerformanceHistory(range);
+  }
+
+  private loadPerformanceHistory(range: ChartRange): void {
+    const periodByRange: Partial<Record<ChartRange, string>> = {
+      Today: '1d',
+      '3D': '3d',
+      '1M': '1mo',
+      '3M': '6mo',
+      '6M': '6mo'
+    };
+    const period = periodByRange[range];
+    if (!period) {
+      this.backendHistory.set(null);
+      return;
+    }
+
+    const holdings = this.portfolioService.holdings();
+    if (holdings.length === 0) {
+      this.backendHistory.set(null);
+      return;
+    }
+
+    forkJoin(holdings.map((holding) =>
+      this.marketDataService.getPriceHistory(holding.symbol, period)
+    )).subscribe({
+      next: (histories) => {
+        const buckets = new Map<string, number>();
+        histories.forEach((history, holdingIndex) => {
+          const shares = holdings[holdingIndex].shares;
+          history.forEach((point) => {
+            const date = new Date(point.date);
+            if (Number.isNaN(date.getTime())) return;
+            if (date.getTime() > Date.now()) return;
+            if (range === 'Today' || range === '3D') {
+              date.setMinutes(0, 0, 0);
+            } else {
+              date.setHours(0, 0, 0, 0);
+            }
+            const key = date.toISOString();
+            buckets.set(key, (buckets.get(key) ?? 0) + shares * Number(point.close));
+          });
+        });
+        const points = [...buckets.entries()]
+          .sort(([left], [right]) => left.localeCompare(right))
+          .map(([date, value]) => ({
+            label: this.formatHistoryLabel(date, range),
+            value,
+            timestamp: new Date(date).getTime()
+          }));
+        this.backendHistory.set(points.length > 0 ? { range, points } : null);
+      },
+      error: (error) => {
+        console.error(`Unable to load ${range} portfolio performance history:`, error);
+        this.backendHistory.set(null);
+      }
+    });
+  }
+
+  private formatHistoryLabel(value: string, range: ChartRange): string {
+    const date = new Date(value);
+    if (range === 'Today' || range === '3D') {
+      return date.toLocaleTimeString('en-US', { hour: 'numeric' });
+    }
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  private buildOrderSeries(range: ChartRange, orders: TransactionResponse[]): ChartPoint[] {
     const configs = {
+      Today: { count: 24, stepHours: 1 },
+      '3D': { count: 72, stepHours: 1 },
       '1M': { count: 5, stepDays: 7 },
       '3M': { count: 6, stepDays: 15 },
       '6M': { count: 6, stepDays: 30 },
       '1Y': { count: 12, stepDays: 30 }
     } as const;
-    const { count, stepDays } = configs[range];
+    const config = configs[range];
+    const { count } = config;
+    const hourly = range === 'Today' || range === '3D';
+    const stepDays = 'stepDays' in config ? config.stepDays : 0;
 
-    const labels = range === '6M' || range === '1Y'
+    const labels = hourly
+      ? this.hourLabels(count, range === 'Today')
+      : range === '6M' || range === '1Y'
       ? this.monthLabels(count)
       : this.dayLabels(count, stepDays);
-    const now = this.today.getTime();
-    const cutoff = new Date(this.today);
-    const rangeDays = range === '1M' ? 30 : range === '3M' ? 90 : range === '6M' ? 180 : 365;
-    cutoff.setDate(cutoff.getDate() - rangeDays);
+    const now = this.now().getTime();
+    const cutoff = new Date(now);
+    if (range === 'Today') {
+      cutoff.setHours(0, 0, 0, 0);
+    } else if (hourly) {
+      cutoff.setHours(cutoff.getHours() - (count - 1));
+    } else {
+      const rangeDays = range === '1M' ? 30 : range === '3M' ? 90 : range === '6M' ? 180 : 365;
+      cutoff.setDate(cutoff.getDate() - rangeDays);
+    }
     const sortedOrders = orders
       .map((order) => ({ order, date: new Date(order.timeFilled || order.timeOfPurchase) }))
       .filter((entry) => !Number.isNaN(entry.date.getTime()))
@@ -177,12 +303,19 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (nextOrderIndex < 0) nextOrderIndex = sortedOrders.length;
     return labels.map((label, index) => {
       const pointDate = new Date(now);
-      pointDate.setDate(pointDate.getDate() - (count - 1 - index) * stepDays);
+      if (range === 'Today') {
+        pointDate.setHours(0, 0, 0, 0);
+        pointDate.setHours(index);
+      } else if (hourly) {
+        pointDate.setHours(pointDate.getHours() - (count - 1 - index));
+      } else {
+        pointDate.setDate(pointDate.getDate() - (count - 1 - index) * stepDays);
+      }
       while (nextOrderIndex < sortedOrders.length && sortedOrders[nextOrderIndex].date <= pointDate) {
         runningValue += this.orderValue(sortedOrders[nextOrderIndex].order);
         nextOrderIndex++;
       }
-      return { label, value: Math.max(runningValue, 0) };
+      return { label, value: runningValue, timestamp: pointDate.getTime() };
     });
   }
 
@@ -193,7 +326,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   private dayLabels(count: number, stepDays: number): string[] {
     return Array.from({ length: count }, (_, i) => {
-      const d = new Date(this.today);
+      const d = new Date(this.now());
       d.setDate(d.getDate() - (count - 1 - i) * stepDays);
       return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     });
@@ -201,13 +334,56 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   private monthLabels(count: number): string[] {
     return Array.from({ length: count }, (_, i) => {
-      const d = new Date(this.today.getFullYear(), this.today.getMonth() - (count - 1 - i), 1);
+      const now = this.now();
+      const d = new Date(now.getFullYear(), now.getMonth() - (count - 1 - i), 1);
       return d.toLocaleDateString('en-US', { month: 'short' });
     });
   }
 
+  private hourLabels(count: number, calendarDay = false): string[] {
+    return Array.from({ length: count }, (_, i) => {
+      const d = new Date(this.now());
+      if (calendarDay) {
+        d.setHours(i, 0, 0, 0);
+      } else {
+        d.setHours(d.getHours() - (count - 1 - i));
+      }
+      return d.toLocaleTimeString('en-US', { hour: 'numeric' });
+    });
+  }
+
+  // Catmull-Rom-to-Bezier spline so the line reads as a smooth curve instead of
+  // sharp straight-line segments between points.
+  private smoothPath(coords: { x: number; y: number }[]): string {
+    if (coords.length === 0) return '';
+    if (coords.length === 1) return `M ${coords[0].x} ${coords[0].y}`;
+
+    let path = `M ${coords[0].x.toFixed(1)} ${coords[0].y.toFixed(1)}`;
+    for (let i = 0; i < coords.length - 1; i++) {
+      const p0 = coords[i - 1] ?? coords[i];
+      const p1 = coords[i];
+      const p2 = coords[i + 1];
+      const p3 = coords[i + 2] ?? p2;
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+      path += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+    }
+    return path;
+  }
+
   private formatCompactDollar(value: number): string {
-    return Math.abs(value) >= 1000 ? '$' + (value / 1000).toFixed(0) + 'k' : '$' + value.toFixed(0);
+    const sign = value < 0 ? '-' : '';
+    const absoluteValue = Math.abs(value);
+    return absoluteValue >= 1000
+      ? sign + '$' + (absoluteValue / 1000).toFixed(0) + 'k'
+      : sign + '$' + absoluteValue.toFixed(0);
+  }
+
+  formatDollar(value: number): string {
+    const sign = value < 0 ? '-' : '';
+    return `${sign}$${Math.abs(value).toFixed(2)}`;
   }
 
   onChartHover(event: MouseEvent, svg: Element): void {
@@ -216,6 +392,11 @@ export class HomeComponent implements OnInit, OnDestroy {
     const relX = (event.clientX - rect.left) / rect.width;
     const chart = this.performanceChart();
     const svgX = relX * chart.width;
+    if (!chart.points.length || (this.selectedRange() === 'Today'
+      && relX > this.dayPosition(this.now().getTime()))) {
+      this.hoveredIndex.set(null);
+      return;
+    }
 
     let nearest = 0;
     let minDist = Infinity;
@@ -237,6 +418,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     const i = this.hoveredIndex();
     if (i === null) return null;
     const chart = this.performanceChart();
+    if (!chart.coords[i] || !chart.points[i]) return null;
     return { coord: chart.coords[i], point: chart.points[i] };
   });
 

@@ -24,6 +24,7 @@
     <result column="region" property="region" />
     <result column="phone_number" property="phoneNumber" />
     <result column="ssn" property="ssn" />
+    <result column="is_admin" property="admin" />
     
     <!-- Foreign key relationship: Client_Status -->
     <association property="clientStatus" javaType="com.sleapy.project.models.entities.ClientStatus">
@@ -36,7 +37,7 @@
   <select id="findById" parameterType="Long" resultMap="ClientResultMap">
     SELECT c.Client_ID, c.username, c.email, c.is_analyst, c.cash_balance, c.password_hash,
            c.first_name, c.last_name, c.dob, c.street_address, c.city, c.state_name, c.zip_code, c.region,
-           c.phone_number, c.ssn, c.ClientStatus_ID, cs.ClientStatus_Name
+           c.phone_number, c.ssn, c.is_admin, c.ClientStatus_ID, cs.ClientStatus_Name
     FROM Clients c
     LEFT JOIN Client_Status cs ON c.ClientStatus_ID = cs.ClientStatus_ID
     WHERE c.Client_ID = #{id}
@@ -46,7 +47,7 @@
   <select id="findByEmail" parameterType="String" resultMap="ClientResultMap">
     SELECT c.Client_ID, c.username, c.email, c.is_analyst, c.cash_balance, c.password_hash,
            c.first_name, c.last_name, c.dob, c.street_address, c.city, c.state_name, c.zip_code, c.region,
-           c.phone_number, c.ssn, c.ClientStatus_ID, cs.ClientStatus_Name
+           c.phone_number, c.ssn, c.is_admin, c.ClientStatus_ID, cs.ClientStatus_Name
     FROM Clients c
     LEFT JOIN Client_Status cs ON c.ClientStatus_ID = cs.ClientStatus_ID
     WHERE c.email = #{email}
@@ -56,7 +57,7 @@
   <select id="findAll" resultMap="ClientResultMap">
     SELECT c.Client_ID, c.username, c.email, c.is_analyst, c.cash_balance, c.password_hash,
            c.first_name, c.last_name, c.dob, c.street_address, c.city, c.state_name, c.zip_code, c.region,
-           c.phone_number, c.ssn, c.ClientStatus_ID, cs.ClientStatus_Name
+           c.phone_number, c.ssn, c.is_admin, c.ClientStatus_ID, cs.ClientStatus_Name
     FROM Clients c
     LEFT JOIN Client_Status cs ON c.ClientStatus_ID = cs.ClientStatus_ID
   </select>

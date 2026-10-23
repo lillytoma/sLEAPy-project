@@ -33,12 +33,16 @@ export class MarketHoursService implements OnDestroy {
     const day = Number(values.get('day'));
     const minutes = Number(values.get('hour')) * 60 + Number(values.get('minute'));
     const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+    const earlyClose = (month === 7 && day === 3)
+      || (month === 11 && weekday === 5 && day >= 23 && day <= 29)
+      || (month === 12 && day === 24);
+    const closeMinutes = earlyClose ? 13 * 60 : MARKET_CLOSE_MINUTES;
 
     return weekday >= 1
       && weekday <= 5
       && !this.marketHoliday(year, month, day)
       && minutes >= MARKET_OPEN_MINUTES
-      && minutes < MARKET_CLOSE_MINUTES;
+      && minutes < closeMinutes;
   }
 
   private marketHoliday(year: number, month: number, day: number): boolean {
@@ -66,9 +70,14 @@ export class MarketHoursService implements OnDestroy {
     const easterSunday = this.easterSunday(year);
     const goodFriday = new Date(easterSunday);
     goodFriday.setUTCDate(goodFriday.getUTCDate() - 2);
+    const newYearsDay = new Date(Date.UTC(year, 0, 1));
+    if (newYearsDay.getUTCDay() === 0) {
+      newYearsDay.setUTCDate(2);
+    }
 
     const holidays = new Set<string>([
-      observed(new Date(Date.UTC(year, 0, 1))),
+      // NYSE does not observe a Saturday New Year's Day on the preceding Friday.
+      this.dateKey(newYearsDay),
       this.dateKey(nthWeekday(1, 1, 3)),
       this.dateKey(nthWeekday(2, 1, 3)),
       this.dateKey(goodFriday),
@@ -76,7 +85,7 @@ export class MarketHoursService implements OnDestroy {
       observed(new Date(Date.UTC(year, 5, 19))),
       observed(new Date(Date.UTC(year, 6, 4))),
       this.dateKey(nthWeekday(9, 1, 1)),
-      this.dateKey(nthWeekday(10, 4, 4)),
+      this.dateKey(nthWeekday(11, 4, 4)),
       observed(new Date(Date.UTC(year, 11, 25)))
     ]);
 

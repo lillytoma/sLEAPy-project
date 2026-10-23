@@ -153,6 +153,107 @@ app-analyst-profile button:focus-visible { outline: 3px solid var(--primary); ou
 
 .dashboard-content-full { max-width: 1440px; margin: 0 auto; padding: 32px 40px 56px; min-width: 0; }
 
+/* CEO puzzle room */
+.games-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 7px; border: 1.5px solid var(--border); border-radius: 16px; background: var(--muted); }
+.games-tab { display: flex; align-items: center; justify-content: center; gap: 11px; min-height: 64px; padding: 10px 16px; border: 0; border-radius: 11px; background: transparent; color: var(--muted-foreground); cursor: pointer; text-align: left; transition: .15s ease; }
+.games-tab:hover { color: var(--primary); }
+.games-tab.is-active { background: var(--card); color: var(--primary); box-shadow: 2px 2px 0 var(--frog-ink); }
+.games-tab-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: var(--primary); color: var(--primary-foreground); font-size: 20px; line-height: 1; }
+.games-tab strong, .games-tab small { display: block; }
+.games-tab strong { font-size: 13px; }
+.games-tab small { margin-top: 3px; color: var(--muted-foreground); font-size: 11px; }
+.games-tab.is-active small { color: var(--primary); }
+.wordle-card { max-width: 680px; margin: 0 auto; padding: 26px; border: 1.5px solid var(--border); border-radius: 18px; background: var(--card); box-shadow: var(--card-shadow); }
+.wordle-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.wordle-heading h2 { margin-top: 5px; color: var(--foreground); font: 400 30px/1 var(--font-display); }
+.wordle-subtitle { margin-top: 9px; color: var(--muted-foreground); font-size: 13px; }
+.wordle-counter { padding: 7px 10px; border-radius: 999px; background: var(--muted); color: var(--primary); font: 700 12px var(--font-mono); }
+.wordle-board { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 26px auto; }
+.wordle-row { display: grid; grid-template-columns: repeat(5, 52px); gap: 6px; }
+.wordle-tile { display: grid; place-items: center; width: 52px; height: 52px; border: 2px solid var(--border); border-radius: 6px; color: var(--foreground); font: 800 20px var(--font-body); }
+.wordle-correct { border-color: var(--success); background: var(--success); color: var(--primary-foreground); }
+.wordle-present { border-color: var(--accent); background: var(--accent); color: var(--frog-ink); }
+.wordle-absent { border-color: var(--muted); background: var(--muted); color: var(--muted-foreground); opacity: .7; }
+.wordle-form { display: flex; justify-content: center; gap: 9px; }
+.wordle-form input { width: 130px; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; background: var(--card); color: var(--foreground); font: 800 14px var(--font-mono); letter-spacing: .12em; text-align: center; text-transform: uppercase; }
+.wordle-form input:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
+.wordle-form button { padding: 9px 14px; }
+.wordle-new { background: var(--muted); color: var(--foreground); }
+.wordle-result, .wordle-message { margin: 16px 0; color: var(--muted-foreground); font-size: 13px; text-align: center; }
+.wordle-win { color: var(--success); font-weight: 800; }
+.wordle-keyboard { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 26px; }
+.wordle-keyboard-row { display: flex; gap: 5px; }
+.wordle-key { display: grid; place-items: center; width: 34px; height: 38px; border-radius: 5px; background: var(--muted); color: var(--foreground); font: 800 11px var(--font-body); }
+.wordle-key.wordle-correct, .wordle-key.wordle-present, .wordle-key.wordle-absent { color: var(--primary-foreground); opacity: 1; }
+.connections-card { padding: 26px; border: 1.5px solid var(--border); border-radius: 18px; background: var(--card); box-shadow: var(--card-shadow); }
+.connections-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.connections-heading h2 { margin-top: 5px; color: var(--foreground); font: 400 30px/1 var(--font-display); }
+.connections-subtitle { margin-top: 9px; color: var(--muted-foreground); font-size: 13px; }
+.connections-mistakes { min-width: 92px; padding: 9px 12px; border-radius: 10px; background: var(--muted); text-align: center; }
+.connections-mistakes span { display: block; color: var(--muted-foreground); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.connections-mistakes strong { display: block; margin-top: 3px; color: var(--accent-red); font: 400 20px var(--font-display); }
+.connections-groups { display: flex; flex-direction: column; gap: 7px; margin-top: 20px; }
+.connection-solved-group { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 15px; border-radius: 10px; color: #211a12; }
+.connection-solved-group strong { font-size: 13px; }
+.connection-solved-group span { font-size: 12px; font-weight: 700; text-align: right; }
+.connection-group-market { background: #f2c94c; }
+.connection-group-options { background: #9cc6e4; }
+.connection-group-ticker { background: #b9d99c; }
+.connection-group-brokerage { background: #c7a8d8; }
+.connections-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; margin-top: 20px; }
+.connection-card { min-height: 78px; padding: 10px 6px; border: 1.5px solid var(--border); border-radius: 10px; background: var(--muted); color: var(--foreground); font: 800 13px var(--font-body); cursor: pointer; transition: .15s ease; }
+.connection-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+.connection-card.is-selected { border-color: var(--frog-ink); background: var(--foreground); color: var(--card); transform: translateY(2px); }
+.connections-complete { display: flex; align-items: center; gap: 9px; margin-top: 16px; color: var(--success); font-size: 13px; }
+.connections-game-over { flex-direction: column; align-items: flex-start; gap: 2px; color: var(--error); }
+.connections-game-over span { color: var(--muted-foreground); font-size: 12px; }
+.connections-actions { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 22px; }
+.connections-selected { margin-right: auto; color: var(--muted-foreground); font-size: 12px; font-weight: 700; }
+.connections-submit, .connections-new { padding: 9px 16px; }
+.connections-submit:disabled { cursor: not-allowed; opacity: .45; }
+.games-page { display: flex; flex-direction: column; gap: 28px; }
+.games-intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
+.games-intro h1 { margin-top: 5px; color: var(--foreground); font: 400 38px/1 var(--font-display); letter-spacing: .01em; }
+.games-subtitle { margin-top: 11px; color: var(--muted-foreground); font-size: 14px; }
+.games-score { min-width: 112px; padding: 13px 18px; border: 1.5px solid var(--border); border-radius: 14px; background: var(--card); text-align: center; box-shadow: var(--card-shadow); }
+.games-score-label { display: block; color: var(--muted-foreground); font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.games-score strong { display: block; margin-top: 2px; color: var(--primary); font: 400 29px/1 var(--font-display); }
+.games-layout { display: grid; grid-template-columns: minmax(360px, 570px) minmax(250px, 1fr); align-items: start; gap: 28px; }
+.puzzle-card { padding: 26px; border: 1.5px solid var(--border); border-radius: 18px; background: var(--card); box-shadow: var(--card-shadow); }
+.puzzle-card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.puzzle-card-heading h2 { margin-top: 5px; color: var(--foreground); font: 400 23px/1.05 var(--font-display); }
+.puzzle-level { padding: 6px 10px; border-radius: 999px; background: var(--muted); color: var(--primary); font-size: 11px; font-weight: 800; }
+.puzzle-size-picker { display: flex; align-items: center; gap: 7px; margin-bottom: 14px; }
+.puzzle-size-picker > span { margin-right: 3px; color: var(--muted-foreground); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+.puzzle-size-option { padding: 6px 9px; border: 1.5px solid var(--border); border-radius: 999px; background: var(--card); color: var(--muted-foreground); font: 700 11px var(--font-body); cursor: pointer; }
+.puzzle-size-option:hover { border-color: var(--primary); color: var(--primary); }
+.puzzle-size-option.is-active { border-color: var(--primary); background: var(--primary); color: var(--primary-foreground); }
+.puzzle-board { display: grid; gap: 2px; aspect-ratio: 1; padding: 4px; border-radius: 12px; background: var(--frog-ink); }
+.game-tile, .puzzle-empty { min-width: 0; aspect-ratio: 1; border: 0; border-radius: 2px; background-image: url('/assets/abigail-johnsons.jpeg'); background-repeat: no-repeat; }
+.game-tile { cursor: pointer; transition: filter .15s, transform .15s; }
+.game-tile:hover:not(:disabled) { filter: brightness(1.12); transform: scale(.98); }
+.game-tile:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.puzzle-empty { background: var(--muted); }
+.puzzle-hint { margin: 17px 0 16px; color: var(--muted-foreground); font-size: 12px; text-align: center; }
+.puzzle-success { display: flex; align-items: center; gap: 10px; min-height: 48px; margin: 13px 0 14px; padding: 8px 12px; border-radius: 10px; background: var(--success-tint); color: var(--success); }
+.success-mark { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 50%; background: var(--success); color: var(--primary-foreground); font-weight: 900; }
+.puzzle-success strong, .puzzle-success span:last-child { display: block; }
+.puzzle-success strong { font-size: 13px; }
+.puzzle-success span:last-child { margin-top: 2px; color: var(--muted-foreground); font-size: 11px; }
+.puzzle-reset { display: block; margin: 0 auto; }
+.games-side-panel { display: flex; flex-direction: column; gap: 18px; }
+.games-note { display: flex; gap: 16px; padding: 24px; border-radius: 18px; background: var(--primary); color: var(--primary-foreground); box-shadow: var(--card-shadow); }
+.games-note-icon { display: grid; place-items: center; flex: 0 0 34px; width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: var(--frog-ink); font-size: 18px; }
+.games-note .eyebrow { color: inherit; opacity: .8; }
+.games-note h2 { margin-top: 6px; font: 400 25px/1.05 var(--font-display); }
+.games-note p:last-child { margin-top: 12px; font-size: 13px; line-height: 1.6; opacity: .9; }
+.games-stats { display: grid; grid-template-columns: repeat(3, 1fr); border: 1.5px solid var(--border); border-radius: 14px; background: var(--card); }
+.games-stats div { padding: 15px; border-right: 1px solid var(--border); }
+.games-stats div:last-child { border-right: 0; }
+.games-stats span, .games-stats strong { display: block; }
+.games-stats span { color: var(--muted-foreground); font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.games-stats strong { margin-top: 7px; color: var(--primary); font: 400 18px var(--font-display); }
+
 /* New-user tour */
 .onboarding-backdrop { position: fixed; inset: 0; z-index: 100; pointer-events: none; background: rgba(42, 29, 20, .2); }
 .onboarding-cloud { position: fixed; width: min(100% - 32px, 570px); height: 570px; color: var(--tour-ink, #111); isolation: isolate; pointer-events: auto; z-index: 101; }
@@ -235,6 +336,11 @@ app-analyst-profile button:focus-visible { outline: 3px solid var(--primary); ou
 .chart-panel .eyebrow { font-size: 13px; }
 .panel-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .panel-heading h2 { margin-top: 3px; font-family: var(--font-display); font-size: 16px; font-weight: 700; }
+.chart-value-caption { margin: 3px 0 0; color: var(--muted-foreground); font-size: 11px; }
+.chart-x-axis { position: relative; height: 20px; margin-top: 6px; }
+.chart-x-axis-label { position: absolute; top: 0; transform: translateX(-50%); color: var(--muted-foreground); white-space: nowrap; }
+.chart-x-axis-label.is-first { transform: translateX(0); }
+.chart-x-axis-label.is-last { transform: translateX(-100%); }
 .period-pill { padding: 7px 14px; border-radius: 999px; color: var(--primary); background: var(--muted); font: 700 13px var(--font-mono); }
 .period-pill.is-active { background: var(--primary); color: var(--primary-foreground); }
 .order-chart-range, .order-option-button { cursor: pointer; transition: background-color .15s ease, border-color .15s ease, color .15s ease, transform .15s ease; }
@@ -269,6 +375,8 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
   .dashboard-header-inner { flex-wrap: wrap; padding: 12px 24px; min-height: 0; }
   .dashboard-nav-top { order: 3; width: 100%; justify-content: flex-start; }
   .dashboard-content-full { padding-left: 24px; padding-right: 24px; }
+  .games-layout { grid-template-columns: minmax(0, 1fr); }
+  .games-side-panel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, .75fr); align-items: start; }
 }
 @media (max-width: 620px) {
   .dashboard-actions { gap: 10px; }
@@ -279,6 +387,34 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
   .stat-value { font-size: 18px; }
   .page-intro { align-items: start; flex-direction: column; gap: 14px; }
   .chart-panel, .watchlist-panel { padding: 16px; }
+  .games-intro { align-items: flex-start; flex-direction: column; }
+  .games-intro h1 { font-size: 32px; }
+  .games-score { align-self: stretch; display: flex; align-items: center; justify-content: space-between; text-align: left; }
+  .games-score strong { margin-top: 0; }
+  .puzzle-card { padding: 18px; }
+  .games-side-panel { display: flex; }
+  .games-note { padding: 18px; }
+  .games-stats div { padding: 12px 10px; }
+  .connections-card { padding: 18px; }
+  .games-tabs { gap: 5px; }
+  .games-tab { min-height: 58px; padding: 8px 6px; gap: 6px; }
+  .games-tab-icon { width: 26px; height: 26px; font-size: 16px; }
+  .games-tab strong { font-size: 11px; }
+  .games-tab small { font-size: 9px; }
+  .wordle-card { padding: 18px; }
+  .wordle-heading h2 { font-size: 26px; }
+  .wordle-row { grid-template-columns: repeat(5, 43px); gap: 5px; }
+  .wordle-tile { width: 43px; height: 43px; font-size: 17px; }
+  .wordle-form { flex-wrap: wrap; }
+  .wordle-form input { width: 100%; }
+  .wordle-key { width: 27px; height: 34px; font-size: 10px; }
+  .connections-heading h2 { font-size: 26px; }
+  .connections-grid { gap: 6px; }
+  .connection-card { min-height: 62px; font-size: 11px; }
+  .connection-solved-group { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .connection-solved-group span { text-align: left; }
+  .connections-actions { flex-wrap: wrap; }
+  .connections-selected { width: 100%; margin-right: 0; text-align: center; }
 }
 
 /* Scrollbar hide utility */
