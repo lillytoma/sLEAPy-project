@@ -13,6 +13,7 @@ spring:
         - classpath:db/migrations/001-add-analyst-role.sql
         - classpath:db/migrations/002-add-client-profile.sql
         - classpath:db/migrations/003-add-admin-role.sql
+        - classpath:db/migrations/004-add-portfolio-snapshots.sql
 # spring:
 #   datasource:
 #     url: jdbc:postgresql://localhost:8101/sleapy_analyst

@@ -3,6 +3,7 @@ package com.sleapy.project.controllers;
 import com.sleapy.project.config.APIRouting;
 import com.sleapy.project.models.dtos.AnalystClientDTO;
 import com.sleapy.project.models.dtos.AnalystSummaryDTO;
+import com.sleapy.project.models.enums.AnalystPeriod;
 import com.sleapy.project.services.AnalystService;
 import com.sleapy.project.services.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @RestController
@@ -29,11 +31,34 @@ public class AnalystController {
     @GetMapping("/summary")
     public ResponseEntity<?> getSummary(
             @RequestParam(required = false) Long clientId,
+            @RequestParam(required = false) List<Long> clientIds,
+            @RequestParam(defaultValue = "DAY") String period,
             @RequestHeader(value = "Authorization", required = false) String authorizationHeader) {
         if (!jwtService.verifyAnalystAuthorizationHeader(authorizationHeader)) {
             return unauthorized();
         }
-        return ResponseEntity.ok(analystService.getSummary(clientId));
+        AnalystPeriod selectedPeriod;
+        try {
+            selectedPeriod = AnalystPeriod.valueOf(period.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Period must be DAY, WEEK, MONTH, or YEAR"));
+        }
+        if (clientIds == null) {
+            if (clientId != null && clientId <= 0) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Customer IDs must be positive"));
+            }
+            return ResponseEntity.ok(analystService.getSummary(clientId, selectedPeriod));
+        }
+        if (clientIds.stream().anyMatch(id -> id == null || id <= 0)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Customer IDs must be positive"));
+        }
+        var selected = new java.util.LinkedHashSet<>(clientIds);
+        if (clientId != null) {
+            if (clientId <= 0) return ResponseEntity.badRequest().body(Map.of("error", "Customer IDs must be positive"));
+            selected.add(clientId);
+        }
+        return ResponseEntity.ok(analystService.getSummaryForClients(List.copyOf(selected), selectedPeriod));
     }
 
     @GetMapping("/clients")

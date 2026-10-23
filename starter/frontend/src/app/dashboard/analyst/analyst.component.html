@@ -3,7 +3,7 @@
     <div>
       <div class="analyst-title-row">
         <p class="eyebrow">Internal analytics</p>
-        <span class="analytics-live"><span></span> Live analytics stream</span>
+        <span class="analytics-live"><span></span> Refreshes every 10 seconds</span>
       </div>
       <h1>Activity at a glance<span class="intro-accent">.</span></h1>
       <p class="page-subtitle">Understand client activity, order flow, and market momentum in one place.</p>
@@ -11,7 +11,7 @@
     <div class="analyst-actions">
       <div class="analyst-refresh">
         <span class="refresh-dot"></span>
-        <span>{{ summary()?.updatedAt ? ('Updated ' + (summary()!.updatedAt | date:'shortTime')) : 'Waiting for analytics data' }}</span>
+        <span>{{ summary() ? (summary()!.updatedAt ? ('Latest trade ' + (summary()!.updatedAt | date:'short')) : 'No filled orders in this period') : 'Waiting for analytics data' }}</span>
         <button type="button" aria-label="Refresh analytics" (click)="analystService.connect()">↻</button>
       </div>
       <app-analyst-profile />
@@ -22,11 +22,17 @@
     <div class="analytics-error" role="alert">{{ dataError() }}</div>
   }
 
-  <div class="analytics-toolbar">
-    <div class="filter-group">
+  <div class="analytics-toolbar" role="region" aria-label="Dashboard filters" aria-describedby="analytics-filter-help">
+    <div class="analytics-filter-heading">
+      <strong>Dashboard filters</strong>
+      <span id="analytics-filter-help">Apply to all charts and metrics</span>
+    </div>
+    <div class="filter-group" role="group" aria-label="Analytics period">
       <span class="filter-label">View</span>
-      @for (period of periods; track period) {
-        <button type="button" class="filter-button" [class.is-selected]="selectedPeriod() === period" (click)="setPeriod(period)">{{ period }}</button>
+      @for (period of periods; track period.value) {
+        <button type="button" class="filter-button" [class.is-selected]="selectedPeriod() === period.value"
+          [attr.aria-pressed]="selectedPeriod() === period.value" [title]="period.description"
+          (click)="setPeriod(period.value)">{{ period.label }}</button>
       }
     </div>
     <label class="select-filter">
@@ -47,11 +53,6 @@
           (keydown)="onClientSearchKeydown($event)">
       </label>
       <button type="button" class="filter-button" (click)="searchForClient()">Search</button>
-      @if (selectedClient(); as client) {
-        <button type="button" class="filter-button is-selected" (click)="clearClient()">
-          {{ client.username }} · Clear
-        </button>
-      }
       @if (clientResults().length) {
         <div id="analyst-client-suggestions" class="client-results" role="listbox" aria-label="Matching clients">
           @for (client of clientResults(); track client.id; let i = $index) {
@@ -61,10 +62,24 @@
               <strong>{{ client.username }}</strong><span>{{ client.email }}</span>
             </button>
           }
-          <span id="analyst-client-search-status" class="client-search-status" role="status">{{ clientSearchStatus() }}</span>
         </div>
       }
+      <span id="analyst-client-search-status" class="client-search-status" role="status">{{ clientSearchStatus() }}</span>
     </div>
+    @if (selectedClients().length) {
+      <div class="selected-customer-list" role="group" aria-label="Selected customers">
+        <span class="selected-customer-heading">Selected clients <b>{{ selectedClients().length }}</b></span>
+        <div class="selected-customer-chips">
+          @for (client of selectedClients(); track client.id) {
+            <button type="button" class="customer-chip" [attr.aria-label]="'Remove ' + client.username + ' from filters'"
+              [title]="client.email" (click)="removeClient(client.id)">
+              <span>{{ client.username }}</span><span class="customer-chip-remove" aria-hidden="true">×</span>
+            </button>
+          }
+        </div>
+        <button type="button" class="filter-button" (click)="clearClient()">Clear all</button>
+      </div>
+    }
   </div>
 
   <div class="analyst-stat-grid">
@@ -81,19 +96,13 @@
     <section class="panel analyst-chart-panel">
       <div class="panel-heading">
         <div><p class="eyebrow">Order activity</p><h2>Aggregate trading activity</h2></div>
-        <label class="select-filter">
-          <span>Instrument</span>
-          <select [value]="selectedActivityInstrument()" (change)="setActivityInstrument($any($event.target).value)">
-            @for (instrument of instrumentOptions; track instrument) { <option [value]="instrument">{{ instrument }}</option> }
-          </select>
-        </label>
       </div>
       <div class="customer-activity-heading">
         <div>
           <strong>Customer trading activity</strong>
-          <p class="panel-helper">Live trade value sampled every 5 minutes.</p>
+          <p class="panel-helper">{{ activityBucketLabel() }} filled-order value for the selected calendar period.</p>
         </div>
-        <span class="chart-summary">5-minute updates</span>
+        <span class="chart-summary">Updates every 10 seconds</span>
       </div>
       <div class="activity-performance-chart">
         <div class="activity-value-axis">
@@ -106,7 +115,7 @@
             <svg #activitySvg
               [attr.viewBox]="'0 0 ' + activityChart().width + ' ' + activityChart().height"
               preserveAspectRatio="none" class="activity-performance-svg"
-              role="img" aria-label="Sampled customer trade value over time"
+              role="img" [attr.aria-label]="activityBucketLabel() + ' customer trade value for ' + selectedPeriod()"
               (mousemove)="onActivityHover($event, activitySvg)"
               (mouseleave)="hoveredActivityPoint.set(null)">
               <defs>
@@ -138,14 +147,14 @@
               <div class="chart-tooltip"
                 [style.left.%]="(point.x / activityChart().width) * 100"
                 [style.top.%]="(point.y / activityChart().height) * 100">
-                <p class="chart-tooltip-label">{{ point.timestamp | date:'short' }}</p>
+                <p class="chart-tooltip-label">{{ point.timestamp | date:(selectedPeriod() === 'DAY' ? 'MMM d, ha' : selectedPeriod() === 'YEAR' ? 'MMMM y' : 'MMM d, y') }}</p>
                 <p class="chart-tooltip-value">Value: {{ formatCurrency(point.value) }}</p>
               </div>
             }
           </div>
           <div class="activity-time-axis">
             @for (point of activityChart().labels; track point.timestamp.toISOString()) {
-              <span [style.left.%]="(point.x / activityChart().width) * 100">{{ point.timestamp | date:'shortTime' }}</span>
+              <span [style.left.%]="(point.x / activityChart().width) * 100">{{ point.timestamp | date:activityAxisFormat() }}</span>
             }
           </div>
         </div>
@@ -153,10 +162,8 @@
       <div class="chart-footnote">
         @if (activityChart().coords.length === 0) {
           Waiting for analytics data.
-        } @else if (activityChart().coords.length === 1) {
-          First sample recorded. The trend appears as more 5-minute samples arrive.
         } @else {
-          <span class="trend-up">● Live</span> Trade value sampled every 5 minutes during this session.
+          <span class="trend-up">● Live</span> {{ activityBucketLabel() }} totals through now, in the server's time zone. Empty intervals show zero; the current interval is partial.
         }
       </div>
     </section>
@@ -164,20 +171,23 @@
   </div>
 
   <div class="analyst-grid analyst-grid-secondary">
-    <section class="panel instrument-panel">
-      <div class="panel-heading"><div><p class="eyebrow">Instrument mix</p><h2>Most active types</h2></div></div>
-      <div class="donut-layout">
+    <section class="panel instrument-panel type-mix-panel">
+      <div class="panel-heading"><div><p class="eyebrow">Instrument mix</p><h2>Most active types</h2>
+        <p class="panel-helper">Share of filled orders. Select a type to see its most active instruments.</p>
+      </div></div>
+      <div class="donut-layout" (mouseleave)="hoveredType.set(null)">
         <div class="donut-legend">
           @for (item of instrumentActivity(); track item.type) {
-            <div class="legend-item" (click)="selectInstrumentType(item.type)">
+            <button type="button" class="legend-item type-legend-button" [attr.aria-pressed]="activeListType() === item.type"
+              (mouseenter)="hoveredType.set(item.type)" (focus)="hoveredType.set(item.type)"
+              (blur)="hoveredType.set(null)" (click)="selectInstrumentType(item.type)">
               <span class="legend-key" [style.background]="item.color"></span>
               <span>{{ item.type }}</span>
-              <strong>{{ item.share | number:'1.0-0' }}%</strong>
-            </div>
+              <strong>{{ item.share | number:'1.0-1' }}%</strong>
+            </button>
           }
         </div>
-        <div class="donut-chart" aria-label="Pie chart of most active instrument types" role="img"
-          (mouseleave)="hoveredType.set(null)">
+        <div class="donut-chart" [attr.aria-label]="instrumentDescription()" role="img">
           <svg class="donut-svg" viewBox="0 0 42 42" aria-hidden="true">
             <circle class="donut-track" cx="21" cy="21" r="15.9155"></circle>
             @for (item of instrumentActivity(); track item.type) {
@@ -190,39 +200,35 @@
                 (click)="selectInstrumentType(item.type)"></circle>
             }
           </svg>
-          <div class="donut-hole"><strong>{{ totalTrades().toLocaleString() }}</strong><span>trades</span></div>
+          <div class="donut-hole"><strong>{{ totalTrades() | number }}</strong><span>filled orders</span></div>
           @if (hoveredInstrumentType(); as hovered) {
             <div class="donut-tooltip">
               <strong>{{ hovered.type }}</strong>
-              <span>{{ hovered.share | number:'1.0-0' }}% of trades</span>
+              <span>{{ hovered.share | number:'1.0-1' }}% of orders</span>
+              <span>{{ formatCurrency(hovered.volume) }}</span>
             </div>
           }
         </div>
       </div>
-      <div class="insight-callout"><span>✦</span><p><strong>Equities lead activity</strong><br>Nearly half of all trades today.</p></div>
     </section>
     <section class="panel top-stocks-panel">
       <div class="panel-heading">
-        <div><p class="eyebrow">By symbol</p><h2>{{ selectedInstrumentHeading() }}</h2></div>
+        <div><p class="eyebrow">By symbol</p><h2>{{ activeListHeading() }}</h2></div>
         <span class="chart-summary">Page {{ symbolPage() + 1 }} of {{ totalSymbolPages() }}</span>
       </div>
-      <div class="stock-header">
-        <span>Rank</span>
-        <span>symbol</span>
-        <span>name</span>
-        <span>trades</span>
-        <span>volume</span>
-      </div>
+      <div class="stock-header"><span>Rank</span><span>Symbol</span><span>Name</span><span>Trades</span><span>Volume</span></div>
       <div class="stock-list">
         @for (stock of topStocks(); track stock.symbol; let i = $index) {
           <div class="stock-row">
-            <span class="stock-rank">{{ (symbolPage() * 5 + i + 1).toString().padStart(2, '0') }}</span>
+            <span class="stock-rank">{{ symbolPage() * 5 + i + 1 }}</span>
             <span class="stock-avatar">{{ stock.symbol.slice(0, 1) }}</span>
             <div class="stock-name"><strong>{{ stock.symbol }}</strong></div>
-            <div class="stock-instrument-name">{{ stock.name }}</div>
-            <div class="stock-metric"><strong>{{ stock.trades.toLocaleString() }}</strong></div>
-            <div class="stock-metric stock-volume"><strong>{{ stock.volume }}</strong></div>
+            <div class="stock-instrument-name">{{ stock.symbolName }}</div>
+            <div class="stock-metric"><strong>{{ stock.totalTrades | number }}</strong></div>
+            <div class="stock-metric stock-volume"><strong>{{ formatCurrency(stock.tradeVolume) }}</strong></div>
           </div>
+        } @empty {
+          <p class="panel-helper" role="status">No filled orders for this type and the selected filters.</p>
         }
       </div>
       <div class="symbol-pagination">
@@ -232,5 +238,5 @@
     </section>
   </div>
 
-  <div class="analytics-note"><span>i</span><p>Analytics are isolated from live trading workloads. This workspace is designed for monitoring and decision support, not order entry.</p></div>
+  <div class="analytics-note"><span>i</span>  <p>Analytics include filled customer orders in the selected calendar period, using the server's time zone. This workspace is for monitoring, not order entry.</p></div>
 </div>

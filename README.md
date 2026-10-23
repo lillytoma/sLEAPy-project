@@ -171,10 +171,30 @@ Restart the backend after restoring or changing the database target so pooled
 connections cannot keep pointing at the previous instance. Do not reseed the
 database or reset passwords to repair a tunnel/port conflict.
 
-The analyst summary reads the ETL snapshot in
-`sleapy_analytics.expensive_trades`. Instrument types are looked up from
-`public.instruments` and `public.instrument_type`; the ETL snapshot does not
-need an `instrument_type` column. Missing instrument lookups are shown as `Other`.
+The analyst summary reads committed filled orders (`status = 2`) directly from
+`public.orders`, excluding admin and analyst accounts. Instrument types are
+looked up from `public.instruments` and `public.instrument_type`; missing type
+lookups are shown as `Other`. There is no top-100 cap on dashboard totals.
+The dashboard refreshes every 10 seconds, including when a client is selected;
+the refresh button fetches immediately. New committed filled orders appear on
+the next successful refresh. Pending, cancelled, and rolled-back orders do not
+contribute to trading totals.
+
+Day, Week, Month, and Year buttons filter all summary totals and instrument
+breakdowns using calendar-to-date ranges in the backend server's time zone.
+Day begins at midnight, Week begins on Monday, Month on the first, and Year on
+January 1. The default is Day. The API accepts
+`GET /api/analyst/summary?period=DAY|WEEK|MONTH|YEAR` plus optional `clientId`.
+Unknown periods return HTTP 400. No trades in a range returns zero totals and an
+empty breakdown. Polling cancels outdated requests when filters change and retries
+on the next interval after displaying request errors.
+
+The Python ETL remains a manual batch-reporting pipeline, not an order-placement
+hook: `etl.py` extracts datasets and replaces warehouse tables when invoked.
+Its `expensive_trades` dataset contains only the top 100 orders, and previously
+kept the dashboard stale. The dashboard no longer depends on that snapshot or
+on an unpublished `/topic/analyst` WebSocket topic. This change does not schedule
+ETL or change its batch exports.
 The analyst mapper explicitly maps the instrument name, type, trade count, and
 volume to API fields rather than relying on global underscore-to-camel-case mapping.
 Analyst client searches match usernames and emails case-insensitively and exclude
@@ -185,11 +205,54 @@ The analyst client field suggests matches after a short typing delay and cancels
 outdated searches. Select a suggestion to fill the field and filter analytics;
 Arrow keys and Enter select a match, and Escape dismisses suggestions.
 
-The aggregate trading activity chart uses the trader overview's smooth line,
-gradient fill, value axis, and hover tooltip. It plots session samples every five
-minutes with their actual timestamps, not historical intraday data. The first
-sample appears as a dot; subsequent samples form the trend. Changing the chart's
-instrument or client filter starts a new sample series.
+The aggregate trading activity chart uses actual historical filled-order values,
+with a gradient fill, value axis, and hover tooltip. Day groups orders by hour
+and labels times of day; Week groups by date starting Monday; Month groups by day
+of the month; Year groups by calendar month. Each range runs from its calendar
+start through the current interval in the server's time zone. Empty elapsed
+intervals show zero, future intervals are omitted, and the current interval is
+partial. Values are per-interval trade volume, not cumulative totals. The chart
+refreshes every 10 seconds, respects the shared client and instrument filters,
+and does not require waiting on session samples. Straight segments avoid
+inventing negative activity between zero-value intervals.
+Orders recorded with only a purchase date appear in that day's midnight bucket;
+the chart cannot reconstruct intraday times that were not stored.
+The top toolbar's period, instrument, and client controls apply to every metric,
+the activity chart, the instrument-type donut, and the most-active instrument list.
+Customer search supports multiple selections. Add customers using the search
+suggestions, remove individual selection chips, or use Clear all to return to all
+customers. Every summary query uses the selected customer IDs without counting
+duplicate selections; administrators and analysts remain excluded.
+The summary API accepts comma-separated or repeated `clientIds` query parameters
+and retains support for the original single `clientId` parameter.
+
+The donut shows the share of filled orders by instrument type, with the filtered
+order count in its center. Select a type using its legend button or donut segment
+to view that type's most-active instruments alongside it. The list ranks by order
+count, then traded dollar value, with five symbols per page. A specific top-toolbar
+instrument filter restricts both panels to that type. Empty results show zero
+shares and an empty list. The extra instrument-details page and portfolio summary
+view have been removed.
+
+Selected customers are always displayed below the search controls as green name
+chips, independently of whether search suggestions are open. Each chip removes
+that customer; Clear all returns to all customers. The search field retains its
+fixed layout while chips wrap on a separate row.
+
+Migration `004-add-portfolio-snapshots.sql` creates persistent snapshot storage.
+The backend records customer cash and per-type holdings values at startup and
+every five minutes while running, independently of dashboard visits. Snapshots
+are not backfilled or deleted on restart. Day/Week/Month/Year selects recorded
+snapshots within that calendar-to-date range. Snapshot collection and API history
+remain available, but are not displayed in the restored instrument panels.
+
+Before recording begins, historical values are unavailable; gaps while the
+backend is stopped are not interpolated.
+Holdings without cached market prices make affected valuations unavailable,
+not zero, while cash and unaffected instrument values remain visible. Prices
+are the cache values at capture time, not independently reconstructed historical
+quotes. Snapshot collection respects `spring.task.scheduling.enabled=false` in
+tests. The new migration and collection begin when you next start the backend.
 
 The analyst header's account avatar includes sign out and the shared persistent
 appearance, text-size, and color-vision preferences. Controls support keyboard

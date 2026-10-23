@@ -1,9 +1,8 @@
 import { Component, computed, OnDestroy, OnInit, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Subscription, switchMap, timer } from 'rxjs';
-import { AnalystClient, AnalystService, AnalystSummary } from '../../services/analyst.service';
+import { AnalystClient, AnalystPeriod, AnalystService, AnalystSummary } from '../../services/analyst.service';
 import { AnalystProfileComponent } from '../../shared/analyst-profile.component';
-import { smoothChartPath } from '../shared/chart-path';
 
 interface InstrumentActivity {
   type: string;
@@ -12,15 +11,6 @@ interface InstrumentActivity {
   color: string;
   volume: number;
   start: number;
-  allInstruments: { symbol: string; name: string; trades: number; volume: number }[];
-}
-
-interface TopStock {
-  symbol: string;
-  name: string;
-  trades: number;
-  volume: string;
-  trend: number | null;
 }
 
 interface CustomerActivityPoint {
@@ -37,26 +27,47 @@ interface CustomerActivityPoint {
   imports: [DatePipe, DecimalPipe, AnalystProfileComponent]
 })
 export class AnalystComponent implements OnInit, OnDestroy {
-  readonly selectedPeriod = signal('Current snapshot');
+  readonly selectedPeriod = signal<AnalystPeriod>('DAY');
   readonly selectedInstrument = signal('All instruments');
-  readonly selectedActivityInstrument = signal('All instruments');
   readonly clientSearch = signal('');
   readonly clientResults = signal<AnalystClient[]>([]);
   readonly activeClientIndex = signal(-1);
   readonly clientSearchStatus = signal('');
-  readonly selectedClient = signal<AnalystClient | null>(null);
+  readonly selectedClients = signal<AnalystClient[]>([]);
+  readonly customerScope = computed(() => this.selectedClients().length
+    ? this.selectedClients().map(client => client.username).join(', ') : 'All customers');
 
-  readonly periods = ['Current snapshot'];
+  readonly periods: { value: AnalystPeriod; label: string; description: string }[] = [
+    { value: 'DAY', label: 'Day', description: 'Today' },
+    { value: 'WEEK', label: 'Week', description: 'This week, starting Monday' },
+    { value: 'MONTH', label: 'Month', description: 'This calendar month' },
+    { value: 'YEAR', label: 'Year', description: 'This calendar year' }
+  ];
 
   readonly summary = signal<AnalystSummary | null>(null);
   readonly dataError = signal<string | null>(null);
   readonly hoveredType = signal<string | null>(null);
-  readonly hoveredActivityPoint = signal<CustomerActivityPoint | null>(null);
-  readonly selectedType = signal<string | null>(null);
-  readonly activityPoints = signal<CustomerActivityPoint[]>([]);
+  readonly selectedType = signal('Stock');
   readonly symbolPage = signal(0);
+  readonly hoveredActivityPoint = signal<CustomerActivityPoint | null>(null);
+  readonly activityPoints = computed<CustomerActivityPoint[]>(() =>
+    (this.summary()?.activity ?? []).map(point => ({
+      timestamp: new Date(point.timestamp),
+      value: this.selectedInstrument() === 'All instruments'
+        ? Number(point.tradeVolume)
+        : Object.entries(point.instrumentVolumes)
+          .filter(([type]) => this.formatInstrumentType(type) === this.selectedInstrument())
+          .reduce((sum, [, volume]) => sum + Number(volume), 0),
+      x: 0,
+      y: 0
+    })));
+  readonly activityAxisFormat = computed(() => ({
+    DAY: 'ha', WEEK: 'MMM d', MONTH: 'd', YEAR: 'MMM'
+  }[this.selectedPeriod()]));
+  readonly activityBucketLabel = computed(() => ({
+    DAY: 'Hourly', WEEK: 'Daily', MONTH: 'Daily', YEAR: 'Monthly'
+  }[this.selectedPeriod()]));
   private subscriptions = new Subscription();
-  private activityTimer?: ReturnType<typeof setInterval>;
   private clientSearchSubscription?: Subscription;
 
   readonly instrumentOptions = ['All instruments', 'Stock', 'Crypto', 'ETF', 'Bond'];
@@ -94,74 +105,81 @@ export class AnalystComponent implements OnInit, OnDestroy {
   });
 
   readonly instrumentActivity = computed<InstrumentActivity[]>(() => {
-    const instruments = this.summary()?.mostActiveInstruments ?? [];
-    const total = this.summary()?.totalTrades ?? 0;
-    const colors = ['#176b55', '#4f9b80', '#d59a43', '#9fb9ad'];
-    const knownTypes = ['Stock', 'Crypto', 'ETF', 'Bond'];
-    const groups = new Map<string, typeof instruments>();
-    instruments.forEach((item) => {
-      const type = this.formatInstrumentType(item.instrumentType || 'Other');
-      groups.set(type, [...(groups.get(type) ?? []), item]);
-    });
+    const instruments = this.filteredInstruments();
+    const types = [...new Set(['Stock', 'Crypto', 'ETF', 'Bond',
+      ...instruments.map(item => this.formatInstrumentType(item.instrumentType || 'Other'))])];
+    const colors = ['#176b55', '#4f9b80', '#d59a43', '#5986b3', '#9b75ae'];
     let start = 0;
-    const allTypes = [...knownTypes, ...[...groups.keys()].filter((type) => !knownTypes.includes(type))];
-    return allTypes.map((type, index) => {
-      const items = groups.get(type) ?? [];
+    return types.map((type, index) => {
+      const items = instruments.filter(item => this.formatInstrumentType(item.instrumentType || 'Other') === type);
       const trades = items.reduce((sum, item) => sum + item.totalTrades, 0);
-      const share = total > 0 ? (trades / total) * 100 : 0;
-      const allInstruments = items.map((item) => ({
-        symbol: item.symbol,
-        name: item.symbolName,
-        trades: item.totalTrades,
-        volume: item.tradeVolume
-      }));
-      const activity = {
+      const share = this.totalTrades() > 0 ? trades / this.totalTrades() * 100 : 0;
+      const slice = {
         type,
         trades,
-        share,
+        volume: items.reduce((sum, item) => sum + Number(item.tradeVolume), 0),
         color: colors[index % colors.length],
-        volume: items.reduce((sum, item) => sum + item.tradeVolume, 0),
-        start,
-        allInstruments
+        share,
+        start
       };
       start += share;
-      return activity;
-    });
+      return slice;
+    }).filter(item => this.selectedInstrument() === 'All instruments' || item.type === this.selectedInstrument());
   });
 
   readonly hoveredInstrumentType = computed(() =>
-    this.instrumentActivity().find((item) => item.type === this.hoveredType()) ?? null);
-
-  readonly selectedInstrumentActivity = computed(() => {
-    const activities = this.instrumentActivity();
-    return activities.find((item) => item.type === this.selectedType()) ?? activities[0] ?? null;
+    this.instrumentActivity().find(item => item.type === this.hoveredType()) ?? null);
+  readonly instrumentDescription = computed(() => 'Share of filled orders by instrument type. '
+    + this.instrumentActivity().map(item => `${item.type}: ${item.share.toFixed(1)}%, ${item.trades} orders`).join('; '));
+  readonly activeListType = computed(() => this.selectedInstrument() === 'All instruments'
+    ? this.selectedType() : this.selectedInstrument());
+  readonly activeInstruments = computed(() => this.filteredInstruments()
+    .filter(item => this.formatInstrumentType(item.instrumentType || 'Other') === this.activeListType())
+    .sort((left, right) => right.totalTrades - left.totalTrades
+      || Number(right.tradeVolume) - Number(left.tradeVolume) || left.symbol.localeCompare(right.symbol)));
+  readonly totalSymbolPages = computed(() => Math.max(1, Math.ceil(this.activeInstruments().length / 5)));
+  readonly topStocks = computed(() => this.activeInstruments().slice(this.symbolPage() * 5, this.symbolPage() * 5 + 5));
+  readonly activeListHeading = computed(() => {
+    const type = this.activeListType();
+    return `Most active ${type === 'Crypto' ? type : type + 's'}`;
   });
-  readonly selectedInstrumentTypeLabel = computed(() => this.selectedInstrumentActivity()?.type ?? 'this type');
-  readonly selectedInstrumentHeading = computed(() => {
-    const type = this.selectedInstrumentTypeLabel();
-    const plural = type === 'Crypto' ? type : `${type}s`;
-    return `Most active ${plural}`;
+
+  readonly portfolioHistory = computed(() => this.summary()?.portfolioHistory ?? null);
+  readonly portfolioLatest = computed(() => this.portfolioHistory()?.latest ?? null);
+  readonly portfolioMetrics = computed(() => {
+    const snapshot = this.portfolioLatest();
+    if (!snapshot) return [];
+    const metrics = [
+      { label: 'Total net worth', value: this.portfolioCurrency(snapshot.netWorth) },
+      { label: 'Cash balance', value: this.formatCurrency(snapshot.cashBalance) },
+      { label: 'Holdings value', value: this.portfolioCurrency(snapshot.holdingsValue) },
+      { label: 'Customer portfolios', value: snapshot.portfolios.toLocaleString() }
+    ];
+    if (this.selectedInstrument() !== 'All instruments') {
+      const entries = Object.entries(snapshot.instrumentValues).filter(([type]) =>
+        this.formatInstrumentType(type) === this.selectedInstrument());
+      const value = entries.some(([, amount]) => amount === null) ? null
+        : entries.reduce((sum, [, amount]) => sum + Number(amount), 0);
+      metrics.push({ label: `${this.selectedInstrument()} holdings`, value: this.portfolioCurrency(value) });
+    }
+    return metrics;
+  });
+  readonly portfolioChange = computed(() => {
+    const first = this.portfolioHistory()?.first;
+    const latest = this.portfolioLatest();
+    if (!this.portfolioHistory()?.comparable || !first || !latest || first.snapshotAt === latest.snapshotAt
+      || first.netWorth === null || latest.netWorth === null || first.portfolios !== latest.portfolios) return null;
+    return Number(latest.netWorth) - Number(first.netWorth);
   });
 
-  readonly totalSymbolPages = computed(() =>
-    Math.max(1, Math.ceil((this.selectedInstrumentActivity()?.allInstruments.length ?? 0) / 5)));
-
-  readonly topStocks = computed<TopStock[]>(() =>
-    (this.selectedInstrumentActivity()?.allInstruments.slice(this.symbolPage() * 5, this.symbolPage() * 5 + 5) ?? []).map((stock) => ({
-      symbol: stock.symbol,
-      name: stock.name,
-      trades: stock.trades,
-      volume: this.formatCompactCurrency(stock.volume),
-      trend: null
-    }))
-  );
-
-  readonly totalTrades = computed(() => this.summary()?.totalTrades ?? 0);
+  readonly totalTrades = computed(() => this.selectedInstrument() === 'All instruments'
+    ? this.summary()?.totalTrades ?? 0
+    : this.filteredTotalTrades());
   readonly activityChart = computed(() => {
     const points = this.activityPoints();
     const values = points.map((point) => point.value);
     const max = points.length ? Math.max(...values) : 1;
-    const min = points.length ? Math.min(...values) : 0;
+    const min = 0;
     const span = max - min || Math.max(Math.abs(max), 1);
     const padding = span * 0.08;
     const chartMin = Math.max(0, min - padding);
@@ -174,7 +192,8 @@ export class AnalystComponent implements OnInit, OnDestroy {
       x: points.length > 1 ? (index / (points.length - 1)) * width : width / 2,
       y: height - ((point.value - chartMin) / range) * height
     }));
-    const linePath = smoothChartPath(coords);
+    const linePath = coords.map((point, index) =>
+      `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
     const areaPath = coords.length > 1
       ? `${linePath} L ${width} ${height} L 0 ${height} Z`
       : '';
@@ -182,8 +201,10 @@ export class AnalystComponent implements OnInit, OnDestroy {
       const value = chartMin + (range * index) / 4;
       return { value, y: height - (index / 4) * height, label: this.formatCompactCurrency(value) };
     });
+    const maxLabels = this.selectedPeriod() === 'YEAR' ? 12 : 7;
     const labels = coords.filter((_, index) =>
-      index === 0 || index === coords.length - 1 || index % Math.max(1, Math.ceil((coords.length - 1) / 4)) === 0);
+      index === 0 || index === coords.length - 1
+      || index % Math.max(1, Math.ceil((coords.length - 1) / (maxLabels - 1))) === 0);
     return { coords, linePath, areaPath, yGridlines, labels, width, height };
   });
 
@@ -200,28 +221,33 @@ export class AnalystComponent implements OnInit, OnDestroy {
   constructor(public readonly analystService: AnalystService) {}
 
   ngOnInit(): void {
+    const filters = this.analystService.viewFilters;
+    this.selectedPeriod.set(filters.period);
+    this.selectedInstrument.set(filters.instrument);
+    this.selectedClients.set([...filters.clients]);
+    this.analystService.setFilters(filters.period, filters.clients.map(client => client.id));
     this.subscriptions.add(this.analystService.summary$.subscribe((summary) => {
-      if (this.selectedClient()) return;
       this.summary.set(summary);
-      if (summary && this.activityPoints().length === 0) this.recordActivityPoint(this.activityValue());
+      this.hoveredType.set(null);
+      this.symbolPage.update(page => Math.min(page, this.totalSymbolPages() - 1));
+      this.hoveredActivityPoint.set(null);
     }));
     this.subscriptions.add(this.analystService.error$.subscribe((error) => this.dataError.set(error)));
     this.analystService.connect();
-    this.activityTimer = setInterval(() => {
-      const summary = this.summary();
-      if (summary) this.recordActivityPoint(this.activityValue());
-    }, 5 * 60 * 1000);
   }
 
   ngOnDestroy(): void {
     this.clientSearchSubscription?.unsubscribe();
     this.subscriptions.unsubscribe();
-    if (this.activityTimer) clearInterval(this.activityTimer);
     this.analystService.disconnect();
   }
 
   formatCurrency(value: number): string {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
+  }
+
+  portfolioCurrency(value: number | null): string {
+    return value === null ? 'Unavailable' : this.formatCurrency(Number(value));
   }
 
   private formatCompactCurrency(value: number): string {
@@ -238,18 +264,31 @@ export class AnalystComponent implements OnInit, OnDestroy {
     return `$${amount.toFixed(2).replace(/\.?0+$/, '')}${unit.suffix}`;
   }
 
-  setPeriod(period: string): void {
+  setPeriod(period: AnalystPeriod): void {
+    if (this.selectedPeriod() === period) return;
     this.selectedPeriod.set(period);
+    this.reloadAnalytics();
+  }
+
+  private reloadAnalytics(): void {
+    this.hoveredActivityPoint.set(null);
+    this.symbolPage.set(0);
+    this.saveViewFilters();
+    this.analystService.setFilters(this.selectedPeriod(), this.selectedClients().map(client => client.id));
+  }
+
+  private saveViewFilters(): void {
+    this.analystService.viewFilters = {
+      period: this.selectedPeriod(), instrument: this.selectedInstrument(), clients: [...this.selectedClients()]
+    };
   }
 
   setInstrument(instrument: string): void {
     this.selectedInstrument.set(instrument);
-  }
-
-  setActivityInstrument(instrument: string): void {
-    this.selectedActivityInstrument.set(instrument);
-    this.activityPoints.set([]);
-    if (this.summary()) this.recordActivityPoint(this.activityValue());
+    this.hoveredType.set(null);
+    this.symbolPage.set(0);
+    this.hoveredActivityPoint.set(null);
+    this.saveViewFilters();
   }
 
   updateClientSearch(value: string): void {
@@ -292,9 +331,10 @@ export class AnalystComponent implements OnInit, OnDestroy {
       switchMap(() => this.analystService.searchClients(search))
     ).subscribe({
       next: (clients) => {
-        this.clientResults.set(clients);
-        this.clientSearchStatus.set(clients.length
-          ? `${clients.length} clients found. Use arrow keys to choose and Enter to select.`
+        const available = clients.filter(client => !this.selectedClients().some(selected => selected.id === client.id));
+        this.clientResults.set(available);
+        this.clientSearchStatus.set(available.length
+          ? `${available.length} clients found. Use arrow keys to choose and Enter to add.`
           : 'No matching clients.');
       },
       error: (error) => {
@@ -306,37 +346,23 @@ export class AnalystComponent implements OnInit, OnDestroy {
 
   selectClient(client: AnalystClient): void {
     this.dismissClientResults();
-    this.clientSearch.set(client.username);
-    this.selectedClient.set(client);
-    this.analystService.getSummary(client.id).subscribe({
-      next: (summary) => {
-        this.summary.set(summary);
-        this.activityPoints.set([]);
-        this.recordActivityPoint(this.activityValue());
-        this.dataError.set(null);
-      },
-      error: (error) => {
-        console.error('Unable to load client analyst summary:', error);
-        this.dataError.set('The selected client analytics could not be loaded.');
-      }
-    });
+    this.clientSearch.set('');
+    if (this.selectedClients().some(selected => selected.id === client.id)) return;
+    this.selectedClients.update(clients => [...clients, client]);
+    this.reloadAnalytics();
   }
 
   clearClient(): void {
     this.dismissClientResults();
-    this.selectedClient.set(null);
+    this.selectedClients.set([]);
     this.clientSearch.set('');
-    this.analystService.getSummary().subscribe({
-      next: (summary) => {
-        this.summary.set(summary);
-        this.activityPoints.set([]);
-        this.recordActivityPoint(this.activityValue());
-      },
-      error: (error) => {
-        console.error('Unable to restore analyst summary:', error);
-        this.dataError.set('The overall analyst summary could not be restored.');
-      }
-    });
+    this.reloadAnalytics();
+  }
+
+  removeClient(id: number): void {
+    this.dismissClientResults();
+    this.selectedClients.update(clients => clients.filter(client => client.id !== id));
+    this.reloadAnalytics();
   }
 
   selectInstrumentType(type: string): void {
@@ -345,25 +371,11 @@ export class AnalystComponent implements OnInit, OnDestroy {
   }
 
   previousSymbolPage(): void {
-    this.symbolPage.update((page) => Math.max(0, page - 1));
+    this.symbolPage.update(page => Math.max(0, page - 1));
   }
 
   nextSymbolPage(): void {
-    this.symbolPage.update((page) => Math.min(this.totalSymbolPages() - 1, page + 1));
-  }
-
-  private recordActivityPoint(value: number): void {
-    this.hoveredActivityPoint.set(null);
-    this.activityPoints.update((points) => [...points, { timestamp: new Date(), value, x: 0, y: 0 }].slice(-24));
-  }
-
-  private activityValue(): number {
-    if (this.selectedActivityInstrument() === 'All instruments') {
-      return Number(this.summary()?.tradeVolume ?? 0);
-    }
-    return (this.summary()?.mostActiveInstruments ?? [])
-      .filter((item) => this.formatInstrumentType(item.instrumentType || 'Other') === this.selectedActivityInstrument())
-      .reduce((sum, item) => sum + item.tradeVolume, 0);
+    this.symbolPage.update(page => Math.min(this.totalSymbolPages() - 1, page + 1));
   }
 
   private formatInstrumentType(value: string): string {

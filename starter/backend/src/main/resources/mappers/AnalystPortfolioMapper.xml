@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sleapy.project.mappers.AnalystPortfolioMapper">
+  <resultMap id="portfolio" type="com.sleapy.project.models.dtos.AnalystPortfolioRowDTO">
+    <result column="snapshot_at" property="snapshotAt"/>
+    <result column="client_id" property="clientId"/>
+    <result column="instrument_type" property="instrumentType"/>
+    <result column="cash_balance" property="cashBalance"/>
+    <result column="holdings_value" property="holdingsValue"/>
+    <result column="missing_prices" property="missingPrices"/>
+  </resultMap>
+
+  <insert id="capture">
+    INSERT INTO public.analyst_portfolio_snapshots
+      (snapshot_at, client_id, instrument_type, cash_balance, holdings_value, missing_prices)
+    SELECT #{timestamp}, c.client_id, COALESCE(t.instrumenttype, 'Other'), c.cash_balance,
+           COALESCE(SUM(h.quantity_shares * mp.current_price), 0),
+           SUM(CASE WHEN h.quantity_shares IS NOT NULL AND h.quantity_shares != 0
+                         AND mp.current_price IS NULL THEN 1 ELSE 0 END)
+    FROM public.clients c
+    LEFT JOIN public.holdings h ON h.client_id = c.client_id
+    LEFT JOIN public.instruments i ON i.instrument_id = h.instrument_id
+    LEFT JOIN public.instrument_type t ON t.instrumenttype_id = i.instrumenttype_id
+    LEFT JOIN public.market_prices mp ON mp.symbol = i.symbol
+    WHERE c.is_admin IS NOT TRUE AND c.is_analyst IS NOT TRUE
+    GROUP BY c.client_id, c.cash_balance, COALESCE(t.instrumenttype, 'Other')
+  </insert>
+
+  <sql id="customers">
+    FROM public.analyst_portfolio_snapshots s
+    JOIN public.clients c ON c.client_id = s.client_id
+    WHERE c.is_admin IS NOT TRUE AND c.is_analyst IS NOT TRUE
+    <if test="clientIds != null and !clientIds.isEmpty()">
+      AND s.client_id IN
+      <foreach collection="clientIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </if>
+  </sql>
+
+  <select id="findSnapshotForClients" resultMap="portfolio">
+    SELECT s.*
+    <include refid="customers"/>
+    AND s.snapshot_at = (
+      SELECT <choose><when test="latest">MAX</when><otherwise>MIN</otherwise></choose>(s.snapshot_at)
+      <include refid="customers"/>
+      AND s.snapshot_at &gt;= #{start} AND s.snapshot_at &lt;= #{end}
+    )
+  </select>
+
+  <select id="findHistorySinceForClients" resultType="java.time.LocalDateTime">
+    SELECT MIN(s.snapshot_at) <include refid="customers"/>
+  </select>
+</mapper>

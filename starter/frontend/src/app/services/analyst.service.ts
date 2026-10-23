@@ -1,8 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { Client, IFrame, IMessage } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { BehaviorSubject, EMPTY, Observable, Subject, Subscription, catchError, merge, switchMap, timer } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface AnalystInstrumentActivity {
@@ -14,11 +12,40 @@ export interface AnalystInstrumentActivity {
 }
 
 export interface AnalystSummary {
+  portfolioHistory: {
+    comparable: boolean;
+    historySince: string | null;
+    first: AnalystPortfolioSnapshot | null;
+    latest: AnalystPortfolioSnapshot | null;
+  } | null;
   tradeVolume: number;
   totalTrades: number;
   mostActiveInstruments: AnalystInstrumentActivity[];
-  updatedAt: string;
+  updatedAt: string | null;
+  orderDirections: {
+    direction: string;
+    instrumentType: string;
+    totalTrades: number;
+    tradeVolume: number;
+  }[];
+  activity: {
+    timestamp: string;
+    tradeVolume: number;
+    instrumentVolumes: Record<string, number>;
+  }[];
 }
+
+export interface AnalystPortfolioSnapshot {
+  snapshotAt: string;
+  portfolios: number;
+  cashBalance: number;
+  holdingsValue: number | null;
+  netWorth: number | null;
+  missingPrices: number;
+  instrumentValues: Record<string, number | null>;
+}
+
+export type AnalystPeriod = 'DAY' | 'WEEK' | 'MONTH' | 'YEAR';
 
 export interface AnalystClient {
   id: number;
@@ -29,19 +56,30 @@ export interface AnalystClient {
 @Injectable({ providedIn: 'root' })
 export class AnalystService {
   private readonly apiUrl = `${environment.apiUrl}/api/analyst`;
-  private readonly wsEndpoint = `${environment.apiUrl}/ws/prices`;
   private readonly summarySubject = new BehaviorSubject<AnalystSummary | null>(null);
   private readonly errorSubject = new BehaviorSubject<string | null>(null);
-  private stompClient: Client | null = null;
+  private readonly filters = new BehaviorSubject<{ period: AnalystPeriod; clientIds: number[] }>({ period: 'DAY', clientIds: [] });
+  viewFilters: { period: AnalystPeriod; instrument: string; clients: AnalystClient[] } = {
+    period: 'DAY', instrument: 'All instruments', clients: []
+  };
+  private readonly refreshRequests = new Subject<void>();
+  private refreshSubscription?: Subscription;
 
   readonly summary$ = this.summarySubject.asObservable();
   readonly error$ = this.errorSubject.asObservable();
 
   constructor(private readonly http: HttpClient) {}
 
-  getSummary(clientId?: number): Observable<AnalystSummary> {
-    const url = clientId ? `${this.apiUrl}/summary?clientId=${clientId}` : `${this.apiUrl}/summary`;
-    return this.http.get<AnalystSummary>(url);
+  getSummary(clientIds: number[] = [], period: AnalystPeriod = 'DAY'): Observable<AnalystSummary> {
+    const params: Record<string, string> = { period };
+    if (clientIds.length) params['clientIds'] = clientIds.join(',');
+    return this.http.get<AnalystSummary>(`${this.apiUrl}/summary`, { params });
+  }
+
+  setFilters(period: AnalystPeriod, clientIds: number[] = []): void {
+    this.summarySubject.next(null);
+    this.errorSubject.next(null);
+    this.filters.next({ period, clientIds: [...new Set(clientIds)] });
   }
 
   searchClients(search: string): Observable<AnalystClient[]> {
@@ -49,55 +87,45 @@ export class AnalystService {
   }
 
   connect(): void {
-    if (this.stompClient?.active) return;
-
-    this.getSummary().subscribe({
+    if (this.refreshSubscription && !this.refreshSubscription.closed) {
+      this.refreshRequests.next();
+      return;
+    }
+    this.refreshSubscription = this.filters.pipe(
+      switchMap(({ period, clientIds }) => merge(timer(0, 10000), this.refreshRequests).pipe(
+        switchMap(() => this.getSummary(clientIds, period).pipe(
+          catchError((error: unknown) => {
+            this.reportError(error);
+            return EMPTY;
+          })
+        ))
+      ))
+    ).subscribe({
       next: (summary) => {
         this.summarySubject.next(summary);
         this.errorSubject.next(null);
-      },
-      error: (error) => this.reportError(error)
-    });
-
-    this.stompClient = new Client({
-      webSocketFactory: () => new SockJS(this.wsEndpoint),
-      reconnectDelay: 5000,
-      onConnect: () => {
-        this.stompClient!.subscribe('/topic/analyst', (message: IMessage) => {
-          try {
-            this.summarySubject.next(JSON.parse(message.body) as AnalystSummary);
-            this.errorSubject.next(null);
-          } catch (error) {
-            console.error('Unable to parse analyst update:', error);
-            this.errorSubject.next('The live analyst update had an invalid format.');
-          }
-        });
-      },
-      onStompError: (frame: IFrame) => {
-        console.error('Analyst WebSocket error:', frame.headers['message'], frame.body);
-        this.errorSubject.next('The live analyst stream is unavailable.');
-      },
-      onWebSocketError: (error) => {
-        console.error('Analyst WebSocket connection error:', error);
-        this.errorSubject.next('The live analyst stream is unavailable.');
       }
     });
-    this.stompClient.activate();
   }
 
   disconnect(): void {
-    this.stompClient?.deactivate();
-    this.stompClient = null;
+    this.refreshSubscription?.unsubscribe();
+    this.refreshSubscription = undefined;
+    this.summarySubject.next(null);
+    this.errorSubject.next(null);
+    this.filters.next({ period: 'DAY', clientIds: [] });
   }
 
   private reportError(error: unknown): void {
     console.error('Unable to load analyst summary:', error);
-    const httpError = error as { status?: number; error?: { error?: string; message?: string } };
-    const detail = httpError.error?.error ?? httpError.error?.message;
+    const status = error instanceof HttpErrorResponse ? error.status : 'unknown';
+    const detail: unknown = error instanceof HttpErrorResponse
+      ? error.error?.message ?? error.error?.error
+      : undefined;
     this.errorSubject.next(
-      detail
-        ? `Analyst data could not be loaded (${httpError.status ?? 'HTTP'}): ${detail}`
-        : `Analyst data could not be loaded (HTTP ${httpError.status ?? 'unknown'}). Check the analytics database connection.`
+      typeof detail === 'string'
+        ? `Analyst data could not be loaded (HTTP ${status}): ${detail}`
+        : `Analyst data could not be loaded (HTTP ${status}). Check the database connection.`
     );
   }
 }

@@ -92,6 +92,8 @@ public class JwtService {
             token = authorizationHeader.substring(7).trim();
         }
         return token.isEmpty() ? null : token;
+    }
+    
     public Optional<Long> getUserId(String authorizationHeader) {
         if (!verifyAuthorizationHeader(authorizationHeader)) {
             return Optional.empty();
