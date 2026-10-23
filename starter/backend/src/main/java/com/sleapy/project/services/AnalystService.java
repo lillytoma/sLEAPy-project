@@ -61,12 +61,16 @@ public class AnalystService {
     static List<AnalystActivityPointDTO> buildActivity(List<AnalystActivityDTO> rows, AnalystPeriod period,
                                                       LocalDateTime start, LocalDateTime end) {
         Map<LocalDateTime, Map<String, BigDecimal>> buckets = new LinkedHashMap<>();
+        if (period == AnalystPeriod.ALL_TIME) {
+            start = bucketTime(rows.stream().map(AnalystActivityDTO::getTimestamp)
+                    .min(LocalDateTime::compareTo).orElse(end), period);
+        }
         for (LocalDateTime time = start; !time.isAfter(bucketTime(end, period)); ) {
             buckets.put(time, new LinkedHashMap<>());
             time = switch (period) {
                 case DAY -> time.plusHours(1);
                 case WEEK, MONTH -> time.plusDays(1);
-                case YEAR -> time.plusMonths(1);
+                case YEAR, ALL_TIME -> time.plusMonths(1);
             };
         }
         for (AnalystActivityDTO row : rows) {
@@ -83,7 +87,7 @@ public class AnalystService {
         return switch (period) {
             case DAY -> timestamp.truncatedTo(ChronoUnit.HOURS);
             case WEEK, MONTH -> timestamp.toLocalDate().atStartOfDay();
-            case YEAR -> timestamp.toLocalDate().withDayOfMonth(1).atStartOfDay();
+            case YEAR, ALL_TIME -> timestamp.toLocalDate().withDayOfMonth(1).atStartOfDay();
         };
     }
 

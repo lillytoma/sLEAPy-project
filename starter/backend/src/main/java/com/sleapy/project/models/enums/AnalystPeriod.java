@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 
 public enum AnalystPeriod {
-    DAY, WEEK, MONTH, YEAR;
+    DAY, WEEK, MONTH, YEAR, ALL_TIME;
 
     public LocalDateTime startAt(LocalDateTime now) {
         LocalDate date = now.toLocalDate();
@@ -15,6 +15,7 @@ public enum AnalystPeriod {
             case WEEK -> date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).atStartOfDay();
             case MONTH -> date.withDayOfMonth(1).atStartOfDay();
             case YEAR -> date.withDayOfYear(1).atStartOfDay();
+            case ALL_TIME -> null;
         };
     }
 }

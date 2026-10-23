@@ -91,6 +91,10 @@ class AnalystPortfolioMapperTest {
             var latest = mapper.findSnapshot(1L, first, first.plusDays(2), true);
             assertEquals(first, old.getFirst().getSnapshotAt());
             assertEquals(first.plusDays(1), latest.getFirst().getSnapshotAt());
+            assertEquals(first, mapper.findSnapshot(1L, null, first.plusDays(2), false)
+                    .getFirst().getSnapshotAt());
+            assertEquals(first.plusDays(1), mapper.findSnapshot(1L, null, first.plusDays(2), true)
+                    .getFirst().getSnapshotAt());
             assertEquals(0, new BigDecimal("100").compareTo(old.getFirst().getCashBalance()));
             assertEquals(0, new BigDecimal("150").compareTo(latest.getFirst().getCashBalance()));
             assertEquals(0, new BigDecimal("80").compareTo(old.stream()

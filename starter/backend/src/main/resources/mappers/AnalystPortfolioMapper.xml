@@ -43,7 +43,8 @@
     AND s.snapshot_at = (
       SELECT <choose><when test="latest">MAX</when><otherwise>MIN</otherwise></choose>(s.snapshot_at)
       <include refid="customers"/>
-      AND s.snapshot_at &gt;= #{start} AND s.snapshot_at &lt;= #{end}
+      <if test="start != null">AND s.snapshot_at &gt;= #{start}</if>
+      AND s.snapshot_at &lt;= #{end}
     )
   </select>
 

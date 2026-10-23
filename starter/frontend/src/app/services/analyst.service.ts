@@ -45,7 +45,7 @@ export interface AnalystPortfolioSnapshot {
   instrumentValues: Record<string, number | null>;
 }
 
-export type AnalystPeriod = 'DAY' | 'WEEK' | 'MONTH' | 'YEAR';
+export type AnalystPeriod = 'DAY' | 'WEEK' | 'MONTH' | 'YEAR' | 'ALL_TIME';
 
 export interface AnalystClient {
   id: number;

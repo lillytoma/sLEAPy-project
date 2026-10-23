@@ -15,6 +15,7 @@ class AnalystPeriodTest {
         assertEquals(LocalDateTime.parse("2026-10-19T00:00:00"), AnalystPeriod.WEEK.startAt(now));
         assertEquals(LocalDateTime.parse("2026-10-01T00:00:00"), AnalystPeriod.MONTH.startAt(now));
         assertEquals(LocalDateTime.parse("2026-01-01T00:00:00"), AnalystPeriod.YEAR.startAt(now));
+        org.junit.jupiter.api.Assertions.assertNull(AnalystPeriod.ALL_TIME.startAt(now));
     }
 
     @Test

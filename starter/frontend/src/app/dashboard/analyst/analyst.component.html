@@ -100,7 +100,7 @@
       <div class="customer-activity-heading">
         <div>
           <strong>Customer trading activity</strong>
-          <p class="panel-helper">{{ activityBucketLabel() }} filled-order value for the selected calendar period.</p>
+          <p class="panel-helper">{{ activityBucketLabel() }} filled-order value for {{ selectedPeriod() === 'ALL_TIME' ? 'all recorded history' : 'the selected calendar period' }}.</p>
         </div>
         <span class="chart-summary">Updates every 10 seconds</span>
       </div>

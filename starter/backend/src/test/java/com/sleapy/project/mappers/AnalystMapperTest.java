@@ -78,6 +78,28 @@ class AnalystMapperTest {
     }
 
     @Test
+    void allTimeIncludesOlderOrdersButStillFiltersCustomersStatusAndFutureOrders() {
+        jdbc.update("INSERT INTO public.orders "
+                + "(client_id, instrument_id, quantity, purchase_price, time_purchased, status) VALUES "
+                + "(1, 1, 1, 10, '1999-01-01 12:00:00', 2), "
+                + "(3, 1, 1, 1000, '1999-01-01 12:00:00', 2), "
+                + "(1, 1, 1, 1000, '1999-01-01 12:00:00', 1), "
+                + "(1, 1, 1, 1000, '2027-01-01 12:00:00', 2)");
+        try (var session = sessionFactory.openSession()) {
+            var mapper = session.getMapper(AnalystMapper.class);
+            assertEquals(4, mapper.countTradesForClients(java.util.List.of(), null, END));
+            assertEquals(3, mapper.countTradesForClients(java.util.List.of(1L), null, END));
+            assertEquals(0, new BigDecimal("360.75")
+                    .compareTo(mapper.findTradeVolumeForClients(java.util.List.of(), null, END)));
+            assertEquals(4, mapper.findActivityForClients(java.util.List.of(), null, END).size());
+            assertEquals(4, mapper.findMostActiveInstrumentsForClients(java.util.List.of(), null, END)
+                    .stream().mapToLong(item -> item.getTotalTrades()).sum());
+            assertEquals(4, mapper.findOrderDirectionsForClients(java.util.List.of(), null, END)
+                    .stream().mapToLong(item -> item.getTotalTrades()).sum());
+        }
+    }
+
+    @Test
     void ownersRankCurrentSummedSharesAndRespectCustomerFiltersAndRoles() {
         jdbc.execute("CREATE TABLE public.holdings (client_id BIGINT, instrument_id BIGINT, quantity_shares NUMERIC(15,4))");
         jdbc.update("INSERT INTO public.holdings VALUES "

@@ -18,7 +18,7 @@ class HttpErrorResponse extends Error {
   error = { message: 'Database temporarily unavailable' };
 }
 
-function loadSource(relativePath, scheduler, errors) {
+function loadSource(relativePath, scheduler, errors, globals = {}) {
   const source = fs.readFileSync(path.join(__dirname, '..', relativePath), 'utf8');
   const compiled = ts.transpileModule(source, {
     compilerOptions: {
@@ -32,9 +32,12 @@ function loadSource(relativePath, scheduler, errors) {
     console: { error: (...args) => errors.push(args) },
     setInterval: () => 1,
     clearInterval: () => {},
+    ...globals,
     require: name => {
       if (name === '@angular/core') {
-        return { Injectable: () => type => type, Component: () => type => type,
+        return { Injectable: () => type => type,
+          Component: metadata => type => { type.componentMetadata = metadata; return type; },
+          ViewChild: () => () => {}, HostListener: () => () => {},
           Optional: () => () => {}, signal, computed: value => value };
       }
       if (name === '@angular/common/http') return { HttpErrorResponse };
@@ -115,6 +118,89 @@ test('polls every 10 seconds and immediately refreshes without duplicate subscri
   f.service.disconnect();
 });
 
+test('all-time and customer filters survive a trip from the dashboard to settings and back', () => {
+  const f = fixture();
+  const { AnalystComponent } = loadSource(
+    'src/app/dashboard/analyst/analyst.component.ts', f.scheduler, f.errors);
+  const dashboard = new AnalystComponent(f.service);
+  dashboard.ngOnInit();
+  dashboard.setPeriod('ALL_TIME');
+  dashboard.setInstrument('ETF');
+  dashboard.selectClient({ id: 42, username: 'customer', email: 'customer@example.invalid' });
+  f.advance(0);
+  dashboard.ngOnDestroy();
+  const restored = new AnalystComponent(f.service);
+  restored.ngOnInit();
+  f.advance(0);
+  assert.equal(restored.selectedPeriod(), 'ALL_TIME');
+  assert.equal(restored.selectedInstrument(), 'ETF');
+  assert.equal(restored.selectedClients()[0].id, 42);
+  assert.equal(restored.activityBucketLabel(), 'Monthly');
+  assert.equal(restored.activityAxisFormat(), 'MMM yyyy');
+  assert.equal(f.requests.at(-1).params.period, 'ALL_TIME');
+  assert.equal(f.requests.at(-1).params.clientIds, '42');
+  restored.ngOnDestroy();
+});
+
+test('analyst Settings uses persistent theme controls without loading client account controls', () => {
+  const storage = new Map([['user_id', '42']]);
+  const localStorage = {
+    getItem: key => storage.get(key) ?? null,
+    setItem: (key, value) => storage.set(key, value)
+  };
+  const classes = new Set();
+  const root = {
+    dataset: {},
+    classList: {
+      toggle: (name, enabled) => enabled ? classes.add(name) : classes.delete(name),
+      remove: (...names) => names.forEach(name => classes.delete(name)),
+      add: name => classes.add(name)
+    }
+  };
+  const globals = { localStorage, document: { documentElement: root } };
+  const { ThemeService } = loadSource('src/app/services/theme.service.ts', null, [], globals);
+  const { SettingsComponent } = loadSource('src/app/dashboard/settings/settings.component.ts', null, [], globals);
+  const theme = new ThemeService();
+  const accountRequests = [];
+  const auth = { getAccountStatus: id => { accountRequests.push(id); return rx.of({ frozen: true }); } };
+  const analyst = new SettingsComponent(theme, auth, {}, { snapshot: { data: { analystSettings: true } } });
+  assert.equal(analyst.analystSettings, true);
+  assert.deepEqual(accountRequests, []);
+  analyst.themeService.toggleDark();
+  analyst.themeService.setFontSize('large');
+  analyst.themeService.setColorVision('tritanopia');
+  assert.ok(classes.has('dark'));
+  assert.ok(classes.has('color-vision-tritanopia'));
+  assert.equal(root.dataset.fontSize, 'large');
+  const restored = new ThemeService();
+  assert.equal(restored.dark(), true);
+  assert.equal(restored.fontSize(), 'large');
+  assert.equal(restored.colorVision(), 'tritanopia');
+  const client = new SettingsComponent(restored, auth, {}, { snapshot: { data: {} } });
+  assert.equal(client.analystSettings, false);
+  assert.equal(client.frozen(), true);
+  assert.deepEqual(accountRequests, [42]);
+  assert.match(SettingsComponent.componentMetadata.template, /@if \(!analystSettings\)/);
+  assert.match(SettingsComponent.componentMetadata.template, /routerLink="\/analyst"/);
+});
+
+test('analyst profile offers only Settings and Sign out and Escape restores trigger focus', () => {
+  const { AnalystProfileComponent } = loadSource('src/app/shared/analyst-profile.component.ts', null, [], {
+    localStorage: { getItem: () => '' }
+  });
+  const profile = new AnalystProfileComponent({}, {});
+  const template = AnalystProfileComponent.componentMetadata.template;
+  assert.match(template, /routerLink="\/analyst\/settings"/);
+  assert.match(template, /authService\.logout\(\)/);
+  assert.doesNotMatch(template, /themeService|textSizes|colorModes/);
+  let focused = false;
+  profile.trigger = { nativeElement: { focus: () => { focused = true; } } };
+  profile.open.set(true);
+  profile.closeOnEscape({ preventDefault() {}, stopPropagation() {} });
+  assert.equal(profile.open(), false);
+  assert.equal(focused, true);
+});
+
 test('preserves client and period filters through polling and ignores outdated responses', () => {
   const f = fixture();
   const received = [];
@@ -188,8 +274,8 @@ test('period buttons and client selection share filters and replace historical c
   component.ngOnInit();
   f.advance(0);
   component.setInstrument('Stock');
-  assert.equal(component.periods.map(period => period.label).join(','), 'Day,Week,Month,Year');
-  for (const period of ['WEEK', 'MONTH', 'YEAR', 'DAY']) {
+  assert.equal(component.periods.map(period => period.label).join(','), 'Day,Week,Month,Year,All time');
+  for (const period of ['WEEK', 'MONTH', 'YEAR', 'ALL_TIME', 'DAY']) {
     component.setPeriod(period);
     assert.equal(component.activityPoints().length, 0);
     f.advance(0);
@@ -226,7 +312,7 @@ test('chart uses historical buckets with period-specific axes, zero intervals an
   const { AnalystComponent } = loadSource(
     'src/app/dashboard/analyst/analyst.component.ts', f.scheduler, f.errors);
   const component = new AnalystComponent(f.service);
-  const formats = { DAY: 'ha', WEEK: 'MMM d', MONTH: 'd', YEAR: 'MMM' };
+  const formats = { DAY: 'ha', WEEK: 'MMM d', MONTH: 'd', YEAR: 'MMM', ALL_TIME: 'MMM yyyy' };
   for (const [period, format] of Object.entries(formats)) {
     component.selectedPeriod.set(period);
     assert.equal(component.activityAxisFormat(), format);

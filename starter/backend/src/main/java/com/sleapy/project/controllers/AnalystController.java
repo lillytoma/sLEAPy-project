@@ -42,7 +42,7 @@ public class AnalystController {
             selectedPeriod = AnalystPeriod.valueOf(period.toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Period must be DAY, WEEK, MONTH, or YEAR"));
+                    .body(Map.of("error", "Period must be DAY, WEEK, MONTH, YEAR, or ALL_TIME"));
         }
         if (clientIds == null) {
             if (clientId != null && clientId <= 0) {

@@ -112,7 +112,7 @@ class AnalystControllerTest {
         mvc.perform(get("/api/analyst/summary").param("period", "ALL")
                         .header("Authorization", "Bearer analyst"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Period must be DAY, WEEK, MONTH, or YEAR"));
+                .andExpect(jsonPath("$.error").value("Period must be DAY, WEEK, MONTH, YEAR, or ALL_TIME"));
         verifyNoInteractions(analystService);
     }
 

@@ -41,7 +41,8 @@ export class AnalystComponent implements OnInit, OnDestroy {
     { value: 'DAY', label: 'Day', description: 'Today' },
     { value: 'WEEK', label: 'Week', description: 'This week, starting Monday' },
     { value: 'MONTH', label: 'Month', description: 'This calendar month' },
-    { value: 'YEAR', label: 'Year', description: 'This calendar year' }
+    { value: 'YEAR', label: 'Year', description: 'This calendar year' },
+    { value: 'ALL_TIME', label: 'All time', description: 'All recorded filled orders' }
   ];
 
   readonly summary = signal<AnalystSummary | null>(null);
@@ -70,10 +71,10 @@ export class AnalystComponent implements OnInit, OnDestroy {
       y: 0
     })));
   readonly activityAxisFormat = computed(() => ({
-    DAY: 'ha', WEEK: 'MMM d', MONTH: 'd', YEAR: 'MMM'
+    DAY: 'ha', WEEK: 'MMM d', MONTH: 'd', YEAR: 'MMM', ALL_TIME: 'MMM yyyy'
   }[this.selectedPeriod()]));
   readonly activityBucketLabel = computed(() => ({
-    DAY: 'Hourly', WEEK: 'Daily', MONTH: 'Daily', YEAR: 'Monthly'
+    DAY: 'Hourly', WEEK: 'Daily', MONTH: 'Daily', YEAR: 'Monthly', ALL_TIME: 'Monthly'
   }[this.selectedPeriod()]));
   private subscriptions = new Subscription();
   private clientSearchSubscription?: Subscription;

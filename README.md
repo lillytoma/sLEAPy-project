@@ -215,6 +215,9 @@ partial. Values are per-interval trade volume, not cumulative totals. The chart
 refreshes every 10 seconds, respects the shared client and instrument filters,
 and does not require waiting on session samples. Straight segments avoid
 inventing negative activity between zero-value intervals.
+All time includes all recorded filled orders through now, with monthly buckets
+from the first matching order and month/year axis labels. Customer and instrument
+filters still apply.
 Orders recorded with only a purchase date appear in that day's midnight bucket;
 the chart cannot reconstruct intraday times that were not stored.
 New filled buy/sell orders store their execution time as both purchase and fill
@@ -265,12 +268,11 @@ are the cache values at capture time, not independently reconstructed historical
 quotes. Snapshot collection respects `spring.task.scheduling.enabled=false` in
 tests. The new migration and collection begin when you next start the backend.
 
-The analyst header's account avatar includes sign out and the shared persistent
-appearance, text-size, and color-vision preferences. Controls support keyboard
-navigation; Escape closes the panel and restores focus to the avatar.
-Night mode is available under Appearance. Text-size scaling applies to both the
-trader dashboard and the analyst page; color-vision palettes are grouped under
-the Color themes heading.
+The analyst header's account avatar has Settings and Sign out options. Settings
+opens `/analyst/settings`, reusing the shared appearance, text-size, and
+color-vision controls without client account freeze/delete controls.
+Preferences persist and apply across the dashboard and settings page.
+Escape closes the account menu and restores focus to the avatar.
 
 ---
 

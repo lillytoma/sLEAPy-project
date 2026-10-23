@@ -51,7 +51,7 @@
     WHERE trades.status = 2
       AND clients.is_admin IS NOT TRUE
       AND clients.is_analyst IS NOT TRUE
-      AND trades.time_purchased &gt;= #{start}
+      <if test="start != null">AND trades.time_purchased &gt;= #{start}</if>
       AND trades.time_purchased &lt;= #{end}
       <if test="clientIds != null and !clientIds.isEmpty()">
         AND trades.client_id IN

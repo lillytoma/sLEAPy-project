@@ -46,6 +46,8 @@ export const routes: Routes = [
   { path: '', component: LandingComponent },
   { path: 'login', component: LoginComponent },
   { path: 'signup', component: SignupComponent },
+  { path: 'analyst/settings', component: SettingsComponent, canActivate: [analystGuard],
+    data: { analystSettings: true } },
   { path: 'analyst', component: AnalystComponent, canActivate: [analystGuard] },
   {
     path: 'dashboard/admin',

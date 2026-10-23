@@ -74,6 +74,7 @@ class AnalystActivityTest {
     @Test
     void emptyPeriodsAndFirstIntervalHaveZeroValuesWithoutFabricatedHistory() {
         for (var period : AnalystPeriod.values()) {
+            if (period == AnalystPeriod.ALL_TIME) continue;
             var start = period.startAt(now);
             var points = AnalystService.buildActivity(List.of(), period, start, start);
             assertEquals(1, points.size());
@@ -81,6 +82,29 @@ class AnalystActivityTest {
             assertEquals(BigDecimal.ZERO, points.getFirst().tradeVolume());
             assertTrue(points.getFirst().instrumentVolumes().isEmpty());
         }
+
+    }
+
+    @Test
+    void allTimeUsesMonthlyBucketsFromFirstRecordedOrderAcrossYears() {
+        var points = AnalystService.buildActivity(List.of(
+                row("2024-12-31T10:00:00", "Stock", "100"),
+                row("2026-10-23T12:00:00", "ETF", "25")),
+                AnalystPeriod.ALL_TIME, null, now);
+        assertEquals(23, points.size());
+        assertEquals(LocalDateTime.parse("2024-12-01T00:00:00"), points.getFirst().timestamp());
+        assertEquals(LocalDateTime.parse("2026-10-01T00:00:00"), points.getLast().timestamp());
+        assertEquals(BigDecimal.ZERO, points.get(1).tradeVolume());
+        assertEquals(new BigDecimal("125"), points.stream().map(point -> point.tradeVolume())
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+    }
+
+    @Test
+    void allTimeWithoutOrdersShowsOnlyCurrentMonthWithZeroVolume() {
+        var points = AnalystService.buildActivity(List.of(), AnalystPeriod.ALL_TIME, null, now);
+        assertEquals(1, points.size());
+        assertEquals(LocalDateTime.parse("2026-10-01T00:00:00"), points.getFirst().timestamp());
+        assertEquals(BigDecimal.ZERO, points.getFirst().tradeVolume());
     }
 
     @Test

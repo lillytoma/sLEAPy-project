@@ -1,5 +1,5 @@
 import { Component, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FrogMascotComponent } from '../../shared/frog-mascot.component';
 import { ThemeService } from '../../services/theme.service';
 import { AuthService } from '../../services/auth.service';
@@ -7,9 +7,18 @@ import { AuthService } from '../../services/auth.service';
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [FrogMascotComponent],
+  imports: [FrogMascotComponent, RouterLink],
   template: `
-    <div class="settings-page">
+    <div class="settings-page" [class.analyst-page]="analystSettings">
+      @if (analystSettings) {
+        <div>
+          <a routerLink="/analyst" class="button button-primary inline-flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" aria-hidden="true"><path d="m12 19-7-7 7-7M5 12h14"/></svg>
+            Back to analyst dashboard
+          </a>
+        </div>
+      }
       <div class="page-intro">
         <div>
           <div class="eyebrow">Account</div>
@@ -84,6 +93,7 @@ import { AuthService } from '../../services/auth.service';
         </div>
       </section>
 
+      @if (!analystSettings) {
       <section class="panel settings-panel settings-account-panel" aria-labelledby="account-heading">
         <div class="settings-section-heading">
           <div>
@@ -113,10 +123,12 @@ import { AuthService } from '../../services/auth.service';
           <p class="settings-account-error" role="alert">{{ accountError() }}</p>
         }
       </section>
+      }
     </div>
   `
 })
 export class SettingsComponent {
+  readonly analystSettings: boolean;
   frozen = signal(false);
   isSaving = signal(false);
   accountError = signal('');
@@ -124,8 +136,11 @@ export class SettingsComponent {
   constructor(
     public themeService: ThemeService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    route: ActivatedRoute
   ) {
+    this.analystSettings = route.snapshot.data['analystSettings'] === true;
+    if (this.analystSettings) return;
     const clientId = this.getClientId();
     if (clientId !== null) {
       this.authService.getAccountStatus(clientId).subscribe({
