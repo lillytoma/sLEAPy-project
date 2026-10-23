@@ -3,6 +3,7 @@ package com.sleapy.project.services;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
@@ -10,7 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -107,7 +108,9 @@ class TradeServiceSettlementTest {
             return null;
         }).when(orderMapper).save(any(OrderEntity.class));
 
+        var beforeExecution = LocalDateTime.now();
         var response = tradeService.buyStock(new BuyOrderRequestDTO(1L, 2L, new BigDecimal("2")));
+        var afterExecution = LocalDateTime.now();
 
         assertEquals(new BigDecimal("200.00"), response.getTotalAmount());
         assertEquals(new BigDecimal("100.00"), response.getPricePerShare());
@@ -127,7 +130,9 @@ class TradeServiceSettlementTest {
         assertEquals(new BigDecimal("100.00"), savedOrder.getPurchasePrice());
         assertEquals(filledStatus, savedOrder.getStatus());
         assertNotNull(savedOrder.getTimeFilled());
-        assertEquals(LocalDate.now(), savedOrder.getTimeFilled());
+        assertEquals(savedOrder.getTimeOfPurchase(), savedOrder.getTimeFilled());
+        assertFalse(savedOrder.getTimeFilled().isBefore(beforeExecution));
+        assertFalse(savedOrder.getTimeFilled().isAfter(afterExecution));
     }
 
     @Test
@@ -144,7 +149,9 @@ class TradeServiceSettlementTest {
             return null;
         }).when(orderMapper).save(any(OrderEntity.class));
 
+        var beforeExecution = LocalDateTime.now();
         var response = tradeService.sellStock(new SellOrderRequestDTO(1L, 2L, new BigDecimal("2")));
+        var afterExecution = LocalDateTime.now();
 
         assertEquals(new BigDecimal("200.00"), response.getTotalAmount());
         assertEquals(700.00, client.getCashBalance(), 0.001);
@@ -157,6 +164,9 @@ class TradeServiceSettlementTest {
         assertEquals("SELL", savedOrder.getTradeType());
         assertEquals(new BigDecimal("100.00"), savedOrder.getPurchasePrice());
         assertNotNull(savedOrder.getTimeFilled());
+        assertEquals(savedOrder.getTimeOfPurchase(), savedOrder.getTimeFilled());
+        assertFalse(savedOrder.getTimeFilled().isBefore(beforeExecution));
+        assertFalse(savedOrder.getTimeFilled().isAfter(afterExecution));
     }
 
     @Test

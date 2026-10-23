@@ -272,7 +272,7 @@ class AnalystMapperTest {
         order.setTradeType("BUY");
         order.setQuantity(new BigDecimal("2"));
         order.setPurchasePrice(new BigDecimal("10"));
-        order.setTimeOfPurchase(START.plusDays(10).toLocalDate());
+        order.setTimeOfPurchase(START.plusDays(10).plusHours(14).plusMinutes(30));
         order.setTimeFilled(order.getTimeOfPurchase());
 
         try (var writer = sessionFactory.openSession()) {
@@ -284,6 +284,12 @@ class AnalystMapperTest {
         }
         try (var reader = sessionFactory.openSession()) {
             var mapper = reader.getMapper(AnalystMapper.class);
+            assertEquals(order.getTimeOfPurchase(), jdbc.queryForObject(
+                    "SELECT time_purchased FROM public.orders WHERE order_id = ?",
+                    LocalDateTime.class, order.getId()));
+            assertEquals(order.getTimeFilled(), jdbc.queryForObject(
+                    "SELECT time_filled FROM public.orders WHERE order_id = ?",
+                    LocalDateTime.class, order.getId()));
             assertEquals(4, mapper.countTrades(null, START, END));
             assertEquals(0, new BigDecimal("370.75").compareTo(mapper.findTradeVolume(null, START, END)));
             assertEquals(3, mapper.findMostActiveInstruments(1L, START, END)

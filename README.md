@@ -217,6 +217,8 @@ and does not require waiting on session samples. Straight segments avoid
 inventing negative activity between zero-value intervals.
 Orders recorded with only a purchase date appear in that day's midnight bucket;
 the chart cannot reconstruct intraday times that were not stored.
+New filled buy/sell orders store their execution time as both purchase and fill
+timestamps, preserving intraday precision.
 The top toolbar's period, instrument, and client controls apply to every metric,
 the activity chart, the instrument-type donut, and the most-active instrument list.
 Customer search supports multiple selections. Add customers using the search

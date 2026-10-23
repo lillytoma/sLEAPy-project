@@ -125,6 +125,7 @@ public class TradeService {
         order.setInstrument(instrument);
         order.setQuantity(quantity);
         order.setTimeOfPurchase(LocalDateTime.now());
+        order.setTimeFilled(order.getTimeOfPurchase());
         order.setPurchasePrice(price);
         order.setTradeType(tradeType);
         OrderStatus filledStatus = orderStatusMapper.findById(2L)
