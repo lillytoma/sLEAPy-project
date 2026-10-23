@@ -34,12 +34,12 @@ public interface OrderMapper {
     List<OrderEntity> findAll();
     
     /**
-     * Find all orders for a specific client, ordered by purchase time (ascending).
+     * Find all orders for a specific client, ordered by purchase time (newest first).
      *
      * This method is defined with annotations to avoid runtime XML statement lookup mismatches.
      *
      * @param clientId the client ID to search by
-     * @return list of orders for the client, ordered by time_purchased ASC
+     * @return list of orders for the client, ordered by time_purchased DESC
      */
     @Select("""
         SELECT o.Order_ID,
@@ -64,7 +64,7 @@ public interface OrderMapper {
         LEFT JOIN Clients c ON o.Client_ID = c.Client_ID
         LEFT JOIN Instruments i ON o.Instrument_ID = i.Instrument_ID
         WHERE c.Client_ID = #{clientId}
-        ORDER BY o.Time_purchased ASC
+        ORDER BY o.Time_purchased DESC, o.Order_ID DESC
         """)
     @Results({
         @Result(column = "Order_ID", property = "id", id = true),
