@@ -4,6 +4,7 @@ import com.sleapy.project.models.dtos.AnalystClientDTO;
 import com.sleapy.project.models.dtos.AnalystActivityDTO;
 import com.sleapy.project.models.dtos.AnalystInstrumentActivityDTO;
 import com.sleapy.project.models.dtos.AnalystOrderDirectionDTO;
+import com.sleapy.project.models.dtos.AnalystInstrumentOwnerDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -13,6 +14,9 @@ import java.util.List;
 
 @Mapper
 public interface AnalystMapper {
+    List<AnalystInstrumentOwnerDTO> findInstrumentOwners(
+            @Param("symbol") String symbol, @Param("clientIds") List<Long> clientIds);
+
     List<AnalystOrderDirectionDTO> findOrderDirectionsForClients(@Param("clientIds") List<Long> clientIds,
             @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 

@@ -51,13 +51,18 @@ function fixture() {
   const scheduler = new rx.VirtualTimeScheduler();
   const errors = [];
   const requests = [];
-  const state = { totalTrades: 1, delay: 0, failNext: false };
+  const state = { totalTrades: 1, delay: 0, failNext: false, owners: [], failOwners: false };
   const http = {
     get: (url, options) => new rx.Observable(subscriber => {
       requests.push({ url, params: options.params });
       const totalTrades = state.totalTrades;
+      const ownerResponse = state.owners.map(owner => ({ ...owner }));
       return scheduler.schedule(() => {
-        if (state.failNext) {
+        if (url.endsWith('/instrument-owners')) {
+          if (state.failOwners) subscriber.error(new HttpErrorResponse());
+          else subscriber.next(ownerResponse);
+          subscriber.complete();
+        } else if (state.failNext) {
           state.failNext = false;
           subscriber.error(new HttpErrorResponse());
         } else {
@@ -430,4 +435,81 @@ test('most-active list ranks by order count then value and responds to donut typ
   assert.equal(component.activeInstruments().map(item => item.symbol).join(','), 'LOW,BIG,A,B,C,D');
   assert.equal(component.instrumentActivity().length, 1);
   assert.equal(component.instrumentActivity()[0].type, 'Stock');
+});
+
+test('donut switches from type distribution to top five symbols ranked by orders with volume labels', () => {
+  const f = fixture();
+  const { AnalystComponent } = loadSource(
+    'src/app/dashboard/analyst/analyst.component.ts', f.scheduler, f.errors);
+  const component = new AnalystComponent(f.service);
+  const mostActiveInstruments = [
+    ['A', 'Stock', 10, 10], ['B', 'Stock', 5, 5000], ['C', 'Stock', 4, 200],
+    ['D', 'Stock', 3, 100], ['E', 'Stock', 2, 200], ['F', 'Stock', 1, 500],
+    ['BTC', 'Crypto', 5, 500]
+  ].map(([symbol, instrumentType, totalTrades, tradeVolume]) => ({
+    symbol, symbolName: symbol, instrumentType, totalTrades, tradeVolume
+  }));
+  component.summary.set({ totalTrades: 30, mostActiveInstruments });
+  assert.equal(component.donutItems().find(item => item.type === 'Stock').trades, 25);
+  component.selectDonutItem('Crypto');
+  assert.equal(component.topStocks()[0].symbol, 'BTC');
+  component.setInstrument('Stock');
+  assert.equal(component.donutItems().map(item => item.type).join(','), 'A,B,C,D,E');
+  assert.equal(component.donutItems()[0].volume, 10);
+  assert.equal(component.donutTotal(), 24);
+  assert.ok(Math.abs(component.donutItems().reduce((sum, item) => sum + item.share, 0) - 100) < 1e-10);
+  assert.equal(component.selectedSymbol(), 'A');
+  component.selectDonutItem('B');
+  assert.equal(component.selectedSymbol(), 'B');
+  component.setInstrument('All instruments');
+  assert.equal(component.selectedSymbol(), null);
+  assert.equal(component.donutItems().length, 4);
+  component.ngOnDestroy();
+});
+
+test('owner requests retain customer filters, paginate, cancel stale selections, recover and stop on teardown', () => {
+  const f = fixture();
+  const { AnalystComponent } = loadSource(
+    'src/app/dashboard/analyst/analyst.component.ts', f.scheduler, f.errors);
+  const component = new AnalystComponent(f.service);
+  component.summary.set({ totalTrades: 2, mostActiveInstruments: [
+    { symbol: 'A', instrumentType: 'Stock', totalTrades: 1, tradeVolume: 10 },
+    { symbol: 'B', instrumentType: 'Stock', totalTrades: 1, tradeVolume: 5 }
+  ] });
+  component.selectedClients.set([{ id: 42, username: 'first' }, { id: 7, username: 'second' }]);
+  f.state.delay = 1000;
+  f.state.owners = [{ clientId: 1, username: 'outdated', shares: 100 }];
+  component.setInstrument('Stock');
+  f.advance(0);
+  f.state.delay = 100;
+  f.state.owners = Array.from({ length: 7 }, (_, index) => ({
+    clientId: index + 1, username: `owner-${index}`, shares: 100 - index
+  }));
+  component.selectDonutItem('B');
+  f.advance(100);
+  assert.equal(f.requests.at(-1).params.symbol, 'B');
+  assert.equal(f.requests.at(-1).params.clientIds, '42,7');
+  assert.equal(component.owners().length, 7);
+  assert.equal(component.totalOwnerPages(), 2);
+  component.nextOwnerPage();
+  assert.equal(component.visibleOwners().length, 2);
+  f.advance(1000);
+  assert.equal(component.owners()[0].username, 'owner-0');
+  f.state.failOwners = true;
+  f.advance(10000);
+  assert.match(component.ownerError(), /Unable to load/);
+  assert.equal(component.owners().length, 0);
+  f.state.failOwners = false;
+  f.state.owners = [{ clientId: 42, username: 'first', shares: 3 }];
+  f.advance(10000);
+  assert.equal(component.ownerError(), null);
+  assert.equal(component.owners()[0].username, 'first');
+  assert.equal(component.ownerPage(), 0);
+  component.removeClient(42);
+  assert.equal(component.selectedSymbol(), null);
+  assert.equal(component.owners().length, 0);
+  component.ngOnDestroy();
+  const count = f.requests.length;
+  f.advance(30000);
+  assert.equal(f.requests.length, count);
 });

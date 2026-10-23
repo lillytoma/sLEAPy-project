@@ -78,6 +78,31 @@ class AnalystMapperTest {
     }
 
     @Test
+    void ownersRankCurrentSummedSharesAndRespectCustomerFiltersAndRoles() {
+        jdbc.execute("CREATE TABLE public.holdings (client_id BIGINT, instrument_id BIGINT, quantity_shares NUMERIC(15,4))");
+        jdbc.update("INSERT INTO public.holdings VALUES "
+                + "(1, 1, 2), (1, 1, 3), (2, 1, 10), (3, 1, 100), (5, 1, 200), "
+                + "(7, 1, 300), (8, 1, 0), (9, 1, 400), (10, 1, 500), (1, 2, 999)");
+        try (var session = sessionFactory.openSession()) {
+            var mapper = session.getMapper(AnalystMapper.class);
+            var owners = mapper.findInstrumentOwners("AAPL", java.util.List.of());
+            assertEquals(java.util.List.of(2L, 1L), owners.stream().map(item -> item.getClientId()).toList());
+            assertEquals("second", owners.getFirst().getUsername());
+            assertEquals(0, new BigDecimal("10").compareTo(owners.getFirst().getShares()));
+            assertEquals(0, new BigDecimal("5").compareTo(owners.get(1).getShares()));
+            var selected = mapper.findInstrumentOwners("AAPL", java.util.List.of(1L, 1L, 3L, 5L));
+            assertEquals(1, selected.size());
+            assertEquals("customer-one", selected.getFirst().getUsername());
+            assertTrue(mapper.findInstrumentOwners("NONE", java.util.List.of()).isEmpty());
+            assertTrue(mapper.findInstrumentOwners("AAPL", java.util.List.of(3L, 5L)).isEmpty());
+            jdbc.update("INSERT INTO public.holdings VALUES (8, 1, 10)");
+            session.clearCache();
+            owners = mapper.findInstrumentOwners("AAPL", java.util.List.of());
+            assertEquals(java.util.List.of(8L, 2L, 1L), owners.stream().map(item -> item.getClientId()).toList());
+        }
+    }
+
+    @Test
     void multipleCustomersApplyToEverySummaryQueryWithoutDuplicatesOrPrivilegedAccounts() {
         try (var session = sessionFactory.openSession()) {
             var mapper = session.getMapper(AnalystMapper.class);

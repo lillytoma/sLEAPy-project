@@ -5,6 +5,7 @@ import com.sleapy.project.models.dtos.AnalystActivityDTO;
 import com.sleapy.project.models.dtos.AnalystActivityPointDTO;
 import com.sleapy.project.models.dtos.AnalystClientDTO;
 import com.sleapy.project.models.dtos.AnalystInstrumentActivityDTO;
+import com.sleapy.project.models.dtos.AnalystInstrumentOwnerDTO;
 import com.sleapy.project.models.dtos.AnalystSummaryDTO;
 import com.sleapy.project.models.enums.AnalystPeriod;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,11 @@ import java.util.Map;
 public class AnalystService {
     private final AnalystMapper analystMapper;
     private final AnalystPortfolioService portfolioService;
+
+    public List<AnalystInstrumentOwnerDTO> getInstrumentOwners(
+            String symbol, List<Long> clientIds) {
+        return analystMapper.findInstrumentOwners(symbol, clientIds);
+    }
 
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     public AnalystSummaryDTO getSummary(Long clientId, AnalystPeriod period) {

@@ -55,6 +55,35 @@ class AnalystControllerTest {
     }
 
     @Test
+    void ownerEndpointRequiresAuthorizationAndValidatesFilters() throws Exception {
+        mvc.perform(get("/api/analyst/instrument-owners").param("symbol", "AAPL"))
+                .andExpect(status().isForbidden());
+        verifyNoInteractions(analystService);
+        when(jwtService.verifyAnalystAuthorizationHeader("******")).thenReturn(true);
+        mvc.perform(get("/api/analyst/instrument-owners").param("symbol", " ")
+                        .header("Authorization", "******")).andExpect(status().isBadRequest());
+        mvc.perform(get("/api/analyst/instrument-owners").param("symbol", "AAPL").param("clientIds", "1,-2")
+                        .header("Authorization", "******")).andExpect(status().isBadRequest());
+        verifyNoInteractions(analystService);
+    }
+
+    @Test
+    void ownerEndpointReturnsCurrentSharesWithDeduplicatedCustomerSelection() throws Exception {
+        when(jwtService.verifyAnalystAuthorizationHeader("******")).thenReturn(true);
+        var owner = new com.sleapy.project.models.dtos.AnalystInstrumentOwnerDTO();
+        owner.setClientId(1L);
+        owner.setUsername("customer");
+        owner.setShares(new BigDecimal("12.5000"));
+        when(analystService.getInstrumentOwners("AAPL", List.of(1L, 2L))).thenReturn(List.of(owner));
+        mvc.perform(get("/api/analyst/instrument-owners").param("symbol", " AAPL ").param("clientIds", "1,2,1")
+                        .header("Authorization", "******"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].username").value("customer"))
+                .andExpect(jsonPath("$[0].shares").value(12.5));
+        verify(analystService).getInstrumentOwners("AAPL", List.of(1L, 2L));
+    }
+
+    @Test
     void acceptsMultipleCustomersAndDeduplicatesLegacyAndNewFilters() throws Exception {
         when(jwtService.verifyAnalystAuthorizationHeader("******")).thenReturn(true);
         when(analystService.getSummaryForClients(List.of(1L, 2L), AnalystPeriod.MONTH))

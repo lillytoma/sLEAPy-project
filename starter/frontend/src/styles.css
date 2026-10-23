@@ -553,6 +553,13 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
 .legend-key { width: 7px; height: 7px; border-radius: 50%; }
 .legend-item strong { color: var(--foreground); font: 700 11px 'DM Mono', monospace; }
 .type-mix-panel { height: auto; }
+.type-symbol-volume { grid-column: 2 / -1; color: var(--muted-foreground); font-size: 10px; font-weight: 400; }
+.owner-list-header, .owner-row { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 14px 0; }
+.owner-list-header { color: var(--muted-foreground); font-size: 11px; }
+.owner-row { border-top: 1px solid var(--border); font-size: 12px; }
+.owner-row strong { overflow-wrap: anywhere; }
+.owner-row > :last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.owner-list { min-height: 270px; }
 .type-mix-panel .donut-layout { display: grid; grid-template-columns: minmax(0, 1fr) 190px; gap: 18px; height: auto; min-height: 250px; padding-block: 12px; }
 .type-mix-panel .donut-legend { min-width: 0; gap: 10px; }
 .type-legend-button { width: 100%; grid-template-columns: 8px minmax(0, 1fr) auto; border: 1px solid transparent; border-radius: 8px; padding: 10px; background: transparent; text-align: left; font-family: inherit; cursor: pointer; }

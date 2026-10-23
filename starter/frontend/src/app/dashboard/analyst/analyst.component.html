@@ -172,36 +172,41 @@
 
   <div class="analyst-grid analyst-grid-secondary">
     <section class="panel instrument-panel type-mix-panel">
-      <div class="panel-heading"><div><p class="eyebrow">Instrument mix</p><h2>Most active types</h2>
-        <p class="panel-helper">Share of filled orders. Select a type to see its most active instruments.</p>
+      <div class="panel-heading"><div><p class="eyebrow">Instrument mix</p><h2>{{ selectedInstrument() === 'All instruments' ? 'Most active types' : 'Top 5 ' + selectedInstrument() + ' instruments' }}</h2>
+        <p class="panel-helper">{{ selectedInstrument() === 'All instruments' ? 'Share of filled orders. Select a type to see its most active instruments.' : 'Ranked by filled orders. Shares are within the top five. Select a symbol to see its current owners.' }}</p>
       </div></div>
       <div class="donut-layout" (mouseleave)="hoveredType.set(null)">
         <div class="donut-legend">
-          @for (item of instrumentActivity(); track item.type) {
-            <button type="button" class="legend-item type-legend-button" [attr.aria-pressed]="activeListType() === item.type"
+          @for (item of donutItems(); track item.type) {
+            <button type="button" class="legend-item type-legend-button" [attr.aria-pressed]="(selectedInstrument() === 'All instruments' ? activeListType() : selectedSymbol()) === item.type"
               (mouseenter)="hoveredType.set(item.type)" (focus)="hoveredType.set(item.type)"
-              (blur)="hoveredType.set(null)" (click)="selectInstrumentType(item.type)">
+              (blur)="hoveredType.set(null)" (click)="selectDonutItem(item.type)">
               <span class="legend-key" [style.background]="item.color"></span>
               <span>{{ item.type }}</span>
               <strong>{{ item.share | number:'1.0-1' }}%</strong>
+              @if (selectedInstrument() !== 'All instruments') {
+                <span class="type-symbol-volume">{{ formatCurrency(item.volume) }} volume · {{ item.trades | number }} orders</span>
+              }
             </button>
+          } @empty {
+            <p class="panel-helper" role="status">No filled orders match these filters.</p>
           }
         </div>
-        <div class="donut-chart" [attr.aria-label]="instrumentDescription()" role="img">
+        <div class="donut-chart" [attr.aria-label]="donutDescription()" role="img">
           <svg class="donut-svg" viewBox="0 0 42 42" aria-hidden="true">
             <circle class="donut-track" cx="21" cy="21" r="15.9155"></circle>
-            @for (item of instrumentActivity(); track item.type) {
+            @for (item of donutItems(); track item.type) {
               <circle class="donut-segment" cx="21" cy="21" r="15.9155"
                 pathLength="100"
                 [attr.stroke]="item.color"
                 [attr.stroke-dasharray]="item.share + ' ' + (100 - item.share)"
                 [attr.stroke-dashoffset]="-item.start"
                 (mouseenter)="hoveredType.set(item.type)"
-                (click)="selectInstrumentType(item.type)"></circle>
+                (click)="selectDonutItem(item.type)"></circle>
             }
           </svg>
-          <div class="donut-hole"><strong>{{ totalTrades() | number }}</strong><span>filled orders</span></div>
-          @if (hoveredInstrumentType(); as hovered) {
+          <div class="donut-hole"><strong>{{ donutTotal() | number }}</strong><span>{{ selectedInstrument() === 'All instruments' ? 'filled orders' : 'top-five orders' }}</span></div>
+          @if (hoveredDonutItem(); as hovered) {
             <div class="donut-tooltip">
               <strong>{{ hovered.type }}</strong>
               <span>{{ hovered.share | number:'1.0-1' }}% of orders</span>
@@ -212,6 +217,7 @@
       </div>
     </section>
     <section class="panel top-stocks-panel">
+      @if (selectedInstrument() === 'All instruments') {
       <div class="panel-heading">
         <div><p class="eyebrow">By symbol</p><h2>{{ activeListHeading() }}</h2></div>
         <span class="chart-summary">Page {{ symbolPage() + 1 }} of {{ totalSymbolPages() }}</span>
@@ -235,6 +241,33 @@
         <button type="button" [disabled]="symbolPage() === 0" (click)="previousSymbolPage()">Previous</button>
         <button type="button" [disabled]="symbolPage() >= totalSymbolPages() - 1" (click)="nextSymbolPage()">Next</button>
       </div>
+      } @else {
+        <div class="panel-heading">
+          <div><p class="eyebrow">Current ownership</p><h2>{{ selectedSymbol() ? 'Top owners of ' + selectedSymbol() : 'Top owners' }}</h2>
+            <p class="panel-helper">Ranked by current shares, not period activity. {{ customerScope() }}.</p>
+          </div>
+          <span class="chart-summary">Page {{ ownerPage() + 1 }} of {{ totalOwnerPages() }}</span>
+        </div>
+        <div class="owner-list-header"><span>Rank</span><span>Customer</span><span>Shares held</span></div>
+        <div class="owner-list">
+          @if (ownerError()) {
+            <p class="panel-helper" role="alert">{{ ownerError() }}</p>
+          } @else if (ownersLoading()) {
+            <p class="panel-helper" role="status">Loading current owners...</p>
+          } @else {
+            @for (owner of visibleOwners(); track owner.clientId; let i = $index) {
+              <div class="owner-row"><span class="stock-rank">{{ ownerPage() * 5 + i + 1 }}</span>
+                <strong>{{ owner.username }}</strong><span>{{ owner.shares | number:'1.0-4' }}</span></div>
+            } @empty {
+              <p class="panel-helper" role="status">{{ selectedSymbol() ? 'No selected customers currently own this instrument.' : 'Select an instrument with filled orders to view its owners.' }}</p>
+            }
+          }
+        </div>
+        <div class="symbol-pagination">
+          <button type="button" [disabled]="ownerPage() === 0" (click)="previousOwnerPage()">Previous</button>
+          <button type="button" [disabled]="ownerPage() >= totalOwnerPages() - 1" (click)="nextOwnerPage()">Next</button>
+        </div>
+      }
     </section>
   </div>
 

@@ -2,6 +2,26 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.sleapy.project.mappers.AnalystMapper">
+  <resultMap id="instrumentOwner" type="com.sleapy.project.models.dtos.AnalystInstrumentOwnerDTO">
+    <result column="client_id" property="clientId"/>
+    <result column="username" property="username"/>
+    <result column="shares" property="shares"/>
+  </resultMap>
+  <select id="findInstrumentOwners" resultMap="instrumentOwner">
+    SELECT c.client_id, c.username, SUM(h.quantity_shares) AS shares
+    FROM public.holdings h
+    JOIN public.clients c ON c.client_id = h.client_id
+    JOIN public.instruments i ON i.instrument_id = h.instrument_id
+    WHERE i.symbol = #{symbol}
+      AND c.is_admin IS NOT TRUE AND c.is_analyst IS NOT TRUE
+      <if test="clientIds != null and !clientIds.isEmpty()">
+        AND c.client_id IN
+        <foreach collection="clientIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+      </if>
+    GROUP BY c.client_id, c.username
+    HAVING SUM(h.quantity_shares) &gt; 0
+    ORDER BY shares DESC, c.username, c.client_id
+  </select>
   <resultMap id="orderDirection" type="com.sleapy.project.models.dtos.AnalystOrderDirectionDTO">
     <result column="direction" property="direction"/>
     <result column="instrument_type" property="instrumentType"/>

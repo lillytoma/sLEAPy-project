@@ -53,6 +53,12 @@ export interface AnalystClient {
   email: string;
 }
 
+export interface AnalystInstrumentOwner {
+  clientId: number;
+  username: string;
+  shares: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AnalystService {
   private readonly apiUrl = `${environment.apiUrl}/api/analyst`;
@@ -84,6 +90,12 @@ export class AnalystService {
 
   searchClients(search: string): Observable<AnalystClient[]> {
     return this.http.get<AnalystClient[]>(`${this.apiUrl}/clients`, { params: { search } });
+  }
+
+  getInstrumentOwners(symbol: string, clientIds: number[]): Observable<AnalystInstrumentOwner[]> {
+    const params: Record<string, string> = { symbol };
+    if (clientIds.length) params['clientIds'] = clientIds.join(',');
+    return this.http.get<AnalystInstrumentOwner[]>(`${this.apiUrl}/instrument-owners`, { params });
   }
 
   connect(): void {

@@ -1,7 +1,7 @@
 import { Component, computed, OnDestroy, OnInit, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Subscription, switchMap, timer } from 'rxjs';
-import { AnalystClient, AnalystPeriod, AnalystService, AnalystSummary } from '../../services/analyst.service';
+import { EMPTY, Subscription, catchError, switchMap, timer } from 'rxjs';
+import { AnalystClient, AnalystInstrumentOwner, AnalystPeriod, AnalystService, AnalystSummary } from '../../services/analyst.service';
 import { AnalystProfileComponent } from '../../shared/analyst-profile.component';
 
 interface InstrumentActivity {
@@ -49,6 +49,14 @@ export class AnalystComponent implements OnInit, OnDestroy {
   readonly hoveredType = signal<string | null>(null);
   readonly selectedType = signal('Stock');
   readonly symbolPage = signal(0);
+  readonly selectedSymbol = signal<string | null>(null);
+  readonly owners = signal<AnalystInstrumentOwner[]>([]);
+  readonly ownerError = signal<string | null>(null);
+  readonly ownersLoading = signal(false);
+  readonly ownerPage = signal(0);
+  readonly totalOwnerPages = computed(() => Math.max(1, Math.ceil(this.owners().length / 5)));
+  readonly visibleOwners = computed(() => this.owners().slice(this.ownerPage() * 5, this.ownerPage() * 5 + 5));
+  private ownerSubscription?: Subscription;
   readonly hoveredActivityPoint = signal<CustomerActivityPoint | null>(null);
   readonly activityPoints = computed<CustomerActivityPoint[]>(() =>
     (this.summary()?.activity ?? []).map(point => ({
@@ -143,6 +151,25 @@ export class AnalystComponent implements OnInit, OnDestroy {
     const type = this.activeListType();
     return `Most active ${type === 'Crypto' ? type : type + 's'}`;
   });
+  readonly donutItems = computed<InstrumentActivity[]>(() => {
+    if (this.selectedInstrument() === 'All instruments') return this.instrumentActivity();
+    const instruments = this.activeInstruments().slice(0, 5);
+    const total = instruments.reduce((sum, item) => sum + item.totalTrades, 0);
+    const colors = ['#176b55', '#4f9b80', '#d59a43', '#5986b3', '#9b75ae'];
+    let start = 0;
+    return instruments.map((item, index) => {
+      const share = total > 0 ? item.totalTrades / total * 100 : 0;
+      const slice = { type: item.symbol, trades: item.totalTrades, volume: Number(item.tradeVolume),
+        color: colors[index], share, start };
+      start += share;
+      return slice;
+    });
+  });
+  readonly hoveredDonutItem = computed(() => this.donutItems().find(item => item.type === this.hoveredType()) ?? null);
+  readonly donutTotal = computed(() => this.donutItems().reduce((sum, item) => sum + item.trades, 0));
+  readonly donutDescription = computed(() => (this.selectedInstrument() === 'All instruments'
+    ? 'Share of filled orders by type. ' : 'Share of filled orders within the top five instruments. ')
+    + this.donutItems().map(item => `${item.type}: ${item.share.toFixed(1)}%, ${item.trades} orders, ${this.formatCurrency(item.volume)}`).join('; '));
 
   readonly portfolioHistory = computed(() => this.summary()?.portfolioHistory ?? null);
   readonly portfolioLatest = computed(() => this.portfolioHistory()?.latest ?? null);
@@ -231,6 +258,7 @@ export class AnalystComponent implements OnInit, OnDestroy {
       this.hoveredType.set(null);
       this.symbolPage.update(page => Math.min(page, this.totalSymbolPages() - 1));
       this.hoveredActivityPoint.set(null);
+      if (summary) this.syncSelectedSymbol();
     }));
     this.subscriptions.add(this.analystService.error$.subscribe((error) => this.dataError.set(error)));
     this.analystService.connect();
@@ -238,6 +266,7 @@ export class AnalystComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.clientSearchSubscription?.unsubscribe();
+    this.ownerSubscription?.unsubscribe();
     this.subscriptions.unsubscribe();
     this.analystService.disconnect();
   }
@@ -271,6 +300,7 @@ export class AnalystComponent implements OnInit, OnDestroy {
   }
 
   private reloadAnalytics(): void {
+    this.resetOwners();
     this.hoveredActivityPoint.set(null);
     this.symbolPage.set(0);
     this.saveViewFilters();
@@ -284,11 +314,13 @@ export class AnalystComponent implements OnInit, OnDestroy {
   }
 
   setInstrument(instrument: string): void {
+    this.resetOwners();
     this.selectedInstrument.set(instrument);
     this.hoveredType.set(null);
     this.symbolPage.set(0);
     this.hoveredActivityPoint.set(null);
     this.saveViewFilters();
+    this.syncSelectedSymbol();
   }
 
   updateClientSearch(value: string): void {
@@ -368,6 +400,60 @@ export class AnalystComponent implements OnInit, OnDestroy {
   selectInstrumentType(type: string): void {
     this.selectedType.set(type);
     this.symbolPage.set(0);
+  }
+
+  selectDonutItem(value: string): void {
+    if (this.selectedInstrument() === 'All instruments') this.selectInstrumentType(value);
+    else this.selectSymbol(value);
+  }
+
+  private syncSelectedSymbol(): void {
+    if (this.selectedInstrument() === 'All instruments') return;
+    if (!this.donutItems().some(item => item.type === this.selectedSymbol())) {
+      this.resetOwners();
+      const first = this.donutItems()[0];
+      if (first) this.selectSymbol(first.type);
+    }
+  }
+
+  private resetOwners(): void {
+    this.ownerSubscription?.unsubscribe();
+    this.selectedSymbol.set(null);
+    this.owners.set([]);
+    this.ownerError.set(null);
+    this.ownersLoading.set(false);
+    this.ownerPage.set(0);
+  }
+
+  private selectSymbol(symbol: string): void {
+    this.resetOwners();
+    this.selectedSymbol.set(symbol);
+    this.ownersLoading.set(true);
+    const clientIds = this.selectedClients().map(client => client.id);
+    this.ownerSubscription = timer(0, 10000).pipe(
+      switchMap(() => this.analystService.getInstrumentOwners(symbol, clientIds).pipe(
+        catchError((error: unknown) => {
+          console.error('Unable to load instrument owners:', error);
+          this.owners.set([]);
+          this.ownerError.set('Unable to load current owners. Retrying automatically.');
+          this.ownersLoading.set(false);
+          return EMPTY;
+        })
+      ))
+    ).subscribe(owners => {
+      this.owners.set(owners);
+      this.ownerError.set(null);
+      this.ownersLoading.set(false);
+      this.ownerPage.update(page => Math.min(page, this.totalOwnerPages() - 1));
+    });
+  }
+
+  previousOwnerPage(): void {
+    this.ownerPage.update(page => Math.max(0, page - 1));
+  }
+
+  nextOwnerPage(): void {
+    this.ownerPage.update(page => Math.min(this.totalOwnerPages() - 1, page + 1));
   }
 
   previousSymbolPage(): void {

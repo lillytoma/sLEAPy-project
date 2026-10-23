@@ -68,11 +68,26 @@ public class AnalystController {
         if (!jwtService.verifyAnalystAuthorizationHeader(authorizationHeader)) {
             return unauthorized();
         }
+
         if (search.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Search term is required"));
         }
         List<AnalystClientDTO> clients = analystService.searchClients(search);
         return ResponseEntity.ok(clients);
+    }
+
+    @GetMapping("/instrument-owners")
+    public ResponseEntity<?> getInstrumentOwners(
+            @RequestParam String symbol,
+            @RequestParam(required = false) List<Long> clientIds,
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader) {
+        if (!jwtService.verifyAnalystAuthorizationHeader(authorizationHeader)) return unauthorized();
+        if (symbol.isBlank()) return ResponseEntity.badRequest().body(Map.of("error", "Symbol is required"));
+        if (clientIds != null && clientIds.stream().anyMatch(id -> id == null || id <= 0)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Customer IDs must be positive"));
+        }
+        return ResponseEntity.ok(analystService.getInstrumentOwners(symbol.trim(),
+                clientIds == null ? List.of() : clientIds.stream().distinct().toList()));
     }
 
     private ResponseEntity<Map<String, String>> unauthorized() {

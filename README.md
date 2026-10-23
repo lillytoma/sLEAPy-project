@@ -226,13 +226,22 @@ duplicate selections; administrators and analysts remain excluded.
 The summary API accepts comma-separated or repeated `clientIds` query parameters
 and retains support for the original single `clientId` parameter.
 
-The donut shows the share of filled orders by instrument type, with the filtered
-order count in its center. Select a type using its legend button or donut segment
-to view that type's most-active instruments alongside it. The list ranks by order
-count, then traded dollar value, with five symbols per page. A specific top-toolbar
-instrument filter restricts both panels to that type. Empty results show zero
-shares and an empty list. The extra instrument-details page and portfolio summary
-view have been removed.
+With All instruments selected, the donut shows the share of filled orders by
+instrument type. Select a legend button or slice to see that type's most-active
+instruments alongside it, ranked by order count, then traded dollar value, with
+five symbols per page.
+
+With a specific instrument type selected, the donut instead shows its top five
+symbols by filled-order count for the selected customers and period. Percentages
+are order shares within those five; the legend and hover include traded dollar
+volume. Clicking a symbol shows its current owners, ranked by summed shares held,
+five per page. The highest-ranked symbol is initially selected. Ownership refreshes
+every 10 seconds, uses the selected customer IDs, excludes admins/analysts, and
+omits zero/negative holdings. Ownership is current, not limited to period trades.
+The protected `/api/analyst/instrument-owners?symbol=...&clientIds=...` endpoint
+provides these owners. Changing symbols or customer filters cancels old owner
+requests; errors are displayed with automatic retries. Empty results display
+explicit messages. The extra instrument-details and portfolio-summary views remain removed.
 
 Selected customers are always displayed below the search controls as green name
 chips, independently of whether search suggestions are open. Each chip removes
