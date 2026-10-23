@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -123,7 +124,7 @@ public class TradeService {
         order.setClient(client);
         order.setInstrument(instrument);
         order.setQuantity(quantity);
-        order.setTimeOfPurchase(LocalDate.now());
+        order.setTimeOfPurchase(LocalDateTime.now());
         order.setPurchasePrice(price);
         order.setTradeType(tradeType);
         OrderStatus filledStatus = orderStatusMapper.findById(2L)
