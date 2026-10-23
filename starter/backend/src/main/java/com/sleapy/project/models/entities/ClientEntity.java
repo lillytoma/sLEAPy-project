@@ -20,6 +20,7 @@ public class ClientEntity {
     private String zipCode;
     private String region;
     private String email; // Unique email used for authentication
+    private boolean analyst;
     private double cashBalance; // client's account balance
     private String passwordHash; // Bcrypt hashed password
     private String phoneNumber; // Contact phone number

@@ -1,0 +1,275 @@
+<div class="analyst-page">
+  <div class="analyst-intro">
+    <div>
+      <div class="analyst-title-row">
+        <p class="eyebrow">Internal analytics</p>
+        <span class="analytics-live"><span></span> Refreshes every 10 seconds</span>
+      </div>
+      <h1>Activity at a glance<span class="intro-accent">.</span></h1>
+      <p class="page-subtitle">Understand client activity, order flow, and market momentum in one place.</p>
+    </div>
+    <div class="analyst-actions">
+      <div class="analyst-refresh">
+        <span class="refresh-dot"></span>
+        <span>{{ summary() ? (summary()!.updatedAt ? ('Latest trade ' + (summary()!.updatedAt | date:'short')) : 'No filled orders in this period') : 'Waiting for analytics data' }}</span>
+        <button type="button" aria-label="Refresh analytics" (click)="analystService.connect()">↻</button>
+      </div>
+      <app-analyst-profile />
+    </div>
+  </div>
+
+  @if (dataError()) {
+    <div class="analytics-error" role="alert">{{ dataError() }}</div>
+  }
+
+  <div class="analytics-toolbar" role="region" aria-label="Dashboard filters" aria-describedby="analytics-filter-help">
+    <div class="analytics-filter-heading">
+      <strong>Dashboard filters</strong>
+      <span id="analytics-filter-help">Apply to all charts and metrics</span>
+    </div>
+    <div class="filter-group" role="group" aria-label="Analytics period">
+      <span class="filter-label">View</span>
+      @for (period of periods; track period.value) {
+        <button type="button" class="filter-button" [class.is-selected]="selectedPeriod() === period.value"
+          [attr.aria-pressed]="selectedPeriod() === period.value" [title]="period.description"
+          (click)="setPeriod(period.value)">{{ period.label }}</button>
+      }
+    </div>
+    <label class="select-filter">
+      <span>Instrument</span>
+      <select [value]="selectedInstrument()" (change)="setInstrument($any($event.target).value)">
+        @for (instrument of instrumentOptions; track instrument) { <option [value]="instrument">{{ instrument }}</option> }
+      </select>
+    </label>
+    <div class="client-filter" (focusout)="!$any($event.currentTarget).contains($event.relatedTarget) && dismissClientResults()">
+      <label class="select-filter">
+        <span>Client</span>
+        <input type="search" [value]="clientSearch()" placeholder="Search email or username"
+          role="combobox" aria-autocomplete="list" aria-controls="analyst-client-suggestions"
+          [attr.aria-expanded]="clientResults().length > 0"
+          [attr.aria-activedescendant]="activeClientIndex() >= 0 ? 'analyst-client-option-' + activeClientIndex() : null"
+          aria-describedby="analyst-client-search-status" autocomplete="off"
+          (input)="updateClientSearch($any($event.target).value)"
+          (keydown)="onClientSearchKeydown($event)">
+      </label>
+      <button type="button" class="filter-button" (click)="searchForClient()">Search</button>
+      @if (clientResults().length) {
+        <div id="analyst-client-suggestions" class="client-results" role="listbox" aria-label="Matching clients">
+          @for (client of clientResults(); track client.id; let i = $index) {
+            <button type="button" role="option" [id]="'analyst-client-option-' + i"
+              [attr.aria-selected]="activeClientIndex() === i"
+              (click)="selectClient(client)">
+              <strong>{{ client.username }}</strong><span>{{ client.email }}</span>
+            </button>
+          }
+        </div>
+      }
+      <span id="analyst-client-search-status" class="client-search-status" role="status">{{ clientSearchStatus() }}</span>
+    </div>
+    @if (selectedClients().length) {
+      <div class="selected-customer-list" role="group" aria-label="Selected customers">
+        <span class="selected-customer-heading">Selected clients <b>{{ selectedClients().length }}</b></span>
+        <div class="selected-customer-chips">
+          @for (client of selectedClients(); track client.id) {
+            <button type="button" class="customer-chip" [attr.aria-label]="'Remove ' + client.username + ' from filters'"
+              [title]="client.email" (click)="removeClient(client.id)">
+              <span>{{ client.username }}</span><span class="customer-chip-remove" aria-hidden="true">×</span>
+            </button>
+          }
+        </div>
+        <button type="button" class="filter-button" (click)="clearClient()">Clear all</button>
+      </div>
+    }
+  </div>
+
+  <div class="analyst-stat-grid">
+    @for (kpi of kpis(); track kpi.label) {
+      <div class="analyst-stat-card">
+        <div class="analyst-stat-top"><span>{{ kpi.label }}</span><b>{{ kpi.icon }}</b></div>
+        <strong>{{ kpi.value }}</strong>
+        <p>{{ kpi.detail }}</p>
+      </div>
+    }
+  </div>
+
+  <div class="analyst-grid analyst-grid-main">
+    <section class="panel analyst-chart-panel">
+      <div class="panel-heading">
+        <div><p class="eyebrow">Order activity</p><h2>Aggregate trading activity</h2></div>
+      </div>
+      <div class="customer-activity-heading">
+        <div>
+          <strong>Customer trading activity</strong>
+          <p class="panel-helper">{{ activityBucketLabel() }} filled-order value for {{ selectedPeriod() === 'ALL_TIME' ? 'all recorded history' : 'the selected calendar period' }}.</p>
+        </div>
+        <span class="chart-summary">Updates every 10 seconds</span>
+      </div>
+      <div class="activity-performance-chart">
+        <div class="activity-value-axis">
+          @for (gridline of activityChart().yGridlines.slice().reverse(); track gridline.value) {
+            <span>{{ gridline.label }}</span>
+          }
+        </div>
+        <div class="activity-plot-column">
+          <div class="activity-plot">
+            <svg #activitySvg
+              [attr.viewBox]="'0 0 ' + activityChart().width + ' ' + activityChart().height"
+              preserveAspectRatio="none" class="activity-performance-svg"
+              role="img" [attr.aria-label]="activityBucketLabel() + ' customer trade value for ' + selectedPeriod()"
+              (mousemove)="onActivityHover($event, activitySvg)"
+              (mouseleave)="hoveredActivityPoint.set(null)">
+              <defs>
+                <linearGradient id="analystActivityFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="var(--success)" stop-opacity="0.25"/>
+                  <stop offset="100%" stop-color="var(--success)" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              @for (gridline of activityChart().yGridlines; track gridline.value) {
+                <line x1="0" [attr.y1]="gridline.y" [attr.x2]="activityChart().width" [attr.y2]="gridline.y"
+                  stroke="var(--border)" stroke-dasharray="3 3" stroke-width="1"/>
+              }
+              <path [attr.d]="activityChart().areaPath" fill="url(#analystActivityFill)" stroke="none"/>
+              <path [attr.d]="activityChart().linePath" fill="none" stroke="var(--success)"
+                stroke-width="2.5" vector-effect="non-scaling-stroke"/>
+              @if (activityChart().coords.length === 1 && !hoveredActivityPoint()) {
+                <circle [attr.cx]="activityChart().coords[0].x" [attr.cy]="activityChart().coords[0].y"
+                  r="4.5" fill="var(--success)" stroke="var(--card)" stroke-width="2"
+                  vector-effect="non-scaling-stroke"/>
+              }
+              @if (hoveredActivityPoint(); as point) {
+                <line [attr.x1]="point.x" y1="0" [attr.x2]="point.x" [attr.y2]="activityChart().height"
+                  stroke="var(--muted-foreground)" stroke-width="1" vector-effect="non-scaling-stroke"/>
+                <circle [attr.cx]="point.x" [attr.cy]="point.y" r="4.5" fill="var(--success)"
+                  stroke="var(--card)" stroke-width="2" vector-effect="non-scaling-stroke"/>
+              }
+            </svg>
+            @if (hoveredActivityPoint(); as point) {
+              <div class="chart-tooltip"
+                [style.left.%]="(point.x / activityChart().width) * 100"
+                [style.top.%]="(point.y / activityChart().height) * 100">
+                <p class="chart-tooltip-label">{{ point.timestamp | date:(selectedPeriod() === 'DAY' ? 'MMM d, ha' : selectedPeriod() === 'YEAR' ? 'MMMM y' : 'MMM d, y') }}</p>
+                <p class="chart-tooltip-value">Value: {{ formatCurrency(point.value) }}</p>
+              </div>
+            }
+          </div>
+          <div class="activity-time-axis">
+            @for (point of activityChart().labels; track point.timestamp.toISOString()) {
+              <span [style.left.%]="(point.x / activityChart().width) * 100">{{ point.timestamp | date:activityAxisFormat() }}</span>
+            }
+          </div>
+        </div>
+      </div>
+      <div class="chart-footnote">
+        @if (activityChart().coords.length === 0) {
+          Waiting for analytics data.
+        } @else {
+          <span class="trend-up">● Live</span> {{ activityBucketLabel() }} totals through now, in the server's time zone. Empty intervals show zero; the current interval is partial.
+        }
+      </div>
+    </section>
+
+  </div>
+
+  <div class="analyst-grid analyst-grid-secondary">
+    <section class="panel instrument-panel type-mix-panel">
+      <div class="panel-heading"><div><p class="eyebrow">Instrument mix</p><h2>{{ selectedInstrument() === 'All instruments' ? 'Most active types' : 'Top 5 ' + selectedInstrument() + ' instruments' }}</h2>
+        <p class="panel-helper">{{ selectedInstrument() === 'All instruments' ? 'Share of filled orders. Select a type to see its most active instruments.' : 'Ranked by filled orders. Shares are within the top five. Select a symbol to see its current owners.' }}</p>
+      </div></div>
+      <div class="donut-layout" (mouseleave)="hoveredType.set(null)">
+        <div class="donut-legend">
+          @for (item of donutItems(); track item.type) {
+            <button type="button" class="legend-item type-legend-button" [attr.aria-pressed]="(selectedInstrument() === 'All instruments' ? activeListType() : selectedSymbol()) === item.type"
+              (mouseenter)="hoveredType.set(item.type)" (focus)="hoveredType.set(item.type)"
+              (blur)="hoveredType.set(null)" (click)="selectDonutItem(item.type)">
+              <span class="legend-key" [style.background]="item.color"></span>
+              <span>{{ item.type }}</span>
+              <strong>{{ item.share | number:'1.0-1' }}%</strong>
+              @if (selectedInstrument() !== 'All instruments') {
+                <span class="type-symbol-volume">{{ formatCurrency(item.volume) }} volume · {{ item.trades | number }} orders</span>
+              }
+            </button>
+          } @empty {
+            <p class="panel-helper" role="status">No filled orders match these filters.</p>
+          }
+        </div>
+        <div class="donut-chart" [attr.aria-label]="donutDescription()" role="img">
+          <svg class="donut-svg" viewBox="0 0 42 42" aria-hidden="true">
+            <circle class="donut-track" cx="21" cy="21" r="15.9155"></circle>
+            @for (item of donutItems(); track item.type) {
+              <circle class="donut-segment" cx="21" cy="21" r="15.9155"
+                pathLength="100"
+                [attr.stroke]="item.color"
+                [attr.stroke-dasharray]="item.share + ' ' + (100 - item.share)"
+                [attr.stroke-dashoffset]="-item.start"
+                (mouseenter)="hoveredType.set(item.type)"
+                (click)="selectDonutItem(item.type)"></circle>
+            }
+          </svg>
+          <div class="donut-hole"><strong>{{ donutTotal() | number }}</strong><span>{{ selectedInstrument() === 'All instruments' ? 'filled orders' : 'top-five orders' }}</span></div>
+          @if (hoveredDonutItem(); as hovered) {
+            <div class="donut-tooltip">
+              <strong>{{ hovered.type }}</strong>
+              <span>{{ hovered.share | number:'1.0-1' }}% of orders</span>
+              <span>{{ formatCurrency(hovered.volume) }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+    <section class="panel top-stocks-panel">
+      @if (selectedInstrument() === 'All instruments') {
+      <div class="panel-heading">
+        <div><p class="eyebrow">By symbol</p><h2>{{ activeListHeading() }}</h2></div>
+        <span class="chart-summary">Page {{ symbolPage() + 1 }} of {{ totalSymbolPages() }}</span>
+      </div>
+      <div class="stock-header"><span>Rank</span><span>Symbol</span><span>Name</span><span>Trades</span><span>Volume</span></div>
+      <div class="stock-list">
+        @for (stock of topStocks(); track stock.symbol; let i = $index) {
+          <div class="stock-row">
+            <span class="stock-rank">{{ symbolPage() * 5 + i + 1 }}</span>
+            <span class="stock-avatar">{{ stock.symbol.slice(0, 1) }}</span>
+            <div class="stock-name"><strong>{{ stock.symbol }}</strong></div>
+            <div class="stock-instrument-name">{{ stock.symbolName }}</div>
+            <div class="stock-metric"><strong>{{ stock.totalTrades | number }}</strong></div>
+            <div class="stock-metric stock-volume"><strong>{{ formatCurrency(stock.tradeVolume) }}</strong></div>
+          </div>
+        } @empty {
+          <p class="panel-helper" role="status">No filled orders for this type and the selected filters.</p>
+        }
+      </div>
+      <div class="symbol-pagination">
+        <button type="button" [disabled]="symbolPage() === 0" (click)="previousSymbolPage()">Previous</button>
+        <button type="button" [disabled]="symbolPage() >= totalSymbolPages() - 1" (click)="nextSymbolPage()">Next</button>
+      </div>
+      } @else {
+        <div class="panel-heading">
+          <div><p class="eyebrow">Current ownership</p><h2>{{ selectedSymbol() ? 'Top owners of ' + selectedSymbol() : 'Top owners' }}</h2>
+            <p class="panel-helper">Ranked by current shares, not period activity. {{ customerScope() }}.</p>
+          </div>
+          <span class="chart-summary">Page {{ ownerPage() + 1 }} of {{ totalOwnerPages() }}</span>
+        </div>
+        <div class="owner-list-header"><span>Rank</span><span>Customer</span><span>Shares held</span></div>
+        <div class="owner-list">
+          @if (ownerError()) {
+            <p class="panel-helper" role="alert">{{ ownerError() }}</p>
+          } @else if (ownersLoading()) {
+            <p class="panel-helper" role="status">Loading current owners...</p>
+          } @else {
+            @for (owner of visibleOwners(); track owner.clientId; let i = $index) {
+              <div class="owner-row"><span class="stock-rank">{{ ownerPage() * 5 + i + 1 }}</span>
+                <strong>{{ owner.username }}</strong><span>{{ owner.shares | number:'1.0-4' }}</span></div>
+            } @empty {
+              <p class="panel-helper" role="status">{{ selectedSymbol() ? 'No selected customers currently own this instrument.' : 'Select an instrument with filled orders to view its owners.' }}</p>
+            }
+          }
+        </div>
+        <div class="symbol-pagination">
+          <button type="button" [disabled]="ownerPage() === 0" (click)="previousOwnerPage()">Previous</button>
+          <button type="button" [disabled]="ownerPage() >= totalOwnerPages() - 1" (click)="nextOwnerPage()">Next</button>
+        </div>
+      }
+    </section>
+  </div>
+
+  <div class="analytics-note"><span>i</span>  <p>Analytics include filled customer orders in the selected calendar period, using the server's time zone. This workspace is for monitoring, not order entry.</p></div>
+</div>

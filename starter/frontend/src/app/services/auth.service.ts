@@ -8,6 +8,7 @@ import { environment } from '../../environments/environment';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   isLoggedIn = signal<boolean>(this.hasValidToken());
+  isAnalyst = signal<boolean>(this.hasAnalystRole());
   isAdmin = signal<boolean>(this.readAdminFlag());
   userName = signal<string>('');
   userInitials = signal<string>('');
@@ -20,6 +21,7 @@ export class AuthService {
   private checkTokenOnInit(): void {
     if (this.hasValidToken()) {
       this.isLoggedIn.set(true);
+      this.isAnalyst.set(this.hasAnalystRole());
       const email = localStorage.getItem('user_email');
       if (email) {
         this.userName.set(email);
@@ -49,6 +51,10 @@ export class AuthService {
 
   private hasValidToken(): boolean {
     return !!localStorage.getItem('auth_token');
+  }
+
+  private hasAnalystRole(): boolean {
+    return localStorage.getItem('is_analyst') === 'true';
   }
 
   // HTTP-based login (connects to real backend API)
@@ -99,7 +105,9 @@ export class AuthService {
     localStorage.removeItem('is_admin');
     localStorage.removeItem('user_first_name');
     localStorage.removeItem('user_last_name');
+    localStorage.removeItem('is_analyst');
     this.isLoggedIn.set(false);
+    this.isAnalyst.set(false);
     this.isAdmin.set(false);
     this.userName.set('');
     this.userInitials.set('');
@@ -114,6 +122,10 @@ export class AuthService {
     return localStorage.getItem('user_id');
   }
 
+  hasAnalystAccess(): boolean {
+    return this.isLoggedIn() && this.isAnalyst();
+  }
+  
   private readAdminFlag(): boolean {
     return localStorage.getItem('is_admin') === 'true';
   }

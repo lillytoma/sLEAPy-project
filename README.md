@@ -62,6 +62,10 @@ POSTGRES_USER=[username]
 POSTGRES_PASSWORD=[password]
 POSTGRES_DB=[db_name]
 
+The backend also accepts `POSTGRES_HOST` (default `localhost`) and
+`POSTGRES_PORT` (default `8101`). For a database accessed through an SSH tunnel,
+these must identify the tunnel's **local** listening address and port.
+
 ### Starting the Database
 
 1. Navigate to the `starter` directory:
@@ -81,7 +85,31 @@ POSTGRES_DB=[db_name]
    ```
    You should see `sleapy-postgres` with status `Up`.
 
+4. If you already had a PostgreSQL volume from an older checkout, refresh the analytics schema used by the analyst dashboard:
+   ```bash
+   psql -h localhost -U postgres -d sleapy_db -p 8101 -f database/analystSchema.sql
+   ```
+
 ### Testing the Connection Locally
+
+The backend automatically applies the non-destructive analyst-role and client-profile migrations on
+startup, including for existing database volumes. Existing accounts default to
+non-analyst access; existing analyst roles are preserved. PostgreSQL must already
+contain the operational tables, and the configured database user must be able to
+alter `public.clients`. Missing profile fields on legacy accounts remain null
+until supplied; existing profile values and legacy addresses are not overwritten.
+
+To apply the same login fix to an already-running backend without restarting it,
+run this from `starter` using your configured database credentials:
+
+```bash
+psql -h localhost -U postgres -d sleapy_db -p 8101 -v ON_ERROR_STOP=1 \
+  -f backend/src/main/resources/db/migrations/001-add-analyst-role.sql \
+  -f backend/src/main/resources/db/migrations/002-add-client-profile.sql
+```
+
+Do not rerun the mock-data seed or delete the database volume to fix a missing
+column; those operations can erase existing accounts and trades.
 
 From the EC2 instance, test the connection:
 ```bash
@@ -108,6 +136,143 @@ To access PostgreSQL from your Windows machine securely:
    - **Password:**
 
    The SSH tunnel transparently routes your connection through the encrypted SSH channel.
+
+### Running the app against an existing remote database
+
+Do not start the local PostgreSQL container when your accounts live in a remote
+database reached through port `8101`. Both Docker and SSH cannot own that port;
+an empty local database will reject otherwise correct account credentials.
+
+If the local container is occupying the tunnel port, stop it without deleting
+its data:
+
+```bash
+docker stop sleapy-postgres
+```
+
+Then open a new tunnel and leave it running:
+
+```bash
+ssh -N -o ExitOnForwardFailure=yes \
+  -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
+  -L 127.0.0.1:8101:localhost:8101 ec2-user@YOUR_DATABASE_HOST
+```
+
+If an older SSH session failed to bind the port, restart that session after
+stopping Docker; it will not automatically acquire the freed port.
+Verify the connection before starting the backend:
+
+```bash
+psql -h localhost -U postgres -d sleapy_db -p 8101 -W \
+  -c 'SELECT current_database(), COUNT(*) AS accounts FROM public.clients;'
+```
+
+Restart the backend after restoring or changing the database target so pooled
+connections cannot keep pointing at the previous instance. Do not reseed the
+database or reset passwords to repair a tunnel/port conflict.
+
+The analyst summary reads committed filled orders (`status = 2`) directly from
+`public.orders`, excluding admin and analyst accounts. Instrument types are
+looked up from `public.instruments` and `public.instrument_type`; missing type
+lookups are shown as `Other`. There is no top-100 cap on dashboard totals.
+The dashboard refreshes every 10 seconds, including when a client is selected;
+the refresh button fetches immediately. New committed filled orders appear on
+the next successful refresh. Pending, cancelled, and rolled-back orders do not
+contribute to trading totals.
+
+Day, Week, Month, and Year buttons filter all summary totals and instrument
+breakdowns using calendar-to-date ranges in the backend server's time zone.
+Day begins at midnight, Week begins on Monday, Month on the first, and Year on
+January 1. The default is Day. The API accepts
+`GET /api/analyst/summary?period=DAY|WEEK|MONTH|YEAR` plus optional `clientId`.
+Unknown periods return HTTP 400. No trades in a range returns zero totals and an
+empty breakdown. Polling cancels outdated requests when filters change and retries
+on the next interval after displaying request errors.
+
+The Python ETL remains a manual batch-reporting pipeline, not an order-placement
+hook: `etl.py` extracts datasets and replaces warehouse tables when invoked.
+Its `expensive_trades` dataset contains only the top 100 orders, and previously
+kept the dashboard stale. The dashboard no longer depends on that snapshot or
+on an unpublished `/topic/analyst` WebSocket topic. This change does not schedule
+ETL or change its batch exports.
+The analyst mapper explicitly maps the instrument name, type, trade count, and
+volume to API fields rather than relying on global underscore-to-camel-case mapping.
+Analyst client searches match usernames and emails case-insensitively and exclude
+any account marked as an admin or analyst. Legacy null role flags are treated as
+unset. Startup adds the admin role column if missing without changing existing
+role assignments.
+The analyst client field suggests matches after a short typing delay and cancels
+outdated searches. Select a suggestion to fill the field and filter analytics;
+Arrow keys and Enter select a match, and Escape dismisses suggestions.
+
+The aggregate trading activity chart uses actual historical filled-order values,
+with a gradient fill, value axis, and hover tooltip. Day groups orders by hour
+and labels times of day; Week groups by date starting Monday; Month groups by day
+of the month; Year groups by calendar month. Each range runs from its calendar
+start through the current interval in the server's time zone. Empty elapsed
+intervals show zero, future intervals are omitted, and the current interval is
+partial. Values are per-interval trade volume, not cumulative totals. The chart
+refreshes every 10 seconds, respects the shared client and instrument filters,
+and does not require waiting on session samples. Straight segments avoid
+inventing negative activity between zero-value intervals.
+All time includes all recorded filled orders through now, with monthly buckets
+from the first matching order and month/year axis labels. Customer and instrument
+filters still apply.
+Orders recorded with only a purchase date appear in that day's midnight bucket;
+the chart cannot reconstruct intraday times that were not stored.
+New filled buy/sell orders store their execution time as both purchase and fill
+timestamps, preserving intraday precision.
+The top toolbar's period, instrument, and client controls apply to every metric,
+the activity chart, the instrument-type donut, and the most-active instrument list.
+Customer search supports multiple selections. Add customers using the search
+suggestions, remove individual selection chips, or use Clear all to return to all
+customers. Every summary query uses the selected customer IDs without counting
+duplicate selections; administrators and analysts remain excluded.
+The summary API accepts comma-separated or repeated `clientIds` query parameters
+and retains support for the original single `clientId` parameter.
+
+With All instruments selected, the donut shows the share of filled orders by
+instrument type. Select a legend button or slice to see that type's most-active
+instruments alongside it, ranked by order count, then traded dollar value, with
+five symbols per page.
+
+With a specific instrument type selected, the donut instead shows its top five
+symbols by filled-order count for the selected customers and period. Percentages
+are order shares within those five; the legend and hover include traded dollar
+volume. Clicking a symbol shows its current owners, ranked by summed shares held,
+five per page. The highest-ranked symbol is initially selected. Ownership refreshes
+every 10 seconds, uses the selected customer IDs, excludes admins/analysts, and
+omits zero/negative holdings. Ownership is current, not limited to period trades.
+The protected `/api/analyst/instrument-owners?symbol=...&clientIds=...` endpoint
+provides these owners. Changing symbols or customer filters cancels old owner
+requests; errors are displayed with automatic retries. Empty results display
+explicit messages. The extra instrument-details and portfolio-summary views remain removed.
+
+Selected customers are always displayed below the search controls as green name
+chips, independently of whether search suggestions are open. Each chip removes
+that customer; Clear all returns to all customers. The search field retains its
+fixed layout while chips wrap on a separate row.
+
+Migration `004-add-portfolio-snapshots.sql` creates persistent snapshot storage.
+The backend records customer cash and per-type holdings values at startup and
+every five minutes while running, independently of dashboard visits. Snapshots
+are not backfilled or deleted on restart. Day/Week/Month/Year selects recorded
+snapshots within that calendar-to-date range. Snapshot collection and API history
+remain available, but are not displayed in the restored instrument panels.
+
+Before recording begins, historical values are unavailable; gaps while the
+backend is stopped are not interpolated.
+Holdings without cached market prices make affected valuations unavailable,
+not zero, while cash and unaffected instrument values remain visible. Prices
+are the cache values at capture time, not independently reconstructed historical
+quotes. Snapshot collection respects `spring.task.scheduling.enabled=false` in
+tests. The new migration and collection begin when you next start the backend.
+
+The analyst header's account avatar has Settings and Sign out options. Settings
+opens `/analyst/settings`, reusing the shared appearance, text-size, and
+color-vision controls without client account freeze/delete controls.
+Preferences persist and apply across the dashboard and settings page.
+Escape closes the account menu and restores focus to the avatar.
 
 ---
 

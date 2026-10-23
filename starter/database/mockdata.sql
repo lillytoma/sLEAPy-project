@@ -179,6 +179,28 @@ VALUES
 
  (1, 'gmartin', 'gmartin@email.com', 'hash010', '555-1010', '111-11-1010', 12880.44, 'George', 'Martin', '1991-06-14', '212 Elm St', 'Denton', 'TX', '76201', 'North Texas', FALSE);
 
+-- Analyst user
+INSERT INTO Clients (
+ ClientStatus_ID,
+ username,
+ email,
+ is_analyst,
+ password_hash,
+ phone_number,
+ ssn,
+ cash_balance,
+ first_name,
+ last_name,
+ dob,
+ street_address,
+ city,
+ state_name,
+ zip_code,
+ region
+)
+VALUES
+ (1, 'priya', 'priya@sleapystocks.com', TRUE, '$2a$10$S8nJuk/Ca0Oqhl7wyjYL1uZpCJv.4T7nEOj5Bpr/e5wtL.mBsTyI2', '555-1011', '111-11-1011', 10000.00, 'Priya', 'Shah', '1990-02-14', '313 Market St', 'Dallas', 'TX', '75001', 'North Texas');
+
 -- =====================================================
 
 -- ORDERS

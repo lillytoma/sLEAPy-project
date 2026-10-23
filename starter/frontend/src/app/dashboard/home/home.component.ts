@@ -9,6 +9,7 @@ import { MarketHoursService } from '../../services/market-hours.service';
 import { AuthService } from '../../services/auth.service';
 import { MarketStock } from '../../data/mock-data';
 import { OrderModalComponent } from '../shared/order-modal.component';
+import { smoothChartPath } from '../shared/chart-path';
 
 interface DashboardTransaction {
   symbol: string;

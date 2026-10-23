@@ -33,9 +33,14 @@ public class JwtService {
      * @return JWT token as string
      */
     public String generateToken(String email, Long userId) {
+        return generateToken(email, userId, false);
+    }
+
+    public String generateToken(String email, Long userId, boolean analyst) {
         return Jwts.builder()
             .subject(email)
             .claim("userId", userId)
+            .claim("analyst", analyst)
             .issuedAt(new Date())
             .expiration(new Date(System.currentTimeMillis() + JWT_EXPIRATION))
             .signWith(getSigningKey())
@@ -43,16 +48,8 @@ public class JwtService {
     }
 
     public boolean verifyAuthorizationHeader(String authorizationHeader) {
-        if (authorizationHeader == null || authorizationHeader.isBlank()) {
-            return false;
-        }
-
-        String token = authorizationHeader;
-        if (authorizationHeader.regionMatches(true, 0, "Bearer ", 0, 7)) {
-            token = authorizationHeader.substring(7).trim();
-        }
-
-        if (token.isEmpty()) {
+        String token = extractToken(authorizationHeader);
+        if (token == null) {
             return false;
         }
 
@@ -67,6 +64,36 @@ public class JwtService {
         }
     }
 
+    public boolean verifyAnalystAuthorizationHeader(String authorizationHeader) {
+        String token = extractToken(authorizationHeader);
+        if (token == null) {
+            return false;
+        }
+
+        try {
+            Boolean analyst = Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .get("analyst", Boolean.class);
+            return Boolean.TRUE.equals(analyst);
+        } catch (JwtException | IllegalArgumentException ex) {
+            return false;
+        }
+    }
+
+    private String extractToken(String authorizationHeader) {
+        if (authorizationHeader == null || authorizationHeader.isBlank()) {
+            return null;
+        }
+        String token = authorizationHeader;
+        if (authorizationHeader.regionMatches(true, 0, "Bearer ", 0, 7)) {
+            token = authorizationHeader.substring(7).trim();
+        }
+        return token.isEmpty() ? null : token;
+    }
+    
     public Optional<Long> getUserId(String authorizationHeader) {
         if (!verifyAuthorizationHeader(authorizationHeader)) {
             return Optional.empty();

@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sleapy.project.mappers.AnalystMapper">
+  <resultMap id="instrumentOwner" type="com.sleapy.project.models.dtos.AnalystInstrumentOwnerDTO">
+    <result column="client_id" property="clientId"/>
+    <result column="username" property="username"/>
+    <result column="shares" property="shares"/>
+  </resultMap>
+  <select id="findInstrumentOwners" resultMap="instrumentOwner">
+    SELECT c.client_id, c.username, SUM(h.quantity_shares) AS shares
+    FROM public.holdings h
+    JOIN public.clients c ON c.client_id = h.client_id
+    JOIN public.instruments i ON i.instrument_id = h.instrument_id
+    WHERE i.symbol = #{symbol}
+      AND c.is_admin IS NOT TRUE AND c.is_analyst IS NOT TRUE
+      <if test="clientIds != null and !clientIds.isEmpty()">
+        AND c.client_id IN
+        <foreach collection="clientIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+      </if>
+    GROUP BY c.client_id, c.username
+    HAVING SUM(h.quantity_shares) &gt; 0
+    ORDER BY shares DESC, c.username, c.client_id
+  </select>
+  <resultMap id="orderDirection" type="com.sleapy.project.models.dtos.AnalystOrderDirectionDTO">
+    <result column="direction" property="direction"/>
+    <result column="instrument_type" property="instrumentType"/>
+    <result column="total_trades" property="totalTrades"/>
+    <result column="trade_volume" property="tradeVolume"/>
+  </resultMap>
+  <resultMap id="activity" type="com.sleapy.project.models.dtos.AnalystActivityDTO">
+    <result column="activity_time" property="timestamp"/>
+    <result column="instrument_type" property="instrumentType"/>
+    <result column="trade_volume" property="tradeVolume"/>
+  </resultMap>
+  <resultMap id="instrumentActivity"
+             type="com.sleapy.project.models.dtos.AnalystInstrumentActivityDTO">
+    <result column="symbol" property="symbol" />
+    <result column="symbol_name" property="symbolName" />
+    <result column="instrument_type" property="instrumentType" />
+    <result column="total_trades" property="totalTrades" />
+    <result column="trade_volume" property="tradeVolume" />
+  </resultMap>
+
+  <sql id="customerOrders">
+    FROM public.orders trades
+    JOIN public.clients clients ON clients.client_id = trades.client_id
+    LEFT JOIN public.instruments instruments ON instruments.instrument_id = trades.instrument_id
+    LEFT JOIN public.instrument_type types
+      ON types.instrumenttype_id = instruments.instrumenttype_id
+    WHERE trades.status = 2
+      AND clients.is_admin IS NOT TRUE
+      AND clients.is_analyst IS NOT TRUE
+      <if test="start != null">AND trades.time_purchased &gt;= #{start}</if>
+      AND trades.time_purchased &lt;= #{end}
+      <if test="clientIds != null and !clientIds.isEmpty()">
+        AND trades.client_id IN
+        <foreach collection="clientIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+      </if>
+  </sql>
+
+  <select id="findTradeVolumeForClients" resultType="java.math.BigDecimal">
+    SELECT COALESCE(SUM(trades.quantity * trades.purchase_price), 0)
+    <include refid="customerOrders"/>
+  </select>
+
+  <select id="findOrderDirectionsForClients" resultMap="orderDirection">
+    SELECT CASE WHEN UPPER(TRIM(trades.trade_type)) IN ('BUY', 'SELL')
+                THEN UPPER(TRIM(trades.trade_type)) ELSE 'UNKNOWN' END AS direction,
+           COALESCE(types.instrumenttype, 'Other') AS instrument_type,
+           COUNT(*) AS total_trades,
+           COALESCE(SUM(trades.quantity * trades.purchase_price), 0) AS trade_volume
+    <include refid="customerOrders"/>
+    GROUP BY CASE WHEN UPPER(TRIM(trades.trade_type)) IN ('BUY', 'SELL')
+                  THEN UPPER(TRIM(trades.trade_type)) ELSE 'UNKNOWN' END,
+             types.instrumenttype
+  </select>
+
+  <select id="findActivityForClients" resultMap="activity">
+    SELECT trades.time_purchased AS activity_time,
+           COALESCE(types.instrumenttype, 'Other') AS instrument_type,
+           COALESCE(SUM(trades.quantity * trades.purchase_price), 0) AS trade_volume
+    <include refid="customerOrders"/>
+    GROUP BY trades.time_purchased, types.instrumenttype
+    ORDER BY trades.time_purchased
+  </select>
+
+  <select id="countTradesForClients" resultType="long">
+    SELECT COUNT(*)
+    <include refid="customerOrders"/>
+  </select>
+
+  <select id="findLatestTradeTimeForClients" resultType="java.lang.String">
+    SELECT CAST(MAX(trades.time_purchased) AS VARCHAR)
+    <include refid="customerOrders"/>
+  </select>
+
+  <select id="findMostActiveInstrumentsForClients"
+          resultMap="instrumentActivity">
+    SELECT instruments.symbol,
+           instruments.symbol_name,
+           COALESCE(types.instrumenttype, 'Other') AS instrument_type,
+           COUNT(*) AS total_trades,
+           COALESCE(SUM(trades.quantity * trades.purchase_price), 0) AS trade_volume
+    <include refid="customerOrders"/>
+    GROUP BY instruments.symbol, instruments.symbol_name, types.instrumenttype
+    ORDER BY total_trades DESC, trade_volume DESC
+  </select>
+
+  <select id="searchClients"
+          resultType="com.sleapy.project.models.dtos.AnalystClientDTO">
+    SELECT client_id AS id, username, email
+    FROM clients
+    WHERE is_admin IS NOT TRUE
+      AND is_analyst IS NOT TRUE
+      AND (LOWER(username) LIKE LOWER(CONCAT('%', #{search}, '%'))
+        OR LOWER(email) LIKE LOWER(CONCAT('%', #{search}, '%')))
+    ORDER BY username
+    LIMIT 20
+  </select>
+</mapper>

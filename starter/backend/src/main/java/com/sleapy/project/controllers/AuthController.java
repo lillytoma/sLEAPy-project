@@ -58,7 +58,7 @@ public class AuthController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
             // Step 4: Generate JWT token
-            String jwtToken = jwtService.generateToken(user.getEmail(), user.getId());
+            String jwtToken = jwtService.generateToken(user.getEmail(), user.getId(), user.isAnalyst());
 
             // Step 5: Build response
             SignUpResponseDTO response = new SignUpResponseDTO(
@@ -66,6 +66,9 @@ public class AuthController {
                 user.getId(),
                 jwtToken,
                 clientService.isFrozen(user),
+                user.getFirstName(),
+                user.getLastName(),
+                user.isAnalyst(),
                 user.isAdmin()
             );
 
@@ -108,6 +111,9 @@ public class AuthController {
                 "Signup successful. Welcome!",
                 newClient.getId(),
                 jwtToken,
+                false,
+                newClient.getFirstName(),
+                newClient.getLastName(),
                 false,
                 newClient.isAdmin()
             );

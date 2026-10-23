@@ -5,6 +5,9 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_DIR="$ROOT_DIR/backend"
 ETL_DIR="$BACKEND_DIR/etl"
 FRONTEND_DIR="$ROOT_DIR/frontend"
+STATE_DIR="${XDG_RUNTIME_DIR:-/tmp}/sleapy-start-dev-$(printf '%s' "$ROOT_DIR" | sha256sum | cut -d' ' -f1)"
+BACKEND_BUILD_MARKER="$STATE_DIR/backend-build"
+FRONTEND_INSTALL_MARKER="$STATE_DIR/frontend-install"
 
 service_pids=()
 
@@ -74,22 +77,54 @@ wait_for_port() {
   return 1
 }
 
-if [[ ! -d "$BACKEND_DIR/target" ]]; then
-  start_service "backend-build" "$BACKEND_DIR" \
-    "./mvnw clean install"
-  build_pid="${service_pids[-1]}"
-  if ! wait "$build_pid"; then
+has_source_changes_since() {
+  local directory="$1"
+  local marker="$2"
+
+  [[ ! -f "$marker" ]] || find "$directory" -type f \
+    ! -path "$directory/node_modules/*" \
+    ! -path "$directory/target/*" \
+    ! -path "$directory/dist/*" \
+    -newer "$marker" -print -quit | grep -q .
+}
+
+mkdir -p "$STATE_DIR"
+
+if [[ ! -f "$BACKEND_DIR/target/project-0.0.1-SNAPSHOT.jar" ]] ||
+   has_source_changes_since "$BACKEND_DIR" "$BACKEND_BUILD_MARKER"; then
+  echo "Backend changes detected; running mvn clean install..."
+  if ! (
+    cd "$BACKEND_DIR"
+    ./mvnw clean install
+  ); then
     echo "Backend build failed. The services were not started."
     exit 1
   fi
+  touch "$BACKEND_BUILD_MARKER"
   echo "Backend build completed."
 else
-  echo "backend/target exists; skipping mvn clean install."
+  echo "No backend changes detected; skipping mvn clean install."
 fi
 
 if [[ ! -f "$BACKEND_DIR/target/project-0.0.1-SNAPSHOT.jar" ]]; then
-  echo "The backend jar is missing. Run ./mvnw clean install."
+  echo "The backend build completed but target/project-0.0.1-SNAPSHOT.jar is missing."
   exit 1
+fi
+
+if [[ ! -d "$FRONTEND_DIR/node_modules" ]] ||
+   has_source_changes_since "$FRONTEND_DIR" "$FRONTEND_INSTALL_MARKER"; then
+  echo "Frontend changes detected; running npm install..."
+  if ! (
+    cd "$FRONTEND_DIR"
+    npm install
+  ); then
+    echo "Frontend dependency installation failed. The services were not started."
+    exit 1
+  fi
+  touch "$FRONTEND_INSTALL_MARKER"
+  echo "Frontend dependencies are ready."
+else
+  echo "No frontend changes detected; skipping npm install."
 fi
 
 start_quiet_service "yfinance" "$ETL_DIR" \
