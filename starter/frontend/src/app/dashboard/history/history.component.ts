@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { FrogMascotComponent } from '../../shared/frog-mascot.component';
@@ -10,7 +11,6 @@ interface OrderApiResponse {
   tradeType?: string | null;
   instrument?: {
     symbol?: string;
-    currentPrice?: number | string;
   };
 }
 
@@ -19,14 +19,12 @@ interface Transaction {
   type: 'BUY' | 'SELL';
   symbol: string;
   shares: number;
-  price: number;
-  total: number;
 }
 
 @Component({
   selector: 'app-history',
   standalone: true,
-  imports: [FrogMascotComponent],
+  imports: [FrogMascotComponent, DatePipe],
   templateUrl: './history.component.html'
 })
 export class HistoryComponent implements OnInit {
@@ -103,16 +101,12 @@ export class HistoryComponent implements OnInit {
     const rawQuantity = Number(order.quantity ?? 0);
     const shares = Math.abs(rawQuantity);
     const type = this.resolveTradeType(order.tradeType);
-    const rawPrice = Number(order.instrument?.currentPrice ?? 0);
-    const price = Number.isFinite(rawPrice) ? rawPrice : 0;
 
     return {
       date: order.timeFilled ?? order.timeOfPurchase ?? '',
       type,
       symbol: order.instrument?.symbol ?? 'N/A',
       shares,
-      price,
-      total: shares * price
     };
   }
 

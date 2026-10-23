@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 
 import com.sleapy.project.models.entities.OrderEntity;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.math.BigDecimal;
 
 import com.sleapy.project.exceptions.InvalidOrderException;
@@ -54,11 +55,11 @@ public class OrderValidator {
     }
 
     // Purchase date must not be in the future
-    private void validatePurchaseDate(LocalDate timeOfPurchase) throws InvalidOrderException{
+    private void validatePurchaseDate(LocalDateTime timeOfPurchase) throws InvalidOrderException{
         if(timeOfPurchase == null){
             throw new InvalidOrderException("Purchase date cannot be null");
         }
-        if(timeOfPurchase.isAfter(LocalDate.now())){
+        if(timeOfPurchase.toLocalDate().isAfter(LocalDate.now())){
             throw new InvalidOrderException("Purchase date cannot be in the future. Received: " + timeOfPurchase);
         }
     }

@@ -148,9 +148,7 @@ export class SettingsComponent {
       next: (status) => {
         this.frozen.set(status.frozen);
         this.isSaving.set(false);
-        if (status.frozen) {
-          this.authService.logout();
-        }
+        localStorage.setItem('account_frozen', String(status.frozen));
       },
       error: () => {
         this.isSaving.set(false);

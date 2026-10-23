@@ -3,13 +3,13 @@ package com.sleapy.project.models.entities;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 public class OrderEntity {
     public OrderEntity(Long id,
                        BigDecimal quantity,
-                       LocalDate timeOfPurchase,
+                       LocalDateTime timeOfPurchase,
                        BigDecimal purchasePrice,
                        OrderStatus status,
                        ClientEntity client,
@@ -28,8 +28,8 @@ public class OrderEntity {
 
     private Long id;
     private BigDecimal quantity;
-    private LocalDate timeOfPurchase;
-    private LocalDate timeFilled;
+    private LocalDateTime timeOfPurchase;
+    private LocalDateTime timeFilled;
     private BigDecimal purchasePrice;
     private String tradeType;
     private OrderStatus status;
