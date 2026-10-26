@@ -278,30 +278,6 @@ Escape closes the account menu and restores focus to the avatar.
 
 ## Running the Program
 
-### Cash deposits, withdrawals, and frozen accounts
-
-The portfolio offers **Add cash** and **Withdraw** buttons. Withdraw opens an
-amount dialog showing available cash, and updates the cash balance and portfolio
-value after success. Withdrawals cannot exceed available cash; the backend locks
-the account and atomically checks the balance before subtracting the amount.
-`POST /api/clients/{clientId}/withdraw` accepts `{ "amount": 25.50 }` with the
-existing JWT authorization header and returns the updated balance.
-
-Frozen accounts cannot sell, add cash, or withdraw from the portfolio. These buttons stay
-disabled while account status is being verified or is unavailable. Deposits and
-withdrawals are also checked server-side and rejected for frozen accounts. Both accept
-positive dollar amounts with at most two decimal places, not letters or
-scientific notation in the input.
-
-### Order history timestamps
-
-History shows separate Order placed and Order filled columns, including seconds.
-New trades record placement when the backend receives the request and filling
-after settlement, using the trading server's local time (the existing database
-columns are timestamps without a time zone). Missing fill times on completed
-orders are shown as "Not recorded"; unfilled orders show "Not filled".
-Older date-only records may still show midnight: previously discarded times
-cannot be reconstructed, and existing orders are not backfilled with guessed times.
 
 ### Backend (Java)
 
