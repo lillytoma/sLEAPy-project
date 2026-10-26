@@ -105,7 +105,7 @@ import { AuthService } from '../../services/auth.service';
         <div class="settings-option">
           <div>
             <h3>{{ frozen() ? 'Unfreeze account' : 'Freeze account' }}</h3>
-            <p>{{ frozen() ? 'Your account is frozen. Unfreeze it to resume normal activity.' : 'Temporarily pause account activity. You can log back in and unfreeze it yourself.' }}</p>
+            <p>{{ frozen() ? 'Your account is frozen. Unfreeze it to resume normal activity.' : 'Temporarily pause account activity without signing out. You can unfreeze it here at any time.' }}</p>
           </div>
           <button type="button" class="button settings-account-button" [class.button-primary]="frozen()"
             [disabled]="isSaving()" (click)="toggleFreeze()">

@@ -278,6 +278,7 @@ Escape closes the account menu and restores focus to the avatar.
 
 ## Running the Program
 
+
 ### Backend (Java)
 
 1. Navigate to the backend directory:

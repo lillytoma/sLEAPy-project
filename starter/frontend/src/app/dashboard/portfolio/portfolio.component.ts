@@ -1,9 +1,11 @@
-import { Component, computed, OnInit, signal } from '@angular/core';
+import { Component, computed, OnDestroy, OnInit, signal } from '@angular/core';
+import { catchError, of, Subscription, switchMap, timer } from 'rxjs';
 import { PortfolioService } from '../../services/portfolio.service';
 import { MarketStock } from '../../data/mock-data';
 import { MarketDataService } from '../../services/market-data.service';
 import { OrderModalComponent } from '../shared/order-modal.component';
 import { AddCashModalComponent } from '../shared/add-cash-modal.component';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-portfolio',
@@ -11,14 +13,54 @@ import { AddCashModalComponent } from '../shared/add-cash-modal.component';
   imports: [OrderModalComponent, AddCashModalComponent],
   templateUrl: './portfolio.component.html'
 })
-export class PortfolioComponent implements OnInit {
+export class PortfolioComponent implements OnInit, OnDestroy {
   orderModal = signal<{ stock: MarketStock; mode: 'buy' | 'sell' } | null>(null);
   showAddCash = signal(false);
+  cashMode = signal<'deposit' | 'withdraw'>('deposit');
+  selectedSector = signal<string | null>(null);
+  private accountFrozen = signal<boolean | null>(null);
+  private accountStatusError = signal('');
+  private accountStatusSubscription?: Subscription;
 
-  constructor(public portfolioService: PortfolioService, private marketDataService: MarketDataService) {}
+  constructor(
+    public portfolioService: PortfolioService,
+    private marketDataService: MarketDataService,
+    private authService: AuthService
+  ) {}
+
+  accountActionDisabledReason = computed(() => {
+    if (this.accountStatusError()) return this.accountStatusError();
+    if (this.accountFrozen() === null) return 'Checking account status before selling, adding, or withdrawing cash.';
+    if (this.accountFrozen()) return 'Your account is frozen. Unfreeze it in Settings to sell, add, or withdraw cash.';
+    return '';
+  });
 
   ngOnInit(): void {
     this.marketDataService.connectWebSocket();
+    const clientId = Number(this.authService.getUserId());
+    if (!Number.isInteger(clientId) || clientId <= 0) {
+      this.accountStatusError.set('Unable to verify your account. Please log in again before selling, adding, or withdrawing cash.');
+      return;
+    }
+    this.accountStatusSubscription = timer(0, 30000).pipe(
+      switchMap(() => this.authService.getAccountStatus(clientId).pipe(
+        catchError((error) => {
+          console.error('Unable to verify portfolio account status:', error);
+          this.accountStatusError.set('Account status could not be verified. Selling, adding, and withdrawing cash are disabled until it can be checked.');
+          return of(null);
+        })
+      ))
+    ).subscribe((status) => {
+      this.accountFrozen.set(status?.frozen ?? null);
+      if (status !== null) this.accountStatusError.set('');
+      if (this.accountActionDisabledReason()) {
+        this.showAddCash.set(false);
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.accountStatusSubscription?.unsubscribe();
   }
 
   statCards = computed(() => {
@@ -44,16 +86,26 @@ export class PortfolioComponent implements OnInit {
     const total = Object.values(sectorMap).reduce((a, b) => a + b, 0);
     // Warm, muted categorical palette — vintage cartoon inks that follow the theme.
     const colors = ['var(--primary)', 'var(--accent)', 'var(--accent-blue)', 'var(--accent-red)', 'var(--accent-plum)', 'var(--accent-teal)'];
-    const circumference = 2 * Math.PI * 60;
     let cumulative = 0;
     return Object.entries(sectorMap).map(([label, value], i) => {
-      const pct = (value / total) * 100;
-      const dashLen = (pct / 100) * circumference;
-      const dashOffset = -cumulative * circumference / 100;
+      const pct = total > 0 ? (value / total) * 100 : 0;
+      const point = (percentage: number) => {
+        const angle = percentage / 100 * 2 * Math.PI - Math.PI / 2;
+        return `${80 + 60 * Math.cos(angle)} ${80 + 60 * Math.sin(angle)}`;
+      };
+      // Two arcs also render a sector occupying the entire wheel.
+      const path = pct > 0
+        ? `M ${point(cumulative)} A 60 60 0 0 1 ${point(cumulative + pct / 2)} A 60 60 0 0 1 ${point(cumulative + pct)}`
+        : '';
       cumulative += pct;
-      return { label, pct, value, color: colors[i % colors.length], dash: `${dashLen} ${circumference - dashLen}`, offset: dashOffset };
+      const holdings = h.filter(holding => holding.sector === label);
+      return { label, pct, value, holdings, path, color: colors[i % colors.length] };
     });
   });
+
+  selectedSectorDetails = computed(() =>
+    this.donutSlices().find(slice => slice.label === this.selectedSector()) ?? null
+  );
 
   sectorCount = computed(() => {
     const sectors = new Set(this.portfolioService.holdings().map((h) => h.sector));
@@ -134,5 +186,11 @@ export class PortfolioComponent implements OnInit {
       },
       mode: 'sell'
     });
+  }
+
+  openAddCash(mode: 'deposit' | 'withdraw' = 'deposit'): void {
+    if (this.accountActionDisabledReason()) return;
+    this.cashMode.set(mode);
+    this.showAddCash.set(true);
   }
 }

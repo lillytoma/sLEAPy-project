@@ -95,6 +95,12 @@
     WHERE Client_ID = #{id}
   </update>
 
+  <update id="withdrawCash">
+    UPDATE Clients
+    SET cash_balance = cash_balance - #{amount}
+    WHERE Client_ID = #{id} AND cash_balance >= #{amount}
+  </update>
+
   <update id="updateStatus">
     UPDATE Clients
     SET ClientStatus_ID = #{statusId}

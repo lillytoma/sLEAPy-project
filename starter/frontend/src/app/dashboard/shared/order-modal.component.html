@@ -39,6 +39,12 @@
         </button>
       </div>
 
+      @if (tradingDisabledReason()) {
+        <p role="status" aria-live="polite" class="px-6 pt-3 text-sm" style="color:var(--muted-foreground)">
+          {{ tradingDisabledReason() }}
+        </p>
+      }
+
       <div class="px-6 py-5 space-y-5 overflow-y-auto min-h-0">
         <!-- Current price -->
         <div class="flex items-center justify-between p-3 rounded-lg" style="background-color:var(--muted)">
@@ -228,11 +234,12 @@
 
         <!-- Submit button -->
         <button (click)="mode() === 'buy' ? executeBuy() : executeSell()"
-          [disabled]="(mode() === 'buy' ? (calculatedBuyShares() < 0.001 || estimatedBuyTotal() > availableCash) : (calculatedSellShares() < 0.001 || calculatedSellShares() > sharesOwned)) || loading()"
+          [disabled]="submitDisabled()"
           class="w-full py-3 rounded-md font-semibold text-sm outlined transition-opacity flex items-center justify-center gap-2"
-          [style.background-color]="mode() === 'buy' ? 'var(--primary)' : 'var(--error)'"
-          style="color:#fff"
-          [style.opacity]="(mode() === 'buy' ? (calculatedBuyShares() < 0.001 || estimatedBuyTotal() > availableCash) : (calculatedSellShares() < 0.001 || calculatedSellShares() > sharesOwned)) || loading() ? '0.5' : '1'">
+          [style.background-color]="submitDisabled() ? 'var(--muted)' : (mode() === 'buy' ? 'var(--primary)' : 'var(--error)')"
+          [style.color]="submitDisabled() ? 'var(--muted-foreground)' : '#fff'"
+          [style.cursor]="submitDisabled() ? 'not-allowed' : null"
+          [style.opacity]="submitDisabled() ? '0.6' : '1'">
           @if (loading()) {
             <svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" opacity="0.25"></circle>

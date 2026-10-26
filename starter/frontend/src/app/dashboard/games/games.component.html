@@ -45,12 +45,12 @@
   </div>
 
   @if (activeGame() === 'wordle') {
-  <article class="wordle-card" id="wordle-game" role="tabpanel">
+  <article class="wordle-card" id="wordle-game" role="tabpanel" (click)="onWordlePanelClick($event)">
     <div class="wordle-heading">
       <div>
         <p class="eyebrow">Daily market brainteaser</p>
         <h2>Market Wordle</h2>
-        <p class="wordle-subtitle">Guess the five-letter stock word in six tries.</p>
+        <p class="wordle-subtitle">Click anywhere in this panel and start typing. Press Enter to submit a five-letter stock word. You have six tries. No letter can repeat three times in a row.</p>
       </div>
       <span class="wordle-counter">{{ wordleGuesses().length }} / {{ wordleMaxGuesses }}</span>
     </div>
@@ -63,10 +63,21 @@
           }
         </div>
       }
-      @for (row of [].constructor(wordleMaxGuesses - wordleGuesses().length); track $index) {
+      @for (row of [].constructor(wordleMaxGuesses - wordleGuesses().length); track rowIndex; let rowIndex = $index) {
         <div class="wordle-row">
           @for (tile of [0, 1, 2, 3, 4]; track tile) {
-            <span class="wordle-tile wordle-empty"></span>
+            @if (rowIndex === 0 && !wordleFinished()) {
+              <input #wordleTile class="wordle-tile wordle-tile-input" type="text"
+                maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false"
+                [attr.aria-label]="'Letter ' + (tile + 1) + ' of 5'"
+                [attr.tabindex]="tile <= wordleInput().length ? 0 : -1"
+                [value]="wordleInput()[tile] || ''"
+                (focus)="focusWordleTile(tile)"
+                (input)="updateWordleTile(tile, wordleTile)"
+                (keydown)="onWordleKeydown($event, tile)">
+            } @else {
+              <span class="wordle-tile wordle-empty"></span>
+            }
           }
         </div>
       }
@@ -80,21 +91,10 @@
       <div class="wordle-message" role="alert">{{ wordleMessage() }}</div>
     }
 
-    <form class="wordle-form" (submit)="$event.preventDefault(); submitWordleGuess()">
-      <label class="sr-only" for="wordle-guess">Five-letter guess</label>
-      <input
-        id="wordle-guess"
-        type="text"
-        maxlength="5"
-        autocomplete="off"
-        [value]="wordleInput()"
-        [disabled]="wordleFinished()"
-        (input)="updateWordleInput($any($event.target).value)"
-        placeholder="GUESS"
-        aria-label="Five-letter guess">
-      <button type="submit" class="button button-primary" [disabled]="wordleInput().length !== 5 || wordleFinished()">Submit</button>
+    <div class="wordle-form">
+      <button type="button" class="button button-primary" (click)="submitWordleGuess()" [disabled]="wordleInput().length !== 5 || wordleFinished()">Submit</button>
       <button type="button" class="button wordle-new" (click)="resetWordle()">New game</button>
-    </form>
+    </div>
 
     <div class="wordle-keyboard" aria-label="Letter feedback">
       @for (row of [['Q','W','E','R','T','Y','U','I','O','P'], ['A','S','D','F','G','H','J','K','L'], ['Z','X','C','V','B','N','M']]; track $index) {

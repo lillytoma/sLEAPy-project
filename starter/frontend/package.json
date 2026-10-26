@@ -6,6 +6,7 @@
     "start": "ng serve",
     "build": "ng build",
     "test:analyst": "node --test tests/analyst-refresh.test.cjs",
+    "test:cash": "node --test tests/cash-transfer.test.cjs",
     "watch": "ng build --watch --configuration development"
   },
   "private": true,

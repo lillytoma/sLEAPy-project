@@ -59,12 +59,35 @@ public class ClientController {
 
         try {
             return ResponseEntity.ok(clientService.addCash(clientId, request.getAmount()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(java.util.Map.of("error", e.getMessage()));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(java.util.Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{clientId}/withdraw")
+    public ResponseEntity<?> withdrawCash(@PathVariable Long clientId,
+                                         @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+                                         @RequestBody AddCashRequestDTO request) {
+        ResponseEntity<?> unauthorized = verifyAuthorization(authorizationHeader);
+        if (unauthorized != null) {
+            return unauthorized;
+        }
+
+        try {
+            return ResponseEntity.ok(clientService.withdrawCash(clientId, request.getAmount()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
 
