@@ -16,6 +16,7 @@ import { AuthService } from '../../services/auth.service';
 export class PortfolioComponent implements OnInit, OnDestroy {
   orderModal = signal<{ stock: MarketStock; mode: 'buy' | 'sell' } | null>(null);
   showAddCash = signal(false);
+  cashMode = signal<'deposit' | 'withdraw'>('deposit');
   selectedSector = signal<string | null>(null);
   private accountFrozen = signal<boolean | null>(null);
   private accountStatusError = signal('');
@@ -29,8 +30,8 @@ export class PortfolioComponent implements OnInit, OnDestroy {
 
   accountActionDisabledReason = computed(() => {
     if (this.accountStatusError()) return this.accountStatusError();
-    if (this.accountFrozen() === null) return 'Checking account status before selling or adding cash.';
-    if (this.accountFrozen()) return 'Your account is frozen. Unfreeze it in Settings to sell or add cash.';
+    if (this.accountFrozen() === null) return 'Checking account status before selling, adding, or withdrawing cash.';
+    if (this.accountFrozen()) return 'Your account is frozen. Unfreeze it in Settings to sell, add, or withdraw cash.';
     return '';
   });
 
@@ -38,14 +39,14 @@ export class PortfolioComponent implements OnInit, OnDestroy {
     this.marketDataService.connectWebSocket();
     const clientId = Number(this.authService.getUserId());
     if (!Number.isInteger(clientId) || clientId <= 0) {
-      this.accountStatusError.set('Unable to verify your account. Please log in again before selling or adding cash.');
+      this.accountStatusError.set('Unable to verify your account. Please log in again before selling, adding, or withdrawing cash.');
       return;
     }
     this.accountStatusSubscription = timer(0, 30000).pipe(
       switchMap(() => this.authService.getAccountStatus(clientId).pipe(
         catchError((error) => {
           console.error('Unable to verify portfolio account status:', error);
-          this.accountStatusError.set('Account status could not be verified. Selling and adding cash are disabled until it can be checked.');
+          this.accountStatusError.set('Account status could not be verified. Selling, adding, and withdrawing cash are disabled until it can be checked.');
           return of(null);
         })
       ))
@@ -187,8 +188,9 @@ export class PortfolioComponent implements OnInit, OnDestroy {
     });
   }
 
-  openAddCash(): void {
+  openAddCash(mode: 'deposit' | 'withdraw' = 'deposit'): void {
     if (this.accountActionDisabledReason()) return;
+    this.cashMode.set(mode);
     this.showAddCash.set(true);
   }
 }

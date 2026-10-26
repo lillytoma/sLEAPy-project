@@ -52,6 +52,9 @@ public interface ClientMapper {
     void addCash(@org.apache.ibatis.annotations.Param("id") Long id,
                  @org.apache.ibatis.annotations.Param("amount") BigDecimal amount);
 
+    int withdrawCash(@org.apache.ibatis.annotations.Param("id") Long id,
+                     @org.apache.ibatis.annotations.Param("amount") BigDecimal amount);
+
     void updateStatus(@org.apache.ibatis.annotations.Param("id") Long id,
                       @org.apache.ibatis.annotations.Param("statusId") Long statusId);
 

@@ -94,13 +94,21 @@ export class PortfolioService {
   }
 
   addCash(amount: number): Observable<number> {
+    return this.transferCash(amount, 'deposit');
+  }
+
+  withdrawCash(amount: number): Observable<number> {
+    return this.transferCash(amount, 'withdraw');
+  }
+
+  private transferCash(amount: number, action: 'deposit' | 'withdraw'): Observable<number> {
     const clientId = this.resolveClientId();
     if (clientId === null) {
       throw new Error('No valid user_id found in localStorage. Please log in again.');
     }
 
-    return this.http.post<number>(`${this.apiBaseUrl}/clients/${clientId}/deposit`, { amount }).pipe(
-      tap((balance) => this.availableCash.set(Number(balance) || 0))
+    return this.http.post<number>(`${this.apiBaseUrl}/clients/${clientId}/${action}`, { amount }).pipe(
+      tap((balance) => this.availableCash.set(balance))
     );
   }
 

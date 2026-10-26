@@ -9,15 +9,24 @@
             </p>
           }
         </div>
-        <button type="button" (click)="openAddCash()" class="button button-primary flex-shrink-0"
-          [disabled]="!!accountActionDisabledReason()"
-          [title]="accountActionDisabledReason() || 'Add cash'"
-          [attr.aria-describedby]="accountActionDisabledReason() ? 'portfolio-account-status' : null"
-          [style.background-color]="accountActionDisabledReason() ? 'var(--muted)' : null"
-          [style.color]="accountActionDisabledReason() ? 'var(--muted-foreground)' : null"
-          [style.cursor]="accountActionDisabledReason() ? 'not-allowed' : null">
-          <span aria-hidden="true">+</span> Add cash
-        </button>
+        <div class="flex flex-wrap justify-end gap-2">
+          <button type="button" (click)="openAddCash('withdraw')"
+            class="button flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            [disabled]="!!accountActionDisabledReason() || portfolioService.availableCash() <= 0"
+            [title]="accountActionDisabledReason() || (portfolioService.availableCash() <= 0 ? 'No cash available to withdraw' : 'Withdraw cash')"
+            [attr.aria-describedby]="accountActionDisabledReason() ? 'portfolio-account-status' : null">
+            <span aria-hidden="true">&minus;</span> Withdraw
+          </button>
+          <button type="button" (click)="openAddCash()" class="button button-primary flex-shrink-0"
+            [disabled]="!!accountActionDisabledReason()"
+            [title]="accountActionDisabledReason() || 'Add cash'"
+            [attr.aria-describedby]="accountActionDisabledReason() ? 'portfolio-account-status' : null"
+            [style.background-color]="accountActionDisabledReason() ? 'var(--muted)' : null"
+            [style.color]="accountActionDisabledReason() ? 'var(--muted-foreground)' : null"
+            [style.cursor]="accountActionDisabledReason() ? 'not-allowed' : null">
+            <span aria-hidden="true">+</span> Add cash
+          </button>
+        </div>
       </div>
 
       <!-- Stat Cards -->
@@ -207,6 +216,7 @@
 
     @if (showAddCash() && !accountActionDisabledReason()) {
       <app-add-cash-modal
+        [mode]="cashMode()"
         [currentBalance]="portfolioService.availableCash()"
         (close)="showAddCash.set(false)">
       </app-add-cash-modal>

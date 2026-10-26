@@ -7,6 +7,7 @@ import com.sleapy.project.mappers.ClientMapper;
 import com.sleapy.project.models.dtos.SignUpRequestDTO;
 import com.sleapy.project.validators.ClientValidator;
 import com.sleapy.project.exceptions.InvalidEmailFormatException;
+import com.sleapy.project.exceptions.InsufficientCashException;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -36,13 +37,7 @@ public class ClientService {
 
     @Transactional
     public double addCash(Long clientId, BigDecimal amount) {
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Amount must be greater than 0");
-        }
-
-        if (amount.stripTrailingZeros().scale() > 2) {
-            throw new IllegalArgumentException("Amount must have no more than two decimal places");
-        }
+        validateCashAmount(amount);
         clientMapper.lockForTrading(clientId);
         ClientEntity client = requireClient(clientId);
         if (isFrozen(client)) {
@@ -50,6 +45,30 @@ public class ClientService {
         }
         clientMapper.addCash(clientId, amount);
         return getCashBalance(clientId);
+    }
+
+    @Transactional
+    public double withdrawCash(Long clientId, BigDecimal amount) {
+        validateCashAmount(amount);
+        clientMapper.lockForTrading(clientId);
+        ClientEntity client = requireClient(clientId);
+        if (isFrozen(client)) {
+            throw new IllegalStateException("Your account is frozen. Unfreeze it in Settings to withdraw cash.");
+        }
+        if (clientMapper.withdrawCash(clientId, amount) != 1) {
+            throw new InsufficientCashException("Insufficient cash balance for this withdrawal.");
+        }
+        return getCashBalance(clientId);
+    }
+
+    private void validateCashAmount(BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than 0");
+        }
+
+        if (amount.stripTrailingZeros().scale() > 2) {
+            throw new IllegalArgumentException("Amount must have no more than two decimal places");
+        }
     }
     
 //Entry point for checking a login attempt. Given an email and the plaintext password. It returns a bool answering whether the credentials exist in the db

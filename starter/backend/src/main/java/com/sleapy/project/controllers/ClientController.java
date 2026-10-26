@@ -71,6 +71,26 @@ public class ClientController {
         }
     }
 
+    @PostMapping("/{clientId}/withdraw")
+    public ResponseEntity<?> withdrawCash(@PathVariable Long clientId,
+                                         @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+                                         @RequestBody AddCashRequestDTO request) {
+        ResponseEntity<?> unauthorized = verifyAuthorization(authorizationHeader);
+        if (unauthorized != null) {
+            return unauthorized;
+        }
+
+        try {
+            return ResponseEntity.ok(clientService.withdrawCash(clientId, request.getAmount()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @GetMapping("/{clientId}/account-status")
     public ResponseEntity<?> getAccountStatus(@PathVariable Long clientId) {
         try {
