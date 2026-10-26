@@ -5,8 +5,9 @@ import { environment } from '../../../environments/environment';
 import { FrogMascotComponent } from '../../shared/frog-mascot.component';
 
 interface OrderApiResponse {
-  timeOfPurchase: string;
+  timeOfPurchase: string | null;
   timeFilled: string | null;
+  status?: string | null;
   quantity: number;
   tradeType?: string | null;
   instrument?: {
@@ -15,7 +16,9 @@ interface OrderApiResponse {
 }
 
 interface Transaction {
-  date: string;
+  placedAt: string | null;
+  filledAt: string | null;
+  missingFillLabel: string;
   type: 'BUY' | 'SELL';
   symbol: string;
   shares: number;
@@ -103,7 +106,9 @@ export class HistoryComponent implements OnInit {
     const type = this.resolveTradeType(order.tradeType);
 
     return {
-      date: order.timeFilled ?? order.timeOfPurchase ?? '',
+      placedAt: order.timeOfPurchase,
+      filledAt: order.timeFilled,
+      missingFillLabel: order.status?.toUpperCase() === 'FILLED' ? 'Not recorded' : 'Not filled',
       type,
       symbol: order.instrument?.symbol ?? 'N/A',
       shares,

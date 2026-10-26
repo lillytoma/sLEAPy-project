@@ -36,6 +36,7 @@ public class TradeService {
 
     @Transactional
     public TradeResponseDTO buyStock(BuyOrderRequestDTO request) {
+        LocalDateTime placedAt = LocalDateTime.now();
         OrderBusinessRuleValidationService.BuyValidation validation =
                 orderValidationService.validateBuy(request.getClientId(), request.getInstrumentId(), request.getQuantity());
         ClientEntity client = validation.client();
@@ -69,7 +70,7 @@ public class TradeService {
             holdingMapper.save(holding);
         }
 
-        OrderEntity order = createOrder(client, instrument, quantity, currentPrice, "BUY");
+        OrderEntity order = createOrder(client, instrument, quantity, currentPrice, "BUY", placedAt);
         orderStatusNotificationService.publish(order.getId(), request.getClientId(), instrument.getSymbol(),
                 "BUY", "FILLED", "Buy order filled");
 
@@ -81,6 +82,7 @@ public class TradeService {
 
     @Transactional
     public TradeResponseDTO sellStock(SellOrderRequestDTO request) {
+        LocalDateTime placedAt = LocalDateTime.now();
         OrderBusinessRuleValidationService.SellValidation validation =
                 orderValidationService.validateSell(request.getClientId(), request.getInstrumentId(), request.getQuantity());
         ClientEntity client = validation.client();
@@ -108,7 +110,7 @@ public class TradeService {
             holdingMapper.update(holding);
         }
 
-        OrderEntity order = createOrder(client, instrument, quantity, currentPrice, "SELL");
+        OrderEntity order = createOrder(client, instrument, quantity, currentPrice, "SELL", placedAt);
         orderStatusNotificationService.publish(order.getId(), request.getClientId(), instrument.getSymbol(),
                 "SELL", "FILLED", "Sell order filled");
 
@@ -119,7 +121,8 @@ public class TradeService {
     }
 
     private OrderEntity createOrder(ClientEntity client, InstrumentEntity instrument,
-                                    BigDecimal quantity, BigDecimal price, String tradeType) {
+                                    BigDecimal quantity, BigDecimal price, String tradeType,
+                                    LocalDateTime placedAt) {
         OrderEntity order = new OrderEntity();
         order.setClient(client);
         order.setInstrument(instrument);

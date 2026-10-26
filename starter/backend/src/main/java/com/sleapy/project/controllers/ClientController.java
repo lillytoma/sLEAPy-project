@@ -59,6 +59,9 @@ public class ClientController {
 
         try {
             return ResponseEntity.ok(clientService.addCash(clientId, request.getAmount()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(java.util.Map.of("error", e.getMessage()));

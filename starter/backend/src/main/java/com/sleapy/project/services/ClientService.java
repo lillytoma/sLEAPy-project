@@ -34,13 +34,20 @@ public class ClientService {
         return client.getCashBalance(); // Return the actual current balance from the client entity
     }
 
+    @Transactional
     public double addCash(Long clientId, BigDecimal amount) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Amount must be greater than 0");
         }
 
-        clientMapper.findById(clientId)
-                .orElseThrow(() -> new java.util.NoSuchElementException("Client not found"));
+        if (amount.stripTrailingZeros().scale() > 2) {
+            throw new IllegalArgumentException("Amount must have no more than two decimal places");
+        }
+        clientMapper.lockForTrading(clientId);
+        ClientEntity client = requireClient(clientId);
+        if (isFrozen(client)) {
+            throw new IllegalStateException("Your account is frozen. Unfreeze it in Settings to add cash.");
+        }
         clientMapper.addCash(clientId, amount);
         return getCashBalance(clientId);
     }

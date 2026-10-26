@@ -4,7 +4,9 @@ import { HttpClientModule } from '@angular/common/http';
 import { PortfolioService, OrderRequest } from '../../services/portfolio.service';
 import { MarketStock } from '../../data/mock-data';
 import { MarketDataService } from '../../services/market-data.service';
-import { Subscription } from 'rxjs';
+import { AuthService } from '../../services/auth.service';
+import { MarketHoursService } from '../../services/market-hours.service';
+import { catchError, of, Subscription, switchMap, timer } from 'rxjs';
 
 type ChartRange = '6mo' | '1mo' | '2wk' | '1wk' | '3d';
 
@@ -59,16 +61,52 @@ export class OrderModalComponent implements OnInit, OnDestroy {
   priceHistory = signal<PricePoint[]>([]);
   hoveredChartIndex = signal<number | null>(null);
   private priceSubscription?: Subscription;
+  private accountStatusSubscription?: Subscription;
+  private accountFrozen = signal<boolean | null>(null);
+  private accountStatusError = signal('');
 
   constructor(
     private portfolioService: PortfolioService,
-    private marketDataService: MarketDataService
+    private marketDataService: MarketDataService,
+    private authService: AuthService,
+    private marketHoursService: MarketHoursService
   ) {}
 
   effectivePrice = computed(() => this.livePrice() ?? this.stock?.price ?? 0);
+  tradingDisabledReason = computed(() => {
+    const reasons: string[] = [];
+    if (!this.marketHoursService.isOpen()) reasons.push('The market is closed. Trading is unavailable outside market hours.');
+    if (this.accountStatusError()) reasons.push(this.accountStatusError());
+    else if (this.accountFrozen() === null) reasons.push('Checking account status before trading.');
+    else if (this.accountFrozen()) reasons.push('Your account is frozen. Unfreeze it in Settings to trade.');
+    return reasons.join(' ');
+  });
+  submitDisabled = computed(() => {
+    const invalidQuantity = this.mode() === 'buy'
+      ? this.calculatedBuyShares() < 0.001 || this.estimatedBuyTotal() > this.availableCash
+      : this.calculatedSellShares() < 0.001 || this.calculatedSellShares() > this.sharesOwned;
+    return !!this.tradingDisabledReason() || invalidQuantity || this.loading();
+  });
 
   ngOnInit(): void {
     this.mode.set(this.initialMode === 'sell' && this.sharesOwned > 0 ? 'sell' : 'buy');
+    const clientId = Number(this.authService.getUserId());
+    if (!Number.isInteger(clientId) || clientId <= 0) {
+      this.accountStatusError.set('Unable to verify your account. Please log in again before trading.');
+    } else {
+      this.accountStatusSubscription = timer(0, 30000).pipe(
+        switchMap(() => this.authService.getAccountStatus(clientId).pipe(
+          catchError((error) => {
+            console.error('Unable to verify trading account status:', error);
+            this.accountStatusError.set('Account status could not be verified. Trading is disabled until it can be checked.');
+            return of(null);
+          })
+        ))
+      ).subscribe((status) => {
+        this.accountFrozen.set(status?.frozen ?? null);
+        if (status !== null) this.accountStatusError.set('');
+      });
+    }
     const initialPrice = this.stock?.price ?? 0;
     this.livePrice.set(initialPrice);
     this.priceHistory.set(Array.from({ length: 12 }, (_, index) => ({
@@ -91,6 +129,7 @@ export class OrderModalComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.priceSubscription?.unsubscribe();
+    this.accountStatusSubscription?.unsubscribe();
   }
 
   selectChartRange(range: ChartRange): void {
@@ -266,6 +305,7 @@ export class OrderModalComponent implements OnInit, OnDestroy {
   }
 
   executeBuy(): void {
+    if (this.tradingDisabledReason()) return;
     const quantity = this.calculatedBuyShares();
     const total = quantity * this.effectivePrice();
     if (quantity < 0.001 || total > this.availableCash) return;
@@ -309,6 +349,7 @@ export class OrderModalComponent implements OnInit, OnDestroy {
   }
 
   executeSell(): void {
+    if (this.tradingDisabledReason()) return;
     const quantity = this.calculatedSellShares();
     const total = quantity * this.effectivePrice();
     if (quantity < 0.001 || quantity > this.sharesOwned) return;

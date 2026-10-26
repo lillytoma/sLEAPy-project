@@ -1,11 +1,12 @@
 import { Component, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { debounceTime, distinctUntilChanged, finalize, of, Subscription, Subject, switchMap } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, finalize, of, Subscription, Subject, switchMap, timer } from 'rxjs';
 import { MarketStock } from '../../data/mock-data';
 import { PortfolioService } from '../../services/portfolio.service';
 import { MarketDataService } from '../../services/market-data.service';
 import { OrderModalComponent } from '../shared/order-modal.component';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-markets',
@@ -30,10 +31,41 @@ export class MarketsComponent implements OnInit, OnDestroy {
   private searchSubscription?: Subscription;
   private searchSubject = new Subject<{ query: string; mode: 'ticker' | 'company' }>();
   private searchResults = signal<MarketStock[] | null>(null);
+  private accountFrozen = signal<boolean | null>(null);
+  private accountStatusError = signal('');
+  private accountStatusSubscription?: Subscription;
 
-  constructor(public portfolioService: PortfolioService, private marketDataService: MarketDataService) {}
+  constructor(
+    public portfolioService: PortfolioService,
+    private marketDataService: MarketDataService,
+    private authService: AuthService
+  ) {}
+
+  tradeDisabledReason = computed(() => {
+    if (this.accountStatusError()) return this.accountStatusError();
+    if (this.accountFrozen() === null) return 'Checking account status before trading.';
+    if (this.accountFrozen()) return 'Your account is frozen. Unfreeze it in Settings to trade.';
+    return '';
+  });
 
   ngOnInit(): void {
+    const clientId = Number(this.authService.getUserId());
+    if (!Number.isInteger(clientId) || clientId <= 0) {
+      this.accountStatusError.set('Unable to verify your account. Please log in again before trading.');
+    } else {
+      this.accountStatusSubscription = timer(0, 30000).pipe(
+        switchMap(() => this.authService.getAccountStatus(clientId).pipe(
+          catchError((error) => {
+            console.error('Unable to verify trading account status:', error);
+            this.accountStatusError.set('Account status could not be verified. Trading is disabled until it can be checked.');
+            return of(null);
+          })
+        ))
+      ).subscribe((status) => {
+        this.accountFrozen.set(status?.frozen ?? null);
+        if (status !== null) this.accountStatusError.set('');
+      });
+    }
     this.marketDataService.connectWebSocket();
     this.priceSubscription = this.marketDataService.priceUpdates$.subscribe((updates) => {
       this.livePrices.set(new Map(updates));
@@ -54,6 +86,7 @@ export class MarketsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.accountStatusSubscription?.unsubscribe();
     this.priceSubscription?.unsubscribe();
     this.searchSubscription?.unsubscribe();
   }

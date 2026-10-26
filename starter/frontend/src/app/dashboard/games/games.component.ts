@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, ElementRef, QueryList, ViewChildren, signal } from '@angular/core';
 
 type Tile = number | null;
 type WordleLetterState = 'correct' | 'present' | 'absent' | 'empty';
@@ -45,6 +45,7 @@ export class GamesComponent {
   readonly wordleInput = signal('');
   readonly wordleMaxGuesses = 6;
   readonly wordleMessage = signal('');
+  @ViewChildren('wordleTile') private wordleTiles!: QueryList<ElementRef<HTMLInputElement>>;
 
   readonly puzzleSizes = [3, 6, 8] as const;
   readonly puzzleSize = signal<number>(8);
@@ -70,6 +71,10 @@ export class GamesComponent {
       this.wordleMessage.set('Enter a five-letter word.');
       return;
     }
+    if (/([A-Z])\1{2}/.test(guess)) {
+      this.wordleMessage.set('A guess cannot repeat the same letter three times in a row.');
+      return;
+    }
     if (this.wordleGuesses().includes(guess)) {
       this.wordleMessage.set('You already tried that word.');
       return;
@@ -79,6 +84,7 @@ export class GamesComponent {
     this.wordleGuesses.update(guesses => [...guesses, guess]);
     this.wordleInput.set('');
     this.wordleMessage.set('');
+    if (!this.wordleFinished()) this.focusWordleTile(0);
   }
 
   resetWordle(): void {
@@ -110,8 +116,44 @@ export class GamesComponent {
     return 'empty';
   }
 
-  updateWordleInput(value: string): void {
-    this.wordleInput.set(value.replace(/[^a-z]/gi, '').slice(0, 5).toUpperCase());
+  onWordlePanelClick(event: MouseEvent): void {
+    if (this.wordleFinished()) return;
+    if (event.target instanceof Element && event.target.closest('input, button')) return;
+    this.focusWordleTile(this.wordleInput().length);
+  }
+
+  focusWordleTile(index: number): void {
+    const tile = this.wordleTiles.get(Math.max(0, Math.min(index, this.wordleInput().length, 4)))?.nativeElement;
+    tile?.focus();
+    tile?.select();
+  }
+
+  updateWordleTile(index: number, input: HTMLInputElement): void {
+    if (this.wordleFinished()) return;
+    const letters = input.value.replace(/[^a-z]/gi, '').toUpperCase();
+    const current = this.wordleInput();
+    this.wordleInput.set((current.slice(0, index) + letters + current.slice(index + Math.max(letters.length, 1))).slice(0, 5));
+    input.value = this.wordleInput()[index] || '';
+    this.wordleMessage.set('');
+    this.focusWordleTile(letters ? index + letters.length : index);
+  }
+
+  onWordleKeydown(event: KeyboardEvent, index: number): void {
+    if (this.wordleFinished() || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.submitWordleGuess();
+    } else if (event.key === 'Backspace' || event.key === 'Delete') {
+      event.preventDefault();
+      const position = event.key === 'Backspace' && !this.wordleInput()[index] ? index - 1 : index;
+      if (position < 0) return;
+      this.wordleInput.update(value => value.slice(0, position) + value.slice(position + 1));
+      this.wordleMessage.set('');
+      this.focusWordleTile(position);
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      event.preventDefault();
+      this.focusWordleTile(index + (event.key === 'ArrowLeft' ? -1 : 1));
+    }
   }
 
   selectPuzzleSize(size: number): void {
