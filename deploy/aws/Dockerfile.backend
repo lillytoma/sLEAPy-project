@@ -1,0 +1,8 @@
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+RUN addgroup -S sleapy && adduser -S -G sleapy sleapy
+COPY starter/backend/target/project-0.0.1-SNAPSHOT.jar app.jar
+USER sleapy
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=65 -XX:+ExitOnOutOfMemoryError"
+EXPOSE 8081
+ENTRYPOINT ["java", "-jar", "app.jar"]

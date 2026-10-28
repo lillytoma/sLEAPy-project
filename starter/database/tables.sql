@@ -33,7 +33,6 @@ CREATE TABLE Clients (
     state_name VARCHAR(100),
     zip_code VARCHAR(20),
     region VARCHAR(100)
-    ,is_admin BOOLEAN NOT NULL DEFAULT FALSE
 );
 -- Instruments
 CREATE TABLE Instruments (
