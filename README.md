@@ -1,6 +1,10 @@
 # sLEAPy-project
 
 ## Overview
+
+For the low-cost CloudFront/S3 + ALB/ECS/RDS demo deployment, see
+[the AWS deployment guide](deploy/aws/README.md).
+
 This repository establishes the core workflow, collaboration structure, and early project scaffolding that the team will build upon in future sprints.
 
 ---

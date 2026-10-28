@@ -1,0 +1,4 @@
+FROM postgres:17-alpine
+COPY starter/database/tables.sql starter/database/mockdata.sql starter/database/analystSchema.sql /seed/
+COPY deploy/aws/init-db.sh /seed/init-db.sh
+ENTRYPOINT ["sh", "/seed/init-db.sh"]
